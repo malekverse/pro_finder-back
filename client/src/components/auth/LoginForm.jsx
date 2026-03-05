@@ -3,7 +3,6 @@ import styles from '../../styles/Form.module.css';
 import { useLoginMutation } from '../../redux/features/auth/authApiSlice';
 import Cookies from 'js-cookie';
 import { useNavigate, Link } from 'react-router-dom';
-import servicesIllustration from '../../assets/illustrations/services.svg';
 
 /* Composant: LoginForm
    - Authentifie l’utilisateur et redirige vers le dashboard

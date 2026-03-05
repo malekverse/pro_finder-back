@@ -41,6 +41,18 @@ const companySchema = new mongoose.Schema(
     coverUrl: {
       type: String,
     },
+    country: {
+      type: String,
+      required: true,
+    },
+    region: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
 
     roles: {
       type: [String],

@@ -23,6 +23,11 @@ app.use("/auth",require("./routes/authRoutes"));
 app.use("/profile", require("./routes/profileRoutes"));
 app.use("/admin", require("./routes/adminRoutes"));
 app.use("/company", require("./routes/companyRoutes"));
+app.use("/localisation", require("./routes/localisationRoutes/countryRoutes"));
+app.use("/localisation", require("./routes/localisationRoutes/regionRoutes"));
+app.use("/localisation", require("./routes/localisationRoutes/cityRoutes"));
+
+
 
 mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");

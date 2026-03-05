@@ -2,7 +2,7 @@ import Cookies from 'js-cookie';
 import { useSendLogoutMutation } from '../redux/features/auth/authApiSlice';
 import { useGetUsersQuery } from '../redux/features/users/usersApiSlice';
 import styles from '../styles/Dashboard.module.css';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const navigate = useNavigate();

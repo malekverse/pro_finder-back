@@ -10,15 +10,19 @@ const verifyJWT = (req, res, next) => {
         if (err) {
             return res.status(401).json({ message: "token is invalid" });
         }
-       req.user = {
-            id: decoded.UserInfo.id,
-            roles: decoded.UserInfo.roles
-        };
-        req.company = {
-            id: decoded.CompanyInfo.id,
-            roles: decoded.CompanyInfo.roles
-        };
-        next(); 
+        if (decoded.UserInfo) {
+            req.user = decoded.UserInfo.id;
+            req.roles = decoded.UserInfo.roles;
+        } 
+        else if (decoded.AccountInfo) {
+            req.user = decoded.AccountInfo.id;
+            req.roles = decoded.AccountInfo.roles;
+        } 
+        else {
+            return res.status(401).json({ message: "Token structure invalid" });
+        }
+
+        next();
     });
 }
 module.exports=verifyJWT;
