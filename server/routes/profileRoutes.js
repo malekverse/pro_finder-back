@@ -5,7 +5,7 @@ const verifyJWT = require("../middleware/verifyJWT");
 
 router.use(verifyJWT);
 
-router.route("/",profileController.getProfile);
+router.route("/").get(profileController.getProfile);
 router.put("/", profileController.updateProfile);
 
 module.exports = router;

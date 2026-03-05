@@ -9,7 +9,7 @@ const register = async (req, res) => {
   try {
     const {email,password,fullName,companyName,phone, avatarUrl,website,logoUrl,description,roles} = req.body;
 
-    if (!email || !password || !phone || !roles) {
+    if (!email || !password || !roles) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 

@@ -2,6 +2,7 @@ import { useRegisterMutation } from '../../redux/features/auth/authApiSlice';
 import styles from '../../styles/Form.module.css';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
@@ -85,6 +86,7 @@ const SignupForm = () => {
 
       if (response?.accessToken) {
         localStorage.setItem("accessToken", response.accessToken);
+        Cookies.set('accessToken', response.accessToken);
         if (role === 'user') navigate("/profile");
         else navigate("/dashboard");
       }
@@ -220,18 +222,20 @@ const SignupForm = () => {
                     <div className={styles.gridRow}>
                       <div className={styles.inputGroup}>
                         <label>WEBSITE</label>
-                        <input
+                      <input
                           type="text"
                           placeholder="Website"
+                        required
                           value={companyInputs.website}
                           onChange={(e) => setCompanyInputs({ ...companyInputs, website: e.target.value })}
                         />
                       </div>
                       <div className={styles.inputGroup}>
                         <label>COMPANY EMAIL</label>
-                        <input
+                      <input
                           type="email"
                           placeholder="Company Email"
+                        required
                           value={companyInputs.email}
                           onChange={(e) => setCompanyInputs({ ...companyInputs, email: e.target.value })}
                         />
@@ -239,7 +243,7 @@ const SignupForm = () => {
                     </div>
                     <div className={styles.inputGroup}>
                       <label>PHONE</label>
-                      <input
+                    <input
                         type="tel"
                         placeholder="Phone"
                         value={companyInputs.phone}
