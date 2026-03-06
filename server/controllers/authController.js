@@ -42,18 +42,26 @@ const register = async (req, res) => {
       });
     }
 
-    if (roles.includes("company")) {
-      if (!companyName || !email ||!website)
-        return res.status(400).json({ message: "Company name, email and website are required" });
+   if (roles.includes("company")) {
+      // 1. Vérification des champs (ajoute country, region, city si tu veux les rendre obligatoires ici aussi)
+      if (!companyName || !email) {
+        return res.status(400).json({ message: "Company name and email are required" });
+      }
 
+      // 2. Création avec TOUS les champs du schéma
       newAccount = await Company.create({
         email,
         password: hashedPassword,
         companyName,
         phone,
-        website,
-        logoUrl,
-        description,
+        website: req.body.website || '',
+        logoUrl: req.body.logoUrl || null,
+        coverUrl: req.body.coverUrl || null,
+        description: req.body.description || '',
+        // ✅ AJOUT DES CHAMPS DE LOCALISATION POUR MONGOOSE
+        country: req.body.country, 
+        region: req.body.region,
+        city: req.body.city,
         roles: ["company"]
       });
     }

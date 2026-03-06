@@ -13,7 +13,6 @@ router.get("/dashboard",verifyJWT,authorizeRoles("admin"),
 router.get("/dashboard",verifyJWT,authorizeRoles("company","admin"),companyController.getDashboard);
 router.get("/profile",verifyJWT,authorizeRoles("company","admin"),companyController.getCompanyProfile);
 router.put("/profile",verifyJWT,authorizeRoles("company","admin"),companyController.updateCompanyProfile);
-router.get("/hello",verifyJWT,authorizeRoles("company","admin"),companyController.hello);
 
 
 module.exports = router;
