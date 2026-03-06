@@ -10,5 +10,4 @@ router.route("/").get(userController.getAllUsers);
 router.get("/dashboard",verifyJWT,authorizeRoles("user","admin"),userController.getDashboard
 );
 
-
 module.exports=router;

@@ -1,0 +1,31 @@
+.table {
+  text-align: center;
+}
+.table th {
+  padding: 5px;
+}
+/* src/styles/Form.module.css */
+
+.brandContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem; /* Réduit l'espace entre l'image et le texte */
+}
+
+.mainIllustration {
+    /* Ajuste ces valeurs pour changer la taille */
+    width: 60%;            /* L'image prendra 60% de la largeur du panneau au lieu de 80% */
+    max-width: 250px;      /* Elle ne dépassera jamais 250px (au lieu de 350-400px) */
+    height: auto;
+    object-fit: contain;
+    
+    /* Optionnel : adoucir l'intégration */
+    opacity: 0.9; 
+}
+
+.logo {
+    font-size: 1.8rem;     /* On réduit aussi un peu la taille du texte pour l'équilibre */
+    font-weight: 700;
+}
