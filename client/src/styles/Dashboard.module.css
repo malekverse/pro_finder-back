@@ -1,0 +1,142 @@
+/* Palette Pro Finder : Bleu profond #1E3A5F */
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc; /* Fond très léger */
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  padding: 24px 16px;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed; /* Reste fixe au scroll */
+  height: 100vh;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  margin-bottom: 35px;
+}
+
+.logoIcon {
+  width: 12px;
+  height: 12px;
+  background-color: #1E3A5F;
+  transform: rotate(45deg); /* Le losange de votre logo */
+}
+
+.sidebarTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1E3A5F;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.menuLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 700;
+  margin: 20px 12px 10px;
+  letter-spacing: 0.05em;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  flex-grow: 1;
+}
+
+.link, .activeLink {
+  text-decoration: none;
+  font-weight: 600;
+  padding: 12px 15px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.link {
+  color: #64748b;
+}
+
+.link:hover {
+  background-color: #f1f5f9;
+  color: #1E3A5F;
+}
+
+.activeLink {
+  background-color: #f0f7ff; /* Fond bleu très clair */
+  color: #1E3A5F; /* Texte bleu profond */
+  border-right: 3px solid #1E3A5F; /* Marqueur de sélection */
+}
+
+.icon {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+/* TOPBAR & CONTENT */
+
+.content {
+  flex: 1;
+  margin-left: 260px; /* Espace pour la sidebar fixe */
+  padding: 30px 40px;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.userProfile {
+  width: 35px;
+  height: 35px;
+  background: #1E3A5F;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.sidebarFooter {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 15px;
+}
+
+.logoutBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: #ef4444; /* Rouge pour déconnexion */
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.logoutBtn:hover {
+    background: #fef2f2;
+}

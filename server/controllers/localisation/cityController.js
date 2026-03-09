@@ -1,5 +1,6 @@
 const City = require("../../models/city");
 const Region = require("../../models/region");
+const {  getStatesOfCountry, getCitiesOfState } = require('@countrystatecity/countries');
 
 
 const createCity = async (req, res) => {
@@ -24,38 +25,37 @@ const createCity = async (req, res) => {
 // GET ALL with cascade populate
 const getCities = async (req, res) => {
   try {
-    const cities = await City.find().populate({
-      path: "region",
-      select: "name",
-      populate: {
-        path: "country",
-        select: "name"
-      }
-    });
 
-    res.json(cities);
+ const countryCode = 'TN';
+
+    // 1️⃣ Récupérer tous les états/régions de la Tunisie
+    //const states = await getStatesOfCountry(countryCode);
+
+    // 2️⃣ Pour chaque état, récupérer les villes
+   // let allCities = [];
+    //for (const state of states) {
+   //   const cities = await getCitiesOfState(countryCode, state.isoCode);
+  //    allCities = allCities.concat(cities);
+  //  }
+  //"iso2": "12",
+  const states = await getStatesOfCountry(countryCode);
+        const cities = await getCitiesOfState(countryCode, "12");
+
+    res.json(states);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 const getCitiesByRegion = async (req, res) => {
   try {
-    const { region_id } = req.params;
+    //iso2 pour state et country_code
+    const { region_id,countryCode } = req.params;
     
-    const cities = await City.find({ 
-      region: region_id 
-    }).populate({
-      path: "region",
-      select: "name",
-      populate: {
-        path: "country",
-        select: "name"
-      } 
-    });
-
-    if (!cities.length)
-      return res.status(404).json({ message: "No cities found for this region" });
-
+    if (!region_id || !countryCode)
+      return res.status(400).json({ message: "Region ID and Country Code are required"+region_id+" and "+countryCode });
+    
+    const cities = await getCitiesOfState(countryCode, region_id);
     res.json(cities);
   } catch (error) {
     res.status(500).json({ message:"region not found"});

@@ -27,7 +27,8 @@ app.use("/company", require("./routes/companyRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/countryRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/regionRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/cityRoutes"));
-
+app.use("/roles", require("./routes/roleRoutes"));
+app.use("/followers", require("./routes/followerRoutes"));
 
 
 mongoose.connection.once("open", () => {
