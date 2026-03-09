@@ -27,28 +27,11 @@ const followCompany = async (req, res) => {
     res.status(201).json(follow);
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message:"follow company failed" });
   }
 
 };
 
-
-// voir followers d'une company
-const getCompanyFollowers = async (req, res) => {
-
-  try {
-
-    const followers = await Follow.find({
-      company_id: req.user
-    }).populate("user_id", "fullName email");
-
-    res.json(followers);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-
-};
 
 
 // unfollow
@@ -70,39 +53,7 @@ const unfollowCompany = async (req, res) => {
     res.json({ message: "Unfollowed company" });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-
-};
-const assignRoleToFollower = async (req, res) => {
-
-  try {
-
-    const { user_id, role_id } = req.body;
-
-    const follow = await Follow.findOne({
-      user_id,
-      company_id: req.user
-    });
-
-    if (!follow) {
-      return res.status(404).json({ message: "Follower not found" });
-    }
-
-    follow.role_id = role_id;
-
-    await follow.save();
-
-    res.json({
-      message: "Role assigned successfully"
-    });
-
-  } catch (err) {
-
-    res.status(500).json({
-      message: err.message
-    });
-
+    res.status(500).json({ message:"unfollow company failed" });
   }
 
 };
@@ -110,6 +61,5 @@ const assignRoleToFollower = async (req, res) => {
 
 module.exports = {
   followCompany,
-  getCompanyFollowers,
   unfollowCompany
 };

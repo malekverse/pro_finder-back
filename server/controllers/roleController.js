@@ -6,17 +6,30 @@ const createRole = async (req, res) => {
   try {
 
     const { name, permissions } = req.body;
+    if(!name || !permissions)
+      return res.status(400).json({ message: "name and permissions are required" });
+    
+    // Vérifier si le rôle existe déjà
+    const existingNameRole = await Role.findOne({ name });
+    if (existingNameRole)
+      return res.status(400).json({ message: "Role name already exists" });
+
+    const existingPermissionsRole = await Role.findOne({ permissions });
+    if (existingPermissionsRole)
+      return res.status(400).json({ message: "A role with the same permissions already exists." });
+
 
     const role = await Role.create({
       name,
       permissions
     });
+    
 
     res.status(201).json(role);
 
   } catch (err) {
 
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "create role failed" });
 
   }
 
@@ -34,7 +47,7 @@ const getRoles = async (req, res) => {
 
   } catch (err) {
 
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message:"get roles failed" });
 
   }
 
@@ -60,7 +73,7 @@ const updateRole = async (req, res) => {
 
   } catch (err) {
 
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message:"update role failed" });
 
   }
 
@@ -83,7 +96,7 @@ const deleteRole = async (req, res) => {
 
   } catch (err) {
 
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message:"delete role failed" });
 
   }
 

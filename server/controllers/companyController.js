@@ -42,9 +42,8 @@ const updateCompanyProfile = async (req, res) => {
   await company.save();
   res.json({ message: "Company profile updated" });
 };
-// ================= RBAC functions =================
 
-// 1️⃣ Lister tous les users de la company avec rôle et permissions
+//  Lister tous les users de la company avec rôle et permissions
 const getCompanyUsers = async (req, res) => {
   try {
     const follows = await Follow.find({ company_id: req.user })
@@ -77,7 +76,7 @@ const assignRoleToUser = async (req, res) => {
     const follow = await Follow.findOne({ user_id: user._id, company_id: req.user });
     if (!follow) return res.status(404).json({ message: "User not following this company" });
 
-    // 3️⃣ Chercher le rôle réel dans la collection Role
+  
     const roleDoc = await Role.findOne({ name: role });
     if (!roleDoc) return res.status(404).json({ message: "Role not found" });
 
@@ -121,6 +120,7 @@ const updateRoleToUser = async (req, res) => {
     res.status(500).json({ message: "Error updating role" });
   }
 };
+
 // Supprimer le rôle d’un utilisateur
 const deleteRoleToUser = async (req, res) => {
   const { email } = req.body;

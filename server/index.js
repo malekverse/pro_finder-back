@@ -31,6 +31,8 @@ app.use("/roles", require("./routes/roleRoutes"));
 app.use("/followers", require("./routes/followerRoutes"));
 
 
+
+
 mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");
   app.listen(PORT, () => {
@@ -41,7 +43,3 @@ mongoose.connection.once("open", () => {
 mongoose.connection.on("error", (err) => {
   console.error("MongoDB connection error:", err.message);
 });
-
-
-
-

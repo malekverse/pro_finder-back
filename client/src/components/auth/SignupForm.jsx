@@ -51,14 +51,14 @@ const SignupForm = () => {
   const [register, { isError, error }] = useRegisterMutation();
 
   useEffect(() => {
-    fetch("http://localhost:5000/localisation/getAllCountries")
+    fetch("http://localhost:5000/localisation/getCountries")
       .then(res => res.json())
       .then(data => setCountries(data))
       .catch(err => console.log(err));
   }, []);
 
 useEffect(() => {
-  console.log("belha "+companyInputs.country_id);
+ 
   if (companyInputs.country_id) {
     fetch(`http://localhost:5000/localisation/getRegionsByCountry/${companyInputs.country_id}`)
       .then(res => res.json())
@@ -70,14 +70,12 @@ useEffect(() => {
 }, [companyInputs.country_id]);
 
   useEffect(() => {
-  if (companyInputs.region_id && companyInputs.country_id) {
-    fetch(`http://localhost:5000/localisation/getCitiesByRegion/${companyInputs.region_id}/${companyInputs.country_id}`)
+  if (companyInputs.region_id) {
+    fetch(`http://localhost:5000/localisation/getCitiesByRegion/${companyInputs.region_id}`)
       .then(res => res.json())
       .then(data => setCities(data))
       .catch(err => console.log(err));
-  } else {
-    setCities([]); // réinitialise si pas de région ou pays
-  }
+  } 
 }, [companyInputs.region_id, companyInputs.country_id]);
 
   const handleSubmit = async (e) => {
@@ -124,15 +122,13 @@ useEffect(() => {
 
       const response = await register(payload).unwrap();
 
-     // Remplace cette partie dans ton SignupForm.jsx :
+    
 if (response?.accessToken) {
-  // 1. Stocke dans localStorage (pour ton authSlice)
+ 
   localStorage.setItem("accessToken", response.accessToken);
-  
-  // 2. AJOUTE CETTE LIGNE (pour ton RequireAuth et App.js)
+
   Cookies.set('accessToken', response.accessToken, { expires: 7 }); 
 
-  // 3. Synchronisation Redux
   dispatch(setCredentials({ 
     accessToken: response.accessToken, 
     account: response.account 
@@ -141,7 +137,7 @@ if (response?.accessToken) {
   // Redirection
   const userRoles = response.account?.roles || [];
   if (userRoles.includes("company")) {
-    navigate("/dashboard");
+    navigate("/company/stats");
   } else {
     navigate("/profile");
   }
@@ -350,11 +346,11 @@ if (response?.accessToken) {
           placeholder="Search Country..."
           options={countries}
           getOptionLabel={(option) => option.name} // affiche le nom du pays
-          value={companyInputs.country_id ? countries.find(c => c.iso2 === companyInputs.country_id) : null}
+          value={companyInputs.country_id ? countries.find(c => c._id === companyInputs.country_id) : null}
           onSelect={(country) => {
             setCompanyInputs(prev => ({
               ...prev,
-              country_id: country.iso2, 
+              country_id: country._id, 
               region_id: '',             
               city_id: ''                
             }));
@@ -376,7 +372,7 @@ if (response?.accessToken) {
           console.log("Region selected:", region.name, region.iso2);
           setCompanyInputs(prev => ({
             ...prev,
-            region_id: region ? region.iso2 : "", 
+            region_id: region ? region._id : "", 
             city_id: ""                          
           }));
         }}

@@ -1,5 +1,4 @@
 const Country = require("../../models/country");
-const { getCountries  } = require('@countrystatecity/countries');
 
 // CREATE
 const createCountry = async (req, res) => {
@@ -24,10 +23,9 @@ const createCountry = async (req, res) => {
 };
 
 // GET ALL
-const getAllCountries = async (req, res) => {
+const getCountries = async (req, res) => {
   try {
-    const countries = await getCountries();
-
+    const countries = await Country.find();
     res.json(countries);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -81,7 +79,7 @@ const deleteCountry = async (req, res) => {
 
 module.exports = {
   createCountry,
-  getAllCountries,
+  getCountries,
   getCountryById,
   deleteCountry,
   getCountryByName,
