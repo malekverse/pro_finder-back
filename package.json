@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@countrystatecity/countries": "^1.0.5"
+  }
+}
