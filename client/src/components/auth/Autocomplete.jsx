@@ -1,15 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from "../../styles/Form.module.css";
-const Autocomplete = ({ options, placeholder, label, onSelect, value }) => {
+const Autocomplete = ({ options, placeholder, label, onSelect, value, getOptionLabel }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef(null);
-
-  // Met à jour le texte affiché si la valeur change (ex: reset)
-  useEffect(() => {
-    const selected = options.find(opt => opt._id === value);
-    setSearchTerm(selected ? selected.name : '');
-  }, [value, options]);
+  const labelFn = getOptionLabel || ((opt) => (opt?.name ?? ''));
 
   // Ferme la liste si on clique ailleurs
   useEffect(() => {
@@ -23,8 +18,10 @@ const Autocomplete = ({ options, placeholder, label, onSelect, value }) => {
   }, []);
 
   const filteredOptions = options.filter(opt =>
-    opt.name.toLowerCase().includes(searchTerm.toLowerCase())
+    labelFn(opt).toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const selected = typeof value === 'object' ? value : options.find(opt => opt._id === value);
+  const displayText = isOpen ? searchTerm : (selected ? labelFn(selected) : '');
 
   return (
     <div className={styles.inputGroup} ref={wrapperRef} style={{ position: 'relative' }}>
@@ -32,7 +29,7 @@ const Autocomplete = ({ options, placeholder, label, onSelect, value }) => {
       <input
         type="text"
         placeholder={placeholder}
-        value={searchTerm}
+        value={displayText}
         onChange={(e) => {
           setSearchTerm(e.target.value);
           setIsOpen(true);
@@ -48,11 +45,11 @@ const Autocomplete = ({ options, placeholder, label, onSelect, value }) => {
                 key={opt._id} 
                 onClick={() => {
                   onSelect(opt);
-                  setSearchTerm(opt.name);
+                  setSearchTerm('');
                   setIsOpen(false);
                 }}
               >
-                {opt.name}
+                {labelFn(opt)}
               </li>
             ))
           ) : (

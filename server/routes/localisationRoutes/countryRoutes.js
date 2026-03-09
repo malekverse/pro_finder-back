@@ -3,7 +3,7 @@ const router = express.Router();
 const countryController = require("../../controllers/localisation/countryController");
 
 router.post("/createCountry", countryController.createCountry);
-router.get("/getAllCountries", countryController.getAllCountries);
+router.get("/getCountries", countryController.getCountries);
 router.get("/getCountryById/:id", countryController.getCountryById);
 router.get("/getCountryByName/:name", countryController.getCountryByName);
 router.get("/getCountryByCode/:code", countryController.getCountryByCode);

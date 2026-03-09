@@ -1,96 +1,52 @@
 const User = require("../models/User");
-const Company = require("../models/company");
 
-
-// GET PROFILE
+// GET profile
 const getProfile = async (req, res) => {
   try {
+    const user = await User.findById(req.user).select("-password");
 
-    let account = await User.findById(req.user).select("-password");
-
-    // si pas user chercher company
-    if (!account) {
-      account = await Company.findById(req.user).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    if (!account) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    res.json(account);
+    res.json(user);
 
   } catch (error) {
-    res.status(500).json({ message:"Error getting profile" });
+    res.status(500).json({ message: error.message });
   }
 };
 
-
-
-// UPDATE PROFILE
+// UPDATE profile
 const updateProfile = async (req, res) => {
   try {
-
     const { fullName, phone, avatarUrl } = req.body;
 
-    // essayer user
-    let user = await User.findById(req.user);
+    const user = await User.findById(req.user);
 
-    if (user) {
-
-      user.fullName = fullName ?? user.fullName;
-      user.phone = phone ?? user.phone;
-      user.avatarUrl = avatarUrl ?? user.avatarUrl;
-
-      const updatedUser = await user.save();
-
-      return res.json({
-        _id: updatedUser._id,
-        email: updatedUser.email,
-        fullName: updatedUser.fullName,
-        phone: updatedUser.phone,
-        avatarUrl: updatedUser.avatarUrl,
-        roles: updatedUser.roles,
-      });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // sinon company
-    let company = await Company.findById(req.user);
+    user.fullName = fullName ?? user.fullName;
+    user.phone = phone ?? user.phone;
+    user.avatarUrl = avatarUrl ?? user.avatarUrl;
 
-    if (company) {
+    const updatedUser = await user.save();
 
-      company.companyName = fullName ?? company.name;
-      company.description = description ?? company.description;
-      company.website = website ?? company.website;
-      company.phone = phone ?? company.phone;
-      company.logoUrl = logoUrl ?? company.logoUrl;
-      company.avatarUrl = avatarUrl ?? company.avatarUrl;
-
-
-      const updatedCompany = await company.save();
-
-      return res.json({
-        _id: updatedCompany._id,
-        email: updatedCompany.email,
-        name: updatedCompany.name,
-        description: updatedCompany.description,
-        website: updatedCompany.website,
-        logoUrl: updatedCompany.logoUrl,
-        phone: updatedCompany.phone,
-        avatarUrl: updatedCompany.avatarUrl,
-        roles: updatedCompany.roles,
-      });
-    }
-
-    res.status(404).json({ message: "Account not found" });
+    res.json({
+      _id: updatedUser._id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      phone: updatedUser.phone,
+      avatarUrl: updatedUser.avatarUrl,
+      roles: updatedUser.roles,
+    });
 
   } catch (error) {
-    res.status(500).json({ message:"Error updating profile" });
+    res.status(500).json({ message: error.message });
   }
 };
 
-
-
-module.exports = {
-  getProfile,
-  updateProfile
-};
+module.exports = { 
+    getProfile,
+    updateProfile };

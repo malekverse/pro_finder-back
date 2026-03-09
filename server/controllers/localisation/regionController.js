@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 
 const Region = require("../../models/region");
 const Country = require("../../models/country");
-const { getStatesOfCountry  } = require('@countrystatecity/countries');
-
 
 const createRegion = async (req, res) => {
   try {
@@ -102,16 +100,16 @@ const getRegionById = async (req, res) => {
 };
 const getRegionsByCountry = async (req, res) => {
   try {
-    //iso2
-    const { countryCode } = req.params;
+    const { country_id } = req.params;
 
-    if (!countryCode)
-      return res.status(400).json({ message: "Country code is required" });
+    if (!country_id)
+      return res.status(400).json({ message: "Country ID is required" });
 
-   const regions = await getStatesOfCountry(countryCode);
-    
+    const regions = await Region.find({ country: country_id }).exec();
+    if (!regions.length)
+      return res.status(404).json({ message: "No regions found for this country" });
+
     res.status(200).json({ message: "Regions found", regions });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

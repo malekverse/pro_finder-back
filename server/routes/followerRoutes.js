@@ -6,8 +6,7 @@ const verifyJWT = require("../middleware/verifyJWT");
 
 router.use(verifyJWT);
 
-router.post("/followCompany", followerController.followCompany);
-router.get("/companyFollowers", followerController.getCompanyFollowers);
+router.post("/follow", followerController.followCompany);
 router.delete("/unfollow", followerController.unfollowCompany);
 
 module.exports = router;
