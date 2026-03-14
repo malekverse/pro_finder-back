@@ -7,7 +7,7 @@ const verifyJWT=require("../middleware/verifyJWT");
 router.use(verifyJWT);
 
 router.route("/").get(userController.getAllUsers);
-router.get("/dashboard",verifyJWT,authorizeRoles("user","admin"),userController.getDashboard
+router.get("/dashboard",verifyJWT,authorizeRoles("user","SuperAdmin"),userController.getDashboard
 );
 
 module.exports=router;

@@ -4,7 +4,7 @@ const getDashboard = async (req, res) => {
   const usersCount = await User.countDocuments();
 
   res.json({
-    message: "Admin Dashboard",
+    message: "SuperAdmin Dashboard",
     totalUsers: usersCount
   });
 };

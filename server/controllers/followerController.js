@@ -1,6 +1,6 @@
 const Follow = require("../models/follow");
 const User = require("../models/User");
-
+const mongoose = require("mongoose");
 
 
 // suivre une company
@@ -58,8 +58,44 @@ const unfollowCompany = async (req, res) => {
 
 };
 
+const getFollowerCount = async (req, res) => {
+  try {
+
+    const followers = await Follow.countDocuments({ company_id: req.user });
+    res.json({ followers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching followers" });
+  }
+};
+const getFollowersStats = async (req, res) => {
+  try {
+    const stats = await Follow.aggregate([
+      {
+        $match: {
+          company_id: new mongoose.Types.ObjectId(req.user)  // attention à ce que req.user soit company ID
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },  // groupe par mois (1 = Janvier, 12 = Décembre)
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    res.json(stats);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching followers stats" });
+  }
+};
+
+
 
 module.exports = {
   followCompany,
-  unfollowCompany
+  unfollowCompany,
+  getFollowerCount,
+  getFollowersStats
 };
