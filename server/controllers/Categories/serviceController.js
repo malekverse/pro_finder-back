@@ -2,8 +2,8 @@ const Service = require("../../models/Service");
 
 const getServicesBySubCategory=async (req,res)=>{
     try {
-        const { id } = req.params;
-        const services = await Service.find({ subCategory_id: id });
+        const { subCategoryId } = req.params;
+        const services = await Service.find({ subCategory_id: subCategoryId });
         if (!services){
              return res.status(404).json({ message: "Services not found" });}
         res.json(services);
@@ -14,8 +14,8 @@ const getServicesBySubCategory=async (req,res)=>{
 
 const createService=async (req,res)=>{
     try {
-        const { name, price, duration, subCategory_id } = req.body;
-        const service = new Service({ name, price, duration, subCategory_id });
+        const { name, subCategory_id } = req.body;
+        const service = new Service({ name, subCategory_id });
         await service.save();
         res.json({ message: "Service created successfully" });
     } catch (err) {
@@ -26,8 +26,8 @@ const createService=async (req,res)=>{
 const updateService=async (req,res)=>{
     try {
         const { id } = req.params;
-        const { name, price, duration, subCategory_id } = req.body;
-        const service = await Service.findByIdAndUpdate(id, { name, price, duration, subCategory_id });
+        const { name, subCategory_id } = req.body;
+        const service = await Service.findByIdAndUpdate(id, { name, subCategory_id });
         if (!service){
              return res.status(404).json({ message: "Service not found" });}
         res.json({ message: "Service updated successfully" });

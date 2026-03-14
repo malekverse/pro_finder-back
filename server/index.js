@@ -26,7 +26,7 @@ app.use("/auth",require("./routes/authRoutes"));
 
 app.use("/profile", require("./routes/profileRoutes"));
 
-app.use("/admin", require("./routes/adminRoutes"));
+app.use("/SuperAdmin", require("./routes/adminRoutes"));
 
 app.use("/company", require("./routes/companyRoutes"));
 
