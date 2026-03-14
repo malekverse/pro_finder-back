@@ -12,5 +12,7 @@ router.get("/users",verifyJWT,authorizeRoles("company","admin"),companyControlle
 router.put("/assign-role",verifyJWT,authorizeRoles("company","admin"),companyController.assignRoleToUser);
 router.put("/update-role",verifyJWT,authorizeRoles("company","admin"),companyController.updateRoleToUser);
 router.delete("/delete-role",verifyJWT,authorizeRoles("company","admin"),companyController.deleteRoleToUser);
+router.get("/my-access/:companyId", verifyJWT, companyController.getUserAccessToCompany);
+router.get("/services/:serviceId",verifyJWT,authorizeRoles("company","admin"),companyController.getCompaniesByService);
 
 module.exports = router;

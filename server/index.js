@@ -19,16 +19,28 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
 app.use("/users",require("./routes/usersRoutes"));
+
 app.use("/",require("./routes/root"));
+
 app.use("/auth",require("./routes/authRoutes"));
+
 app.use("/profile", require("./routes/profileRoutes"));
+
 app.use("/admin", require("./routes/adminRoutes"));
+
 app.use("/company", require("./routes/companyRoutes"));
+
 app.use("/localisation", require("./routes/localisationRoutes/countryRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/regionRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/cityRoutes"));
+
 app.use("/roles", require("./routes/roleRoutes"));
+
 app.use("/followers", require("./routes/followerRoutes"));
+
+app.use("/categories", require("./routes/categoriesRoutes/subCategoryRoutes"));
+app.use("/categories", require("./routes/categoriesRoutes/serviceRoutes"));
+app.use("/categories", require("./routes/categoriesRoutes/categoryRoutes"));
 
 
 
