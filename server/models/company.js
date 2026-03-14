@@ -53,6 +53,10 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+      service_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service"
+  },
 
     roles: {
       type: [String],
