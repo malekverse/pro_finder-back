@@ -43,7 +43,7 @@ const register = async (req, res) => {
     }
 
    if (roles.includes("company")) {
-      // 1. Vérification des champs (ajoute country, region, city si tu veux les rendre obligatoires ici aussi)
+    
       if (!companyName || !email) {
         return res.status(400).json({ message: "Company name and email are required" });
       }
@@ -58,11 +58,16 @@ const register = async (req, res) => {
         logoUrl: req.body.logoUrl || null,
         coverUrl: req.body.coverUrl || null,
         description: req.body.description || '',
-        // ✅ AJOUT DES CHAMPS DE LOCALISATION POUR MONGOOSE
         country: req.body.country, 
         region: req.body.region,
         city: req.body.city,
         roles: ["company"]
+      });
+    }
+
+    if (roles.includes("company")) {
+      return res.status(201).json({ 
+        message: "Merci pour votre inscription , votre compte est en attente de validation par un administrateur." 
       });
     }
 
@@ -104,7 +109,6 @@ const register = async (req, res) => {
         roles: newAccount.roles
       },
     });
-
   } catch (err) {
     res.status(500).json({ message: "Register error" });
   }
@@ -129,7 +133,12 @@ const login = async (req, res) => {
 
   if (!account) {
     return res.status(400).json({ message: "Account not found" });
-  }
+  } 
+  if (accountType === "company" && account.Status === "pending") {
+    return res.status(403).json({ 
+      message: "Votre compte est en attente de validation par un administrateur." 
+    });
+  } 
 
   // Vérifier le mot de passe
   const match = await bcrypt.compare(password, account.password);
@@ -142,7 +151,8 @@ const login = async (req, res) => {
     {
       UserInfo: {
         id: account._id,
-        roles: account.roles || [accountType], // si pas de roles pour Company
+        roles: account.roles || [accountType], 
+        status: account.Status || "active" 
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
@@ -171,7 +181,8 @@ const login = async (req, res) => {
       id: account._id,
       email: account.email,
       fullName: account.fullName || account.name,
-      roles: account.roles || [accountType]
+      roles: account.roles || [accountType],
+      status: account.Status
     },
   });
 };

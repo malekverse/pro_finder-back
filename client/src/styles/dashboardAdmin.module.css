@@ -1,0 +1,1157 @@
+/* TABLE CARD */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* HEADER */
+.table thead {
+  background: #243e63;
+}
+
+.table th {
+  text-align: left;
+  padding: 16px 20px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+/* CELLS */
+.table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* CATEGORY ROW */
+.categoryRow {
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* SUBCATEGORY ROW */
+.subCategoryRow {
+  background: #f8fafc;
+}
+
+.subCategoryRow td:nth-child(2) {
+  padding-left: 30px;
+  font-weight: 500;
+}
+
+/* SERVICE ROW */
+.serviceRow td:nth-child(3) {
+  padding-left: 50px;
+  color: #475569;
+}
+
+/* HOVER */
+.table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* ACTION ICON BUTTONS */
+.table button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+/* DELETE */
+.table button.deleteBtn {
+  color: #ef4444;
+}
+
+.table button.deleteBtn:hover {
+  color: #dc2626;
+}
+
+/* EDIT */
+.table button.editBtn {
+  color: #3b82f6;
+}
+
+.table button.editBtn:hover {
+  color: #1d4ed8;
+}
+
+/* INPUT EDIT */
+.table input {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5f5;
+  font-size: 13px;
+}
+/* ADD SECTION CONTAINER */
+.addSection {
+  background: white;
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* GRID FOR 3 FORMS */
+.addGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+  gap: 20px;
+}
+
+/* FORM CARD */
+.formBlock {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+/* TITLE */
+.formBlock h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+/* INPUT */
+.formBlock input,
+.formBlock select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+/* INPUT FOCUS */
+.formBlock input:focus,
+.formBlock select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
+
+/* ADD BUTTON */
+.formBlock button {
+  margin-top: 5px;
+  background: #243e63;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* HOVER */
+.formBlock button:hover {
+  background: #1e3a5f;
+}
+/* SECTION ADD */
+.addSection{
+  background: white;
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* GRID */
+.addGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+}
+
+/* FORM CARD */
+.formBlock{
+  background:#f8fafc;
+  border-radius:10px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  border:1px solid #e2e8f0;
+}
+
+/* TITLE */
+.formBlock h3{
+  font-size:15px;
+  font-weight:600;
+  color:#1e293b;
+}
+
+/* INPUT */
+.formBlock input,
+.formBlock select{
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
+  font-size:14px;
+  transition:0.2s;
+}
+
+/* INPUT FOCUS */
+.formBlock input:focus,
+.formBlock select:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 2px rgba(37,99,235,0.15);
+}
+
+/* BUTTON */
+.formBlock button{
+  margin-top:5px;
+  background:#243e63;
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+/* HOVER */
+.formBlock button:hover{
+  background:#1e3a5f;
+}.editBtn,
+.deleteBtn{
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  font-size:16px;
+  margin-right:10px;
+  transition:0.2s;
+}
+
+.editBtn{
+  color:#3b82f6;
+}
+
+.editBtn:hover{
+  color:#1d4ed8;
+  transform:scale(1.1);
+}
+
+.deleteBtn{
+  color:#ef4444;
+}
+
+.deleteBtn:hover{
+  color:#dc2626;
+  transform:scale(1.1);
+}
+/* SAVE BUTTON */
+.saveBtn{
+  background:#22c55e;
+  color:white;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+  margin-left:8px;
+  transition:0.2s;
+}
+
+.saveBtn:hover{
+  background:#16a34a;
+  transform:scale(1.05);
+}
+
+/* CANCEL BUTTON */
+.cancelBtn{
+  background:#e5e7eb;
+  color:#374151;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+  margin-left:6px;
+  transition:0.2s;
+}
+
+.cancelBtn:hover{
+  background:#d1d5db;
+}/* C:\Users\asus\Documents\GitHub\pro_finder-front\client\src\styles\dashboardAdmin.module.css */
+
+.container {
+    padding: 2rem;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+}
+
+.gridWrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    color: #334155;
+}
+
+.input, .select {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.input:focus, .select:focus {
+    border-color: #2d405f;
+}
+
+.button {
+    width: 100%;
+    background-color: #2d405f; /* Le bleu foncé de ton image */
+    color: white;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.button:hover {
+    background-color: #1e2b40;
+}
+
+/* Styles du Tableau */
+.tableWrapper {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.thead {
+    background-color: #2d405f;
+    color: white;
+}
+
+.th {
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.tr:hover {
+    background-color: #f8fafc;
+}
+/* Conteneur principal avec fond gris clair */
+.container {
+    padding: 25px;
+    background-color: #f8fafc;
+}
+
+/* Barrettes d'onglets (Tabs) */
+.tabsBar {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tab, .tabActive {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.tab { background: transparent; color: #64748b; }
+.tabActive { background: #eff6ff; color: #2563eb; }
+
+/* Stat Cards style Figma */
+.cardStat {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #e2e8f0;
+}
+
+.statIcon {
+    padding: 10px;
+    border-radius: 10px;
+}
+
+/* Badge Statut Vert */
+.statusActive {
+    background: #ecfdf5;
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Badge Code ISO Gris */
+.codeBadge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+}
+
+/* Barre d'action (Recherche + Bouton Ajouter) */
+.actionBar {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    align-items: center;
+}
+
+.searchWrapper {
+    position: relative;
+    width: 300px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+/* Bouton Ajouter Style Figma */
+.addBtnBlue {
+    background-color: #2563eb;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.addBtnBlue:hover {
+    background-color: #1d4ed8;
+}
+
+/* Modal Overlay */
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.modalInput, .modalSelect {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.submitBtn {
+    width: 100%;
+    background: #2563eb;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Icônes d'actions */
+.actionsFlex {
+    display: flex;
+    gap: 15px;
+}
+
+.editBtnIcon { color: #3b82f6; cursor: pointer; }
+.deleteBtnIcon { color: #ef4444; cursor: pointer; }
+.addBtnMain {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.td {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.deleteBtn { color: #ef4444; cursor: pointer; }
+.editBtn { color: #3b82f6; cursor: pointer; }
+/* --- Conteneur Global (Le Dashboard) --- */
+.dashboardContainer {
+    width: 100%;
+    height: calc(100vh - 80px); 
+    padding: 20px;
+    background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; 
+}
+
+/* --- En-tête de Page --- */
+.pageHeader {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.pageTitle {
+    font-size: 1.8rem;
+    color: #1a365d;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.pageSubtitle {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* --- Formulaire Style Pro Finder --- */
+.fullWidthForm {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    max-width: 800px; 
+    margin: 0 auto 40px auto;
+    width: 95%;
+}
+
+/* --- Section Avatar Spécifique au Profil --- */
+.avatarSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 35px;
+    gap: 15px;
+}
+
+.avatarWrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.avatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatarEditBtn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #24416b;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid white;
+    transition: 0.2s;
+}
+
+.avatarEditBtn:hover {
+    background: #1a365d;
+    transform: scale(1.1);
+}
+
+.adminBadge {
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+/* --- Grille d'Inputs (Récupérée de ton style) --- */
+.inputGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formGroup label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.formGroup input {
+    padding: 12px;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 10px;
+    background: #f8fafc;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: #24416b;
+    background: #fff;
+}
+
+.readOnly {
+    background: #f1f5f9 !important;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* --- Boutons d'Action --- */
+.formActions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btnSave {
+    background: #24416b;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btnSave:hover {
+    background: #1a365d;
+    transform: translateY(-2px);
+}
+
+.btnLogout {
+    background: #fff;
+    color: #dc2626;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: 1.5px solid #fee2e2;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btnLogout:hover {
+    background: #fef2f2;
+}
+
+/* Toast Success */
+.successToast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+/* Barre d'action contenant les boutons d'ajout */
+.actionBar {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Style des boutons d'ajout (Catégorie, Sous-Catégorie, Service) */
+.addBtnMain, .addBtnBlue {
+    background-color: #24416b; /* Ton bleu marine spécifique */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(36, 65, 107, 0.1);
+}
+
+.addBtnMain:hover, .addBtnBlue:hover {
+    background-color: #1a365d; /* Un bleu plus sombre au survol */
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(36, 65, 107, 0.2);
+}
+
+/* Si tu as plusieurs boutons à la suite comme dans l'image */
+.buttonGroup {
+    display: flex;
+    gap: 10px;
+}
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+  margin-bottom: 10px;
+}
+
+.avatarCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.userName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.viewProfileLink {
+  font-size: 12px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.viewProfileLink:hover {
+  color: #2563eb;
+}
+
+.menuDivider {
+  padding: 0 24px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}/* Structure de base du layout */
+.dashboard {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #f8fafc;
+}
+
+.sidebar {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.topBar {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+/* Styles pour les liens de navigation */
+.menuList {
+  list-style: none;
+  padding: 0 10px;
+  margin: 0;
+  flex: 1;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 15px;
+  color: #64748b;
+  text-decoration: none;
+  border-radius: 10px;
+  margin-bottom: 4px;
+  transition: all 0.2s;
+}
+
+.activeLink {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.linkContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* Bouton Déconnexion en bas de la Sidebar */
+.btnLogout {
+    width: 100%;
+    background: #ffffff;
+    color: #dc2626; /* Rouge alerte */
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: 1.5px solid #fee2e2; /* Bordure rouge très clair */
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.btnLogout:hover {
+    background: #fef2f2; /* Fond rouge très pâle au survol */
+    border-color: #fca5a5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.1);
+}
+
+.btnLogout svg {
+    transition: transform 0.2s;
+}
+
+.btnLogout:hover svg {
+    transform: translateX(-3px); /* Petit mouvement de l'icône vers la gauche */
+}
+/* Bouton Déconnexion en bas de la Sidebar */
+.btnLogout {
+    width: 100%;
+    background: #ffffff;
+    color: #dc2626; /* Rouge alerte */
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: 1.5px solid #fee2e2; /* Bordure rouge très clair */
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.btnLogout:hover {
+    background: #fef2f2; /* Fond rouge très pâle au survol */
+    border-color: #fca5a5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.1);
+}
+
+.btnLogout svg {
+    transition: transform 0.2s;
+}
+
+.btnLogout:hover svg {
+    transform: translateX(-3px); /* Petit mouvement de l'icône vers la gauche */
+}
+.link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 10px;
+    margin: 0 10px 4px 10px;
+    transition: all 0.2s;
+}
+
+.activeLink {
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.linkContent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+/* Section Profil */
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+  margin-bottom: 10px;
+}
+
+.avatarCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #eff6ff; /* Bleu clair de pro_finder */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.userName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.viewProfileLink {
+  font-size: 12px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.viewProfileLink:hover {
+  color: #2563eb;
+}
+
+/* Texte de séparation "MENU PRINCIPAL" */
+.menuDivider {
+  padding: 0 24px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  color: #64748b;
+  text-decoration: none;
+  border-radius: 10px;
+  margin: 0 10px 4px 10px;
+  transition: all 0.2s;
+}
+
+.activeLink {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.linkContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.activeArrow {
+  color: #2563eb;
+}
+/* Conteneur pour pousser le bouton en bas */
+.sidebarFooter {
+  padding: 20px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto; /* Important : pousse vers le bas */
+}
+
+.btnLogout {
+  width: 100%;
+  background: #ffffff;
+  color: #dc2626; /* Rouge */
+  padding: 12px;
+  border-radius: 8px;
+  border: 1.5px solid #fee2e2; /* Bordure rouge clair */
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.btnLogout:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);
+}
+/* Conteneur du bas pour la déconnexion */
+.sidebarFooter {
+    padding: 20px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: auto; /* Pousse le bouton tout en bas */
+}
+
+/* Ton bouton de déconnexion rouge style pro_finder */
+.btnLogout {
+    width: 100%;
+    background: #ffffff;
+    color: #dc2626; /* Rouge alerte */
+    padding: 12px;
+    border-radius: 8px;
+    border: 1.5px solid #fee2e2; /* Bordure rouge clair */
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.btnLogout:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    transform: translateY(-2px);
+}
+
+/* Correction pour que la sidebar prenne toute la hauteur */
+.sidebar {
+    width: 280px;
+    background: white;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column; /* Indispensable pour le marginTop: auto */
+    height: 100vh;
+}

@@ -8,5 +8,5 @@ router.post("/createRegion", regionController.createRegion);
 router.put("/updateRegion/:id", regionController.updateRegion);
 router.get("/getRegionByName/:name", regionController.getRegionByName);
 router.get("/getRegionById/:id", regionController.getRegionById);
-
+router.delete("/deleteRegion/:id", regionController.deleteRegion);
 module.exports = router;

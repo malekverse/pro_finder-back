@@ -10,6 +10,11 @@ const subCategorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
     required: true
+  },
+  status: {
+    type: String,
+    enum: ["Actif", "Inactif"],
+    default: "Inactif"
   }
 
 }, { timestamps: true });

@@ -59,8 +59,8 @@ const updateRole = async (req, res) => {
 
   try {
 
-    const role = await Role.findById(req.params.id);
-
+// Dans updateRole et deleteRole
+const role = await Role.findById(req.params.roleId); // Utilise roleId pour correspondre à la route
     if (!role)
       return res.status(404).json({ message: "Role not found" });
 
@@ -85,8 +85,8 @@ const deleteRole = async (req, res) => {
 
   try {
 
-    const role = await Role.findById(req.params.id);
-
+// Dans updateRole et deleteRole
+const role = await Role.findById(req.params.roleId); // Utilise roleId pour correspondre à la route
     if (!role)
       return res.status(404).json({ message: "Role not found" });
 
