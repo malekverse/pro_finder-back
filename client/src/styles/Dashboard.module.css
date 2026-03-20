@@ -1,0 +1,359 @@
+/* --- Palette Pro Finder : Bleu profond #1E3A5F --- */
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+/* --- SIDEBAR --- */
+
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  padding: 24px 16px;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: width 0.3s ease;
+}
+
+/* --- COMPANY PROFILE --- */
+
+.companyProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 25px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.companyProfile:hover {
+  background-color: #f1f5f9;
+}
+
+.companyLogo {
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.companyInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.companyName {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin: 0;
+}
+
+.viewProfile {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* --- LOGO APP --- */
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  margin-bottom: 35px;
+}
+
+.logoIcon {
+  width: 12px;
+  height: 12px;
+  background-color: #1E3A5F;
+  transform: rotate(45deg);
+}
+
+.sidebarTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1E3A5F;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+/* --- MENU --- */
+
+.menuLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 700;
+  margin: 20px 12px 10px;
+  letter-spacing: 0.05em;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  flex-grow: 1;
+}
+
+.link,
+.activeLink {
+  text-decoration: none;
+  font-weight: 600;
+  padding: 12px 15px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.link {
+  color: #64748b;
+}
+
+.link:hover {
+  background-color: #f1f5f9;
+  color: #1E3A5F;
+}
+
+.activeLink {
+  background-color: #f0f7ff;
+  color: #1E3A5F;
+  border-right: 3px solid #1E3A5F;
+}
+
+.icon {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+/* --- FOOTER --- */
+
+.sidebarFooter {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 15px;
+}
+
+.logoutBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.logoutBtn:hover {
+  background-color: #fef2f2;
+}
+
+/* --- ZONE DE CONTENU --- */
+
+.content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 30px 40px;
+  background-color: #f8fafc;
+
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.userProfile {
+  width: 35px;
+  height: 35px;
+  background: #1E3A5F;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+/* --- RESPONSIVE TABLETTE --- */
+
+@media (max-width: 1024px) {
+
+  .sidebar {
+    width: 80px;
+    padding: 24px 8px;
+  }
+
+  .sidebarTitle,
+  .menuLabel,
+  .companyInfo,
+  .link span {
+    display: none;
+  }
+
+  .companyLogo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .content {
+    margin-left: 80px;
+    padding: 20px;
+  }
+}
+
+/* --- RESPONSIVE MOBILE --- */
+
+@media (max-width: 768px) {
+
+  .dashboard {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 15px;
+    width: 100%;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .menu {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    width: 100%;
+    gap: 10px;
+    padding: 10px 0;
+  }
+
+  .link,
+  .activeLink {
+    white-space: nowrap;
+    margin-bottom: 0;
+    padding: 8px 12px;
+  }
+
+  .sidebarFooter {
+    display: none;
+  }
+}
+/* --- Overlay de Restriction (Compte en attente) --- */
+
+.pendingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.7); /* Fond blanc semi-transparent */
+  backdrop-filter: blur(10px); /* Flou intense sur l'arrière-plan */
+  z-index: 9999; /* Toujours au-dessus de tout */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pendingCard {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  width: 90%;
+  border-top: 6px solid #f59e0b; /* Rappel du jaune "En attente" */
+}
+
+.pendingIcon {
+  color: #f59e0b;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+.pendingTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.pendingText {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+/* --- Effet de flou et blocage sur le dashboard --- */
+
+.blurred {
+  filter: blur(4px);
+  pointer-events: none; /* Désactive les clics sur les menus */
+  user-select: none;    /* Empêche de copier le texte */
+}
+
+/* --- Bouton Déconnexion Spécifique à l'Overlay --- */
+
+.logoutBtnOverlay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logoutBtnOverlay:hover {
+  background-color: #dc2626;
+}
+
+/* Animation de l'icône */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}

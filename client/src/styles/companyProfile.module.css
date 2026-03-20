@@ -1,0 +1,289 @@
+/* --- Conteneur Global (Le Dashboard) --- */
+.dashboardContainer {
+    width: 100%;
+    /* Utilise toute la hauteur moins le header du dashboard */
+    height: calc(100vh - 80px); 
+    padding: 20px;
+    background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    /* Force le scroll ici pour que la sidebar reste fixe */
+    overflow-y: auto; 
+}
+
+/* --- En-tête de Page --- */
+.pageHeader {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.pageTitle {
+    font-size: 1.8rem; /* Plus compact */
+    color: #1a365d;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.pageSubtitle {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* --- Formulaire Plus Petit & Centré --- */
+.fullWidthForm {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    /* Largeur réduite pour un look plus pro */
+    max-width: 800px; 
+    margin: 0 auto 40px auto;
+    width: 95%;
+    height: auto;
+}
+
+/* --- Stepper Compact --- */
+.modernStepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 450px;
+    margin: 0 auto 35px auto;
+    position: relative;
+}
+
+.progressLine {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 1;
+}
+
+.progressLineFull {
+    background: #24416b;
+}
+
+.stepItem {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    cursor: pointer;
+    width: 100px;
+}
+
+.stepCircle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #cbd5e1;
+    transition: 0.3s;
+}
+
+.activeStep .stepCircle {
+    background: #24416b;
+    border-color: #24416b;
+    color: white;
+}
+
+.stepLabel {
+    margin-top: 8px;
+    font-weight: 600;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.activeStep .stepLabel {
+    color: #24416b;
+}
+
+/* --- Grille d'Inputs --- */
+.inputGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.fullWidth {
+    grid-column: span 2;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formGroup label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.formGroup input, 
+.formGroup textarea {
+    padding: 12px;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 10px;
+    background: #f8fafc;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: #24416b;
+    background: #fff;
+}
+
+/* --- Section Médias --- */
+.mediaUploadSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.uploadCard {
+    background: #fff;
+    border: 2px dashed #e2e8f0;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.previewContainer, .previewContainerCover {
+    width: 100%;
+    height: 120px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.previewContainer img, .previewContainerCover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fileLabel {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #24416b;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Cache l'input file par défaut */
+input[type="file"] {
+    display: none;
+}
+
+/* --- Localisation --- */
+.locationGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+/* --- Actions --- */
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btnNext, .btnSave {
+    background: #24416b;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btnBack {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+/* --- DASHBOARD RESPONSIVE --- */
+
+/* Tablettes (iPad, etc.) */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 80px; /* On réduit la sidebar aux icônes */
+        padding: 20px 10px;
+    }
+    
+    .sidebarTitle, .menuLabel, .link span {
+        display: none; /* Cache le texte pour gagner de la place */
+    }
+    
+    .content {
+        margin-left: 80px; /* On ajuste la marge */
+    }
+}
+
+/* Mobiles (Smartphones) */
+@media (max-width: 768px) {
+    .dashboard {
+        flex-direction: column; /* La sidebar passe au-dessus du contenu */
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative; /* Elle ne bloque plus le côté gauche */
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 10px;
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 15px;
+        width: 100%;
+        height: auto;
+        overflow-y: visible; /* On laisse le scroll se faire naturellement */
+    }
+
+    .menu {
+        display: flex;
+        overflow-x: auto; /* Menu défilant horizontalement sur mobile */
+        gap: 15px;
+        padding: 10px 0;
+    }
+
+    .link, .activeLink {
+        white-space: nowrap; /* Empêche le menu de s'afficher sur plusieurs lignes */
+        margin-bottom: 0;
+    }
+}

@@ -53,15 +53,23 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-      service_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Service"
-  },
+    
+    services: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Service"
+      }
+    ],
+  Status: {
+      type: String,
+      default: "pending",
+    },
 
     roles: {
       type: [String],
       default: ["company"],
     },
+
   },
   {
     timestamps: true,

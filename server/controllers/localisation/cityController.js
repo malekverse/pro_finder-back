@@ -9,7 +9,7 @@ const createCity = async (req, res) => {
     if (!name || !region)
       return res.status(400).json({ message: "Missing required fields" });
 
-    const regionExist = await Region.findOne({ name: region || region_id });
+    const regionExist = await Region.findById(region);
     if (!regionExist)
       return res.status(404).json({ message: "Region not found" });
 
@@ -117,7 +117,20 @@ const getCityByName = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const deleteCity = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const city = await City.findByIdAndDelete(id);
 
+        if (!city) {
+            return res.status(404).json({ message: "Ville non trouvée" });
+        }
+
+        res.status(200).json({ message: "Ville supprimée avec succès" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 module.exports = {
   createCity,
@@ -125,5 +138,6 @@ module.exports = {
   getCitiesByRegion,
   updateCity,
   getCityById,
-  getCityByName
+  getCityByName,
+  deleteCity
 };

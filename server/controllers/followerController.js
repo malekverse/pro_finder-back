@@ -60,7 +60,7 @@ const unfollowCompany = async (req, res) => {
 
 const getFollowerCount = async (req, res) => {
   try {
-
+    
     const followers = await Follow.countDocuments({ company_id: req.user });
     res.json({ followers });
   } catch (err) {

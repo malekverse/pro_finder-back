@@ -114,8 +114,23 @@ const getRegionsByCountry = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const deleteRegion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const region = await Region.findByIdAndDelete(id);
+
+        if (!region) {
+            return res.status(404).json({ message: "Region not found" });
+        }
+
+        res.status(200).json({ message: "Region deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+  };
 
 module.exports = {
+  deleteRegion,
   createRegion,
   getRegions,
   getRegionsByCountry,

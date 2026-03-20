@@ -1,24 +1,31 @@
 const Service = require("../../models/Service");
 
-const getServicesBySubCategory=async (req,res)=>{
-    try {
-        const { subCategoryId } = req.params;
-        const services = await Service.find({ subCategory_id: subCategoryId });
-        if (!services){
-             return res.status(404).json({ message: "Services not found" });}
-        res.json(services);
-    } catch (err) {
-        res.status(500).json({ message: "Error getting services" });
+const getServicesBySubCategory = async (req, res) => {
+  try {
+    const { subCategoryId } = req.params;
+
+    const services = await Service.find({
+      subcategory_id: subCategoryId
+    });
+
+    res.json(services);
+
+  } catch (err) {
+    res.status(500).json({ message: "Error getting services" });
     }
 }
 
-const createService=async (req,res)=>{
+const createService = async (req,res)=>{
     try {
-        const { name, subCategory_id } = req.body;
-        const service = new Service({ name, subCategory_id });
+        const { name, subcategory_id } = req.body;  // <-- CORRECT
+        if(!name || !subcategory_id){
+            return res.status(400).json({ message: "Name and subcategory_id are required" });
+        }
+        const service = new Service({ name, subcategory_id }); // <-- CORRECT
         await service.save();
-        res.json({ message: "Service created successfully" });
+        res.status(201).json({ message: "Service created successfully", service });
     } catch (err) {
+        console.error("Error creating service:", err);
         res.status(500).json({ message: "Error creating service" });
     }
 };
@@ -26,8 +33,8 @@ const createService=async (req,res)=>{
 const updateService=async (req,res)=>{
     try {
         const { id } = req.params;
-        const { name, subCategory_id } = req.body;
-        const service = await Service.findByIdAndUpdate(id, { name, subCategory_id });
+        const { name,  subcategory_id } = req.body;
+        const service = await Service.findByIdAndUpdate(id, { name, subcategory_id });
         if (!service){
              return res.status(404).json({ message: "Service not found" });}
         res.json({ message: "Service updated successfully" });

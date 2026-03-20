@@ -2,7 +2,8 @@ const Company = require("../models/company");
 const Follow = require("../models/follow");
 const Role = require("../models/Role");
 const User = require("../models/User");
-
+const fs = require('fs');
+const path = require("path");
 const getDashboard = async (req, res) => {
   res.json({ message: "Company Dashboard", companyId: req.user });
 };
@@ -33,25 +34,34 @@ const getCompanyProfile = async (req, res) => {
 };
 
 const updateCompanyProfile = async (req, res) => {
-  const { companyName, phone, website, logoUrl, coverUrl, description, country, region, city } = req.body;
+  const { companyName, phone, website, description, country, region, city } = req.body;
 
   const company = await Company.findById(req.user);
   if (!company) return res.status(404).json({ message: "Company not found" });
 
-  company.companyName = companyName || company.companyName;
-  company.phone = phone || company.phone;
-  company.website = website || company.website;
-  company.logoUrl = logoUrl || company.logoUrl;
-  company.coverUrl = coverUrl || company.coverUrl;
-  company.description = description || company.description;
-  company.country = country || company.country;
-  company.region = region || company.region;
-  company.city = city || company.city;
+  company.companyName  = companyName  || company.companyName;
+  company.phone        = phone        || company.phone;
+  company.website      = website      || company.website;
+  company.description  = description  || company.description;
+  company.country      = country      || company.country;
+  company.region       = region       || company.region;
+  company.city         = city         || company.city;
+
+  // Gestion logo
+  if (req.files?.logo) {
+    if (company.logoUrl && fs.existsSync(company.logoUrl)) fs.unlinkSync(company.logoUrl);
+  company.logoUrl = req.files.logo[0].path.split(path.sep).join("/");
+  }
+
+  // Gestion cover
+  if (req.files?.cover) {
+    if (company.coverUrl && fs.existsSync(company.coverUrl)) fs.unlinkSync(company.coverUrl);
+    company.coverUrl = req.files.cover[0].path.split(path.sep).join("/");
+  }
 
   const updatedCompany = await company.save();
-
-  res.json(updatedCompany); 
-};  
+  res.json(updatedCompany);
+};
 
 //  Lister tous les users de la company avec rôle et permissions
 const getCompanyUsers = async (req, res) => {
@@ -199,9 +209,8 @@ const getCompaniesByService = async (req, res) => {
 };
 
 
-
-
 module.exports = {
+ 
   getDashboard,
   getCompanyProfile,
   updateCompanyProfile,

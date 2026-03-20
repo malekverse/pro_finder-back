@@ -1,0 +1,29 @@
+.statsPage{
+  padding:20px;
+}
+
+.title{
+  font-size:24px;
+  margin-bottom:20px;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  width:200px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+.value{
+  font-size:22px;
+  font-weight:bold;
+}
+
+.label{
+  color:gray;
+  font-size:14px;
+}
