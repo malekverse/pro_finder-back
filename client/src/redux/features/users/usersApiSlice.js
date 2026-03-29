@@ -18,7 +18,7 @@ export const usersApiSlice = apiSlice.injectEndpoints({
     method: "PUT",
     body: data
   }),
-  invalidatesTags: [{ type: "User", id: "LIST" }],
+  invalidatesTags: [{ type: "User", id: "LIST" }, 'Dashboard'],
 }),
     }),
 });

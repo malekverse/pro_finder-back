@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { profileApiSlice } from '../../../redux/features/profileApiSlice';
+import { selectCurrentToken } from '../../../redux/features/auth/authSlice';
 import { Trash2, Edit, Globe, Map, MapPin, Search, Plus, X } from 'lucide-react';
 import styles from '../../../styles/dashboardAdmin.module.css';
 
 const AdminGeography = () => {
+  const dispatch = useDispatch();
+  const token = useSelector(selectCurrentToken);
   const [countries, setCountries] = useState([]);
   const [regions, setRegions] = useState([]);
   const [cities, setCities] = useState([]);
@@ -49,17 +54,25 @@ const AdminGeography = () => {
         payload = { name: formData.name, region: formData.regionId };
       }
 
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
       if (editItem) {
-        await axios.put(url, payload);
+        await axios.put(url, payload, config);
       } else {
-        await axios.post(url, payload);
+        await axios.post(url, payload, config);
       }
 
+      dispatch(profileApiSlice.util.invalidateTags(['Dashboard']));
       closeModal();
       refreshData();
     } catch (err) {
       console.error("Erreur save:", err);
-      alert("Échec de l'enregistrement. Vérifiez vos données.");
+      const msg = err.response?.data?.message || "Échec de l'enregistrement. Vérifiez vos données.";
+      alert(msg);
     }
   };
 
@@ -67,18 +80,24 @@ const handleDelete = async (id, type) => {
   if (!window.confirm("Voulez-vous vraiment supprimer cet élément ?")) return;
   
   try {
-    // 'villes' doit correspondre au nom de votre onglet actif
+    // Les types dans activeTab sont 'pays', 'regions', 'villes'
     let endpoint = type === 'pays' ? "deleteCountry" : type === 'regions' ? "deleteRegion" : "deleteCity";
     
-    const res = await axios.delete(`${API}/${endpoint}/${id}`);
+    const res = await axios.delete(`${API}/${endpoint}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     
-    if (res.status === 200) {
+    if (res.status === 200 || res.status === 204) {
+      dispatch(profileApiSlice.util.invalidateTags(['Dashboard']));
       refreshData();
       alert("Supprimé avec succès");
     }
   } catch (err) {
-    // C'est cette alerte que vous voyez sur l'image image_0d12ff.png
-    alert("Erreur: Vérifiez que la route DELETE existe sur le serveur.");
+    console.error("Erreur suppression:", err);
+    const msg = err.response?.data?.message || "Erreur lors de la suppression. Vérifiez si l'élément est utilisé.";
+    alert(msg);
   }
 };
 
@@ -100,145 +119,160 @@ const handleDelete = async (id, type) => {
 
   const closeModal = () => { setIsModalOpen(false); setEditItem(null); };
 
+  const filteredData = activeTab === 'pays' 
+    ? countries.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+    : activeTab === 'regions' 
+    ? regions.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+    : cities.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <div className={styles.container}>
-      {/* STATS HEADER */}
-      <div className={styles.gridWrapper}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+        <div>
+          <h1 className={styles.title} style={{ margin: 0 }}>Gestion de la Géographie</h1>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '5px' }}>Gérez les pays, les régions et les villes disponibles sur la plateforme.</p>
+        </div>
+        <button className={styles.addBtnBlue} onClick={() => openModal()}>
+          <Plus size={18} /> {activeTab === 'pays' ? 'Pays' : activeTab === 'regions' ? 'Région' : 'Ville'}
+        </button>
+      </div>
+
+      <div className={styles.gridWrapper} style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '40px' }}>
         <div className={styles.cardStat}>
-            <div className={styles.statIcon} style={{background: '#eef2ff', color: '#6366f1'}}><Globe size={22}/></div>
-            <div><p>Pays</p><strong>{countries.length}</strong></div>
+           <div className={styles.statIcon} style={{ background: '#eff6ff', color: '#24416b' }}><Globe size={24} /></div>
+           <div className={styles.statInfo}><p>Pays</p><strong>{countries.length}</strong></div>
         </div>
         <div className={styles.cardStat}>
-            <div className={styles.statIcon} style={{background: '#f0fdf4', color: '#22c55e'}}><Map size={22}/></div>
-            <div><p>Régions</p><strong>{regions.length}</strong></div>
+           <div className={styles.statIcon} style={{ background: '#f5f3ff', color: '#8b5cf6' }}><Map size={24} /></div>
+           <div className={styles.statInfo}><p>Régions</p><strong>{regions.length}</strong></div>
         </div>
         <div className={styles.cardStat}>
-            <div className={styles.statIcon} style={{background: '#faf5ff', color: '#a855f7'}}><MapPin size={22}/></div>
-            <div><p>Villes</p><strong>{cities.length}</strong></div>
+           <div className={styles.statIcon} style={{ background: '#ecfdf5', color: '#10b981' }}><MapPin size={24} /></div>
+           <div className={styles.statInfo}><p>Villes</p><strong>{cities.length}</strong></div>
         </div>
       </div>
 
-      <div className={styles.mainContentCard}>
-        <div className={styles.tabsHeader}>
-          {['pays', 'regions', 'villes'].map(tab => (
-            <button key={tab} className={activeTab === tab ? styles.tabActive : styles.tab} onClick={() => setActiveTab(tab)}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.actionBar}>
-          <div className={styles.searchBox}>
-            <Search size={18} className={styles.searchIcon} />
-            <input type="text" placeholder="Rechercher..." className={styles.searchInput} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <button className={styles.addBtnBlue} onClick={() => openModal()}>
-            <Plus size={18} /> Ajouter
+      <div className={styles.tabsBar}>
+        {['pays', 'regions', 'villes'].map(tab => (
+          <button key={tab} className={activeTab === tab ? styles.tabActive : styles.tab} onClick={() => setActiveTab(tab)}>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
-        </div>
+        ))}
+      </div>
 
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead className={styles.theadDark}>
-              <tr>
-                <th className={styles.th}>NOM</th>
-                {activeTab === 'pays' && <th className={styles.th}>CODE</th>}
-                {activeTab !== 'pays' && <th className={styles.th}>PARENT</th>}
-                <th className={styles.th}>STATUT</th>
-                <th className={styles.th}>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* RENDU PAYS */}
-              {activeTab === 'pays' && countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).map(c => (
-                <tr key={c._id} className={styles.tr}>
-                  <td className={styles.td}><strong>{c.name}</strong></td>
-                  <td className={styles.td}><span className={styles.badgeIso}>{c.code}</span></td>
-                  <td className={styles.td}><span className={styles.statusBadgeGreen}>Actif</span></td>
-                  <td className={styles.td}>
-                    <div className={styles.actionsFlex}>
-                      <Edit className={styles.editBtnIcon} onClick={() => openModal(c)} size={18} />
-                      <Trash2 className={styles.deleteBtnIcon} onClick={() => handleDelete(c._id, 'pays')} size={18} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              
-              {/* RENDU REGIONS */}
-              {activeTab === 'regions' && regions.filter(r => r.name.toLowerCase().includes(search.toLowerCase())).map(r => (
-                <tr key={r._id} className={styles.tr}>
-                  <td className={styles.td}><strong>{r.name}</strong></td>
-                  <td className={styles.td}>{r.country?.name || 'N/A'}</td>
-                  <td className={styles.td}><span className={styles.statusBadgeGreen}>Actif</span></td>
-                  <td className={styles.td}>
-                    <div className={styles.actionsFlex}>
-                      <Edit className={styles.editBtnIcon} onClick={() => openModal(r)} size={18} />
-                      <Trash2 className={styles.deleteBtnIcon} onClick={() => handleDelete(r._id, 'regions')} size={18} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {/* RENDU VILLES */}
-              {activeTab === 'villes' && cities.filter(v => v.name.toLowerCase().includes(search.toLowerCase())).map(v => (
-                <tr key={v._id} className={styles.tr}>
-                  <td className={styles.td}><strong>{v.name}</strong></td>
-                  <td className={styles.td}>{v.region?.name || 'N/A'}</td>
-                  <td className={styles.td}><span className={styles.statusBadgeGreen}>Actif</span></td>
-                  <td className={styles.td}>
-                    <div className={styles.actionsFlex}>
-                      <Edit className={styles.editBtnIcon} onClick={() => openModal(v)} size={18} />
-                      <Trash2 className={styles.deleteBtnIcon} onClick={() => handleDelete(v._id, 'villes')} size={18} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className={styles.actionBar}>
+        <div className={styles.searchWrapper}>
+          <Search className={styles.searchIcon} size={20} />
+          <input 
+            type="text" 
+            placeholder={`Rechercher ${activeTab}...`} 
+            className={styles.searchInput}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* MODAL (PAYS / REGION / VILLE) */}
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead className={styles.thead}>
+            <tr>
+              <th className={styles.th}>NOM</th>
+              {activeTab === 'pays' && <th className={styles.th}>CODE</th>}
+              {activeTab !== 'pays' && <th className={styles.th}>PARENT</th>}
+              <th className={styles.th} style={{ textAlign: 'center' }}>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredData.map(item => (
+              <tr key={item._id} className={styles.tr}>
+                <td className={styles.td}>
+                  <span style={{ fontWeight: '700', color: '#1e293b' }}>{item.name}</span>
+                </td>
+                {activeTab === 'pays' && (
+                  <td className={styles.td}>
+                    <span className={styles.badgeIso}>{item.code}</span>
+                  </td>
+                )}
+                {activeTab === 'regions' && <td className={styles.td}>{item.country?.name || 'N/A'}</td>}
+                {activeTab === 'villes' && <td className={styles.td}>{item.region?.name || 'N/A'}</td>}
+                <td className={styles.td} style={{ textAlign: 'center' }}>
+                  <div className={styles.actionsFlex} style={{ justifyContent: 'center' }}>
+                    <Edit className={styles.editBtnIcon} onClick={() => openModal(item)} size={18} />
+                    <Trash2 className={styles.deleteBtnIcon} onClick={() => handleDelete(item._id, activeTab)} size={18} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+
       {isModalOpen && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3>{editItem ? "Modifier" : "Ajouter"} {activeTab}</h3>
-              <X className={styles.closeIcon} onClick={closeModal} />
+              <h3>{editItem ? "Modifier" : "Ajouter"} {activeTab.slice(0, -1)}</h3>
+              <X className={styles.closeIcon} style={{ cursor: 'pointer' }} onClick={closeModal} />
             </div>
-            <form onSubmit={handleSubmit} className={styles.formContainer}>
-              <input 
-                className={styles.modalInput} 
-                placeholder="Nom" 
-                value={formData.name} 
-                onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                required 
-              />
-
-              {activeTab === 'pays' && (
+            
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className={styles.formGroup}>
+                <label>Nom</label>
                 <input 
                   className={styles.modalInput} 
-                  placeholder="Code ISO" 
-                  value={formData.code} 
-                  onChange={(e) => setFormData({...formData, code: e.target.value})} 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                  placeholder={`Nom du ${activeTab.slice(0, -1)}`}
+                  required 
                 />
+              </div>
+
+              {activeTab === 'pays' && (
+                <div className={styles.formGroup}>
+                  <label>Code ISO</label>
+                  <input 
+                    className={styles.modalInput} 
+                    value={formData.code} 
+                    onChange={(e) => setFormData({...formData, code: e.target.value})} 
+                    placeholder="Ex: FR, US, TN..."
+                  />
+                </div>
               )}
 
               {activeTab === 'regions' && (
-                <select className={styles.modalSelect} value={formData.countryId} onChange={(e) => setFormData({...formData, countryId: e.target.value})} required>
-                  <option value="">Choisir un Pays</option>
-                  {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                </select>
+                <div className={styles.formGroup}>
+                  <label>Pays</label>
+                  <select 
+                    className={styles.modalSelect} 
+                    value={formData.countryId} 
+                    onChange={(e) => setFormData({...formData, countryId: e.target.value})}
+                    required
+                  >
+                    <option value="">Sélectionner un pays</option>
+                    {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                  </select>
+                </div>
               )}
 
               {activeTab === 'villes' && (
-                <select className={styles.modalSelect} value={formData.regionId} onChange={(e) => setFormData({...formData, regionId: e.target.value})} required>
-                  <option value="">Choisir une Région</option>
-                  {regions.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-                </select>
+                <div className={styles.formGroup}>
+                  <label>Région</label>
+                  <select 
+                    className={styles.modalSelect} 
+                    value={formData.regionId} 
+                    onChange={(e) => setFormData({...formData, regionId: e.target.value})}
+                    required
+                  >
+                    <option value="">Sélectionner une région</option>
+                    {regions.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+                  </select>
+                </div>
               )}
 
-              <button type="submit" className={styles.submitBtn}>Confirmer</button>
+              <button type="submit" className={styles.submitBtn} style={{ width: '100%', marginTop: '10px' }}>
+                {editItem ? "Confirmer la modification" : "Ajouter"}
+              </button>
             </form>
           </div>
         </div>

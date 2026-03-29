@@ -143,6 +143,7 @@ useEffect(() => {
           country: companyInputs.country_id,
           region: companyInputs.region_id,
           city: companyInputs.city_id,
+          services: companyInputs.type_societe,
           roles: ["company"],
         };
       }
@@ -180,317 +181,314 @@ useEffect(() => {
 
   return (
     <div className={styles.splitContainer}>
-      <div className={styles.leftPanel}>
-        <div className={styles.brandContent}>
-          <h2 className={styles.logo}>🔷 Pro Finder</h2>
-        </div>
-      </div>
-
       <div className={styles.rightPanel}>
         <div className={styles.formCard}>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <h1 style={{ color: '#1E3A5F', fontSize: '32px', fontWeight: '800', marginBottom: '10px' }}>ProFinder</h1>
+            <h2 className={styles.mainTitle}>Créer un compte</h2>
+            <p className={styles.subtitle}>Choisissez votre type de compte pour commencer</p>
+          </div>
+
           <div className={styles.roleSelector}>
             <button
               type="button"
               className={`${styles.roleButton} ${role === 'user' ? styles.activeRole : ''}`}
               onClick={() => { setRole('user'); setStep(1); }}
             >
-              👤 User
+              Particulier
             </button>
             <button
               type="button"
               className={`${styles.roleButton} ${role === 'company' ? styles.activeRole : ''}`}
               onClick={() => { setRole('company'); setStep(1); }}
             >
-              🏢 Company
+              Entreprise
             </button>
           </div>
 
           {role === 'user' && (
             <form onSubmit={handleSubmit}>
               <div className={styles.inputGroup}>
-                <label>FULL NAME</label>
+                <label>Nom Complet</label>
                 <input
                   type="text"
-                  placeholder="Full Name"
+                  placeholder="Ex: Ahmed Ben Salem"
                   required
                   value={userInputs.fullName}
                   onChange={(e) => setUserInputs({ ...userInputs, fullName: e.target.value })}
                 />
               </div>
               <div className={styles.inputGroup}>
-                <label>EMAIL</label>
+                <label>Adresse Email</label>
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="nom@exemple.com"
                   required
                   value={userInputs.email}
                   onChange={(e) => setUserInputs({ ...userInputs, email: e.target.value })}
                 />
               </div>
-              <div className={styles.inputGroup}>
-                <label>PASSWORD</label>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  required
-                  value={userInputs.password}
-                  onChange={(e) => setUserInputs({ ...userInputs, password: e.target.value })}
-                />
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div className={styles.inputGroup} style={{ flex: 1 }}>
+                  <label>Mot de passe</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    value={userInputs.password}
+                    onChange={(e) => setUserInputs({ ...userInputs, password: e.target.value })}
+                  />
+                </div>
+                <div className={styles.inputGroup} style={{ flex: 1 }}>
+                  <label>Confirmation</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    value={userInputs.confirmPassword}
+                    onChange={(e) => setUserInputs({ ...userInputs, confirmPassword: e.target.value })}
+                  />
+                </div>
               </div>
               <div className={styles.inputGroup}>
-                <label>CONFIRM PASSWORD</label>
-                <input
-                  type="password"
-                  placeholder="Confirm Password"
-                  required
-                  value={userInputs.confirmPassword}
-                  onChange={(e) => setUserInputs({ ...userInputs, confirmPassword: e.target.value })}
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label>PHONE</label>
+                <label>Téléphone</label>
                 <input
                   type="tel"
-                  placeholder="Phone"
+                  placeholder="+216 -- --- ---"
                   value={userInputs.phone}
                   onChange={(e) => setUserInputs({ ...userInputs, phone: e.target.value })}
                 />
               </div>
               <div className={styles.inputGroup}>
-                <label>AVATAR</label>
+                <label>Photo de profil</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => setUserInputs({ ...userInputs, avatarUrl: e.target.files[0] })}
                 />
               </div>
-              <button type="submit" className={styles.submitButton}>Create Account</button>
+              <button type="submit" className={styles.submitButton}>S'inscrire</button>
             </form>
           )}
 
           {role === 'company' && (
             <>
-              <div className={`${styles.stepIndicator} ${step === 2 ? styles.step2 : ''}`}>
-                <div className={`${styles.step} ${step === 1 ? styles.activeStep : ''}`} onClick={() => setStep(1)}>1</div>
-                <div className={`${styles.step} ${step === 2 ? styles.activeStep : ''}`} onClick={() => setStep(2)}>2</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+                <div style={{ width: '40px', height: '6px', borderRadius: '3px', background: step === 1 ? '#1E3A5F' : '#e2e8f0' }} />
+                <div style={{ width: '40px', height: '6px', borderRadius: '3px', background: step === 2 ? '#1E3A5F' : '#e2e8f0' }} />
               </div>
 
               <form onSubmit={handleSubmit}>
                 {step === 1 && (
                   <div className={styles.stepContent}>
                     <div className={styles.inputGroup}>
-                      <label>COMPANY NAME</label>
+                      <label>Nom de l'entreprise</label>
                       <input
                         type="text"
-                        placeholder="Company Name"
+                        placeholder="Ex: Pro Services S.A.R.L"
                         required
                         value={companyInputs.name}
                         onChange={(e) => setCompanyInputs({ ...companyInputs, name: e.target.value })}
                       />
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>DESCRIPTION</label>
+                      <label>Description</label>
                       <textarea
-                        placeholder="Description"
+                        style={{ width: '100%', padding: '14px 18px', borderRadius: '12px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '15px' }}
+                        placeholder="Parlez-nous de vos services..."
                         rows="3"
                         value={companyInputs.description}
                         onChange={(e) => setCompanyInputs({ ...companyInputs, description: e.target.value })}
                       />
                     </div>
-                    <div className={styles.gridRow}>
-                      <div className={styles.inputGroup}>
-                        <label>WEBSITE</label>
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Site Web</label>
                         <input
                           type="text"
-                          placeholder="Website"
+                          placeholder="https://..."
                           value={companyInputs.website}
                           onChange={(e) => setCompanyInputs({ ...companyInputs, website: e.target.value })}
                         />
                       </div>
-                      <div className={styles.inputGroup}>
-                        <label>COMPANY EMAIL</label>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Email Professionnel</label>
                         <input
                           type="email"
-                          placeholder="Company Email"
+                          placeholder="contact@entreprise.com"
                           value={companyInputs.email}
                           onChange={(e) => setCompanyInputs({ ...companyInputs, email: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div className={styles.inputGroup}>
-                      <label>PHONE</label>
-                      <input
-                        type="tel"
-                        placeholder="Phone"
-                        value={companyInputs.phone}
-                        onChange={(e) => setCompanyInputs({ ...companyInputs, phone: e.target.value })}
-                      />
-                    </div>
-                    <div className={styles.gridRow}>
-                      <div className={styles.inputGroup}>
-                        <label>PASSWORD</label>
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Mot de passe</label>
                         <input
                           type="password"
-                          placeholder="Password"
+                          placeholder="••••••••"
                           required
                           value={companyInputs.password}
                           onChange={(e) => setCompanyInputs({ ...companyInputs, password: e.target.value })}
                         />
                       </div>
-                      <div className={styles.inputGroup}>
-                        <label>CONFIRM PASSWORD</label>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Confirmation</label>
                         <input
                           type="password"
-                          placeholder="Confirm Password"
+                          placeholder="••••••••"
                           required
                           value={companyInputs.confirm_password}
                           onChange={(e) => setCompanyInputs({ ...companyInputs, confirm_password: e.target.value })}
                         />
                       </div>
                     </div>
-                    <button type="button" className={styles.submitButton} onClick={() => setStep(2)}>Next</button>
+                    <div className={styles.inputGroup}>
+                      <label>Téléphone</label>
+                      <input
+                        type="tel"
+                        placeholder="+216 -- --- ---"
+                        required
+                        value={companyInputs.phone}
+                        onChange={(e) => setCompanyInputs({ ...companyInputs, phone: e.target.value })}
+                      />
+                    </div>
+                    <button type="button" className={styles.submitButton} onClick={() => setStep(2)}>Étape suivante</button>
                   </div>
                 )}
-{step === 2 && (
-                <div className={styles.stepContent}>
-                  <div className={styles.mediaGrid}>
-                    <div className={styles.fileCard}>
-                      <label>LOGO</label>
-                      <input type="file" accept="image/*" onChange={(e) => setCompanyInputs({ ...companyInputs, logo_url: e.target.files[0] })} />
-                    </div>
-                    <div className={styles.fileCard}>
-                      <label>COVER</label>
-                      <input type="file" accept="image/*" onChange={(e) => setCompanyInputs({ ...companyInputs, cover_url: e.target.files[0] })} />
-                    </div>
-                  </div>
-
-                  <div className={styles.formColumnsGrid}>
-
-                    {/* COLONNE GAUCHE */}
-                    <div className={styles.formColumn}>
-
-                     {/* DOMAINE */}
-<Autocomplete
-  label="DOMAINE"
-  placeholder="Choisir domaine..."
-  options={categories}
-  getOptionLabel={(option) => option.name}
-  value={companyInputs.domaine ? categories.find(c => c._id === companyInputs.domaine) : null}
-  onSelect={(selected) => {
-    setCompanyInputs(prev => ({
-      ...prev,
-      domaine: selected?._id || "",
-      sous_domaine: "",
-      type_societe: []
-    }));
-  }}
-/>
-
-{/* SOUS-DOMAINE */}
-<Autocomplete
-  label="SOUS-DOMAINE"
-  placeholder="Choisir sous domaine..."
-  options={subCategories}
-  getOptionLabel={(option) => option.name}
-  value={companyInputs.sous_domaine ? subCategories.find(s => s._id === companyInputs.sous_domaine) : null}
-  onSelect={(selected) => {
-    setCompanyInputs(prev => ({
-      ...prev,
-      sous_domaine: selected?._id || "",
-      type_societe: []
-    }));
-  }}
-/>
-
-{/* TYPE SOCIETE / SERVICE (multi-selection) */}
-<div className={styles.inputGroup}>
-  <label>TYPE DE SOCIÉTÉ / SERVICE</label>
-  
-  <Autocomplete
-    placeholder="Choisir service..."
-    options={services}
-    getOptionLabel={(option) => option.name}
-    value={[]} // vide car on gère via tableau
-    onSelect={(selected) => {
-      if (selected && !companyInputs.type_societe.includes(selected._id)) {
-        setCompanyInputs(prev => ({
-          ...prev,
-          type_societe: [...prev.type_societe, selected._id]
-        }));
-      }
-    }}
-  />
-
-  {/* Afficher les services sélectionnés avec bouton pour supprimer */}
-  <div className={styles.selectedItems}>
-    {companyInputs.type_societe.map(id => {
-      const service = services.find(s => s._id === id);
-      return (
-        <span key={id} className={styles.selectedItem}>
-          {service?.name} 
-          <button type="button" onClick={() => {
-            setCompanyInputs(prev => ({
-              ...prev,
-              type_societe: prev.type_societe.filter(sid => sid !== id)
-            }));
-          }}>×</button>
-        </span>
-      );
-    })}
-  </div>
-</div>
+                {step === 2 && (
+                  <div className={styles.stepContent}>
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Logo</label>
+                        <input type="file" accept="image/*" onChange={(e) => setCompanyInputs({ ...companyInputs, logo_url: e.target.files[0] })} />
+                      </div>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Photo de couverture</label>
+                        <input type="file" accept="image/*" onChange={(e) => setCompanyInputs({ ...companyInputs, cover_url: e.target.files[0] })} />
+                      </div>
                     </div>
 
-                    {/* COLONNE DROITE : Localisation */}
-                    <div className={styles.formColumn}>
-                      <Autocomplete
-                        label="COUNTRY"
-                        placeholder="Country"
-                        options={countries}
-                        getOptionLabel={(option) => option.name}
-                        value={companyInputs.country_id ? countries.find(c => c._id === companyInputs.country_id) : null}
-                        onSelect={(country) => setCompanyInputs(prev => ({ ...prev, country_id: country._id, region_id: '', city_id: '' }))}
-                      />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <Autocomplete
+                          label="Domaine d'activité"
+                          placeholder="Choisir domaine..."
+                          options={categories}
+                          getOptionLabel={(option) => option.name}
+                          value={companyInputs.domaine ? categories.find(c => c._id === companyInputs.domaine) : null}
+                          onSelect={(selected) => {
+                            setCompanyInputs(prev => ({
+                              ...prev,
+                              domaine: selected?._id || "",
+                              sous_domaine: "",
+                              type_societe: []
+                            }));
+                          }}
+                        />
 
-                      <Autocomplete
-                        label="REGION"
-                        placeholder="Region"
-                        options={regions}
-                        getOptionLabel={(option) => option.name}
-                        value={companyInputs.region_id ? regions.find(r => r._id === companyInputs.region_id) : null}
-                        onSelect={(region) => setCompanyInputs(prev => ({ ...prev, region_id: region?._id, city_id: '' }))}
-                      />
+                        <Autocomplete
+                          label="Sous-Domaine"
+                          placeholder="Choisir sous domaine..."
+                          options={subCategories}
+                          getOptionLabel={(option) => option.name}
+                          value={companyInputs.sous_domaine ? subCategories.find(s => s._id === companyInputs.sous_domaine) : null}
+                          onSelect={(selected) => {
+                            setCompanyInputs(prev => ({
+                              ...prev,
+                              sous_domaine: selected?._id || "",
+                              type_societe: []
+                            }));
+                          }}
+                        />
 
-                      <Autocomplete
-                        label="CITY"
-                        placeholder="City"
-                        options={cities}
-                        getOptionLabel={(option) => option.name}
-                        value={companyInputs.city_id ? cities.find(c => c._id === companyInputs.city_id) : null}
-                        onSelect={(city) => setCompanyInputs(prev => ({ ...prev, city_id: city?._id }))}
-                      />
+                        <div className={styles.inputGroup}>
+                          <label>Services proposés</label>
+                          <Autocomplete
+                            placeholder="Choisir service..."
+                            options={services}
+                            getOptionLabel={(option) => option.name}
+                            value={[]}
+                            onSelect={(selected) => {
+                              if (selected && !companyInputs.type_societe.includes(selected._id)) {
+                                setCompanyInputs(prev => ({
+                                  ...prev,
+                                  type_societe: [...prev.type_societe, selected._id]
+                                }));
+                              }
+                            }}
+                          />
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                            {companyInputs.type_societe.map(id => {
+                              const service = services.find(s => s._id === id);
+                              return (
+                                <span key={id} style={{ background: '#e0e7ff', padding: '4px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: '600', color: '#1E3A5F' }}>
+                                  {service?.name} 
+                                  <button type="button" style={{ background: 'none', border: 'none', marginLeft: '6px', cursor: 'pointer', fontWeight: 'bold', color: '#ef4444' }} onClick={() => {
+                                    setCompanyInputs(prev => ({
+                                      ...prev,
+                                      type_societe: prev.type_societe.filter(sid => sid !== id)
+                                    }));
+                                  }}>×</button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <Autocomplete
+                          label="Pays"
+                          placeholder="Tunisie"
+                          options={countries}
+                          getOptionLabel={(option) => option.name}
+                          value={companyInputs.country_id ? countries.find(c => c._id === companyInputs.country_id) : null}
+                          onSelect={(country) => setCompanyInputs(prev => ({ ...prev, country_id: country._id, region_id: '', city_id: '' }))}
+                        />
+
+                        <Autocomplete
+                          label="Région"
+                          placeholder="Choisir région..."
+                          options={regions}
+                          getOptionLabel={(option) => option.name}
+                          value={companyInputs.region_id ? regions.find(r => r._id === companyInputs.region_id) : null}
+                          onSelect={(region) => setCompanyInputs(prev => ({ ...prev, region_id: region?._id, city_id: '' }))}
+                        />
+
+                        <Autocomplete
+                          label="Ville"
+                          placeholder="Choisir ville..."
+                          options={cities}
+                          getOptionLabel={(option) => option.name}
+                          value={companyInputs.city_id ? cities.find(c => c._id === companyInputs.city_id) : null}
+                          onSelect={(city) => setCompanyInputs(prev => ({ ...prev, city_id: city?._id }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                      <button type="button" className={styles.submitButton} style={{ background: '#f1f5f9', color: '#64748b', flex: 1 }} onClick={() => setStep(1)}>Retour</button>
+                      <button type="submit" className={styles.submitButton} style={{ flex: 2 }}>Finaliser l'inscription</button>
                     </div>
                   </div>
+                )}
+              </form>
+            </>
+          )}
 
-                  <div className={styles.buttonRow}>
-                    <button type="button" className={styles.backButton} onClick={() => setStep(1)}>← Back</button>
-                    <button type="submit" className={styles.submitButton}>Create Company</button>
-                  </div>
-                </div>
-              )}
-            </form>
-          </>
-        )}
+          {isError && <p className={styles.errorText}>{error?.data?.message || 'Erreur lors de l\'inscription'}</p>}
 
-        {isError && <p className={styles.errorMsg}>{error?.data?.message || 'Registration failed'}</p>}
-
-        <p className={styles.linkText}>
-          Already have an account? <Link to="/auth/login">Login</Link>
-        </p>
+          <p className={styles.footerText}>
+            Déjà inscrit ? 
+            <Link to="/auth/login" className={styles.footerLink}>
+              Se connecter
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default SignupForm;

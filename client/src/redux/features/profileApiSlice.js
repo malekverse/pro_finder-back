@@ -7,13 +7,57 @@ getProfile: builder.query({
   providesTags: ['Profile'],
 }),
 updateProfile: builder.mutation({
-  query: (formData) => ({
-    url: '/profile',
-    method: 'PUT',
-    body: formData,
-  }),
-}),
+      query: (formData) => ({
+        url: '/profile',
+        method: 'PUT',
+        body: formData,
+      }),
+    }),
+    changeAdminPassword: builder.mutation({
+      query: (passwords) => ({
+        url: '/admin/change-password',
+        method: 'PUT',
+        body: passwords,
+      }),
+      invalidatesTags: ['Dashboard', 'Activities'],
+    }),
+    getAdminDashboard: builder.query({
+      query: () => '/admin/dashboard',
+      providesTags: ['Dashboard'],
+    }),
+    getAdminActivities: builder.query({
+      query: () => '/admin/activities',
+      providesTags: ['Activities'],
+    }),
+    getPendingCompanies: builder.query({
+      query: () => '/admin/pending',
+      providesTags: ['PendingCompanies'],
+    }),
+    verifyCompany: builder.mutation({
+      query: (companyId) => ({
+        url: `/admin/verify/${companyId}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Dashboard', 'PendingCompanies'],
+    }),
+    rejectCompany: builder.mutation({
+      query: ({ companyId, reason }) => ({
+        url: `/admin/reject/${companyId}`,
+        method: 'DELETE',
+        body: { reason },
+      }),
+      invalidatesTags: ['Dashboard', 'PendingCompanies'],
+    }),
   }),
 });
 
-export const { useGetProfileQuery, useUpdateProfileMutation } = profileApiSlice;
+export const { 
+  useGetProfileQuery, 
+  useUpdateProfileMutation, 
+  useChangeAdminPasswordMutation,
+  useGetAdminDashboardQuery,
+  useGetAdminActivitiesQuery,
+  useGetPendingCompaniesQuery,
+  useVerifyCompanyMutation,
+  useRejectCompanyMutation
+} = profileApiSlice;

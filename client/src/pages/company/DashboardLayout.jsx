@@ -1,5 +1,7 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logOut } from "../../redux/features/auth/authSlice";
+import { apiSlice } from "../../redux/app/api/apiSlice";
 import { 
   BarChart3, 
   LayoutDashboard, 
@@ -17,23 +19,31 @@ const DashboardLayout = () => {
 
   const navigate = useNavigate(); 
   const dispatch = useDispatch();
+  const authUser = useSelector((state) => state.auth.user);
+  const companyId = authUser?.companyId;
 
-  const { data: company } = useGetCompanyProfileQuery();
+  console.log("DashboardLayout AuthUser:", authUser);
+  console.log("DashboardLayout CompanyId:", companyId);
+
+  const { data: company, refetch } = useGetCompanyProfileQuery(companyId, {
+    skip: !companyId
+  });
 
   const mainMenu = [
-    { path: "/company/stats", label: "Statistiques", icon: <BarChart3 size={20} /> },
+    { path: "/company/stats", label: "Dashboard", icon: <BarChart3 size={20} /> },
     { path: "/company/posts", label: "Publications", icon: <LayoutDashboard size={20} /> },
     { path: "/company/documents", label: "Documents", icon: <FileText size={20} /> },
   ];
 
   const managementMenu = [
-    { path: "/company/products", label: "Mes Produits", icon: <Package size={20} /> },
+    { path: "/company/produits", label: "Mes Produits", icon: <Package size={20} /> },
     { path: "/company/services", label: "Mes Services", icon: <Wrench size={20} /> },
     { path: "/company/users", label: "Gestion des accès", icon: <Users size={20} /> },
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
+    dispatch(logOut());
+    dispatch(apiSlice.util.resetApiState());
     navigate("/auth/login"); 
   };
 
@@ -55,8 +65,10 @@ const DashboardLayout = () => {
           <img
             src={
               company?.logoUrl
-                ? `http://localhost:5000/${company.logoUrl}`
-                : "https://via.placeholder.com/60"
+              ? company.logoUrl.startsWith('http') 
+              ? company.logoUrl                          // ✅ Cloudinary → tel quel
+              : `http://localhost:5000/${company.logoUrl}` // chemin local → préfixe
+              : "https://via.placeholder.com/60"
             }
             alt="logo"
             className={styles.companyLogo}

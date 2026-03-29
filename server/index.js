@@ -1,4 +1,3 @@
-// Load environment variables from .env file
 require("dotenv").config();
 const express = require("express");
 const app = express();
@@ -11,13 +10,27 @@ const path = require('path');
 const PORT = process.env.PORT || 5000;
 const dns = require("dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+require("./models/User");
+require("./models/company");
+require("./models/Post");
+require("./models/Role");
+require("./models/follow");
+require("./models/Activity");
+require("./models/Category");
+require("./models/SubCategory");
+require("./models/Service");
+require("./models/city");
+require("./models/country");
+require("./models/region");
+
 connectDB();
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
+app.use("/posts", require("./routes/postRoutes"));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/users",require("./routes/usersRoutes"));
 
@@ -30,6 +43,8 @@ app.use("/profile", require("./routes/profileRoutes"));
 app.use("/admin", require("./routes/adminRoutes"));
 
 app.use("/company", require("./routes/companyRoutes"));
+app.use("/products", require("./routes/productRoutes"));
+app.use("/company-services", require("./routes/companyServiceRoutes"));
 
 app.use("/localisation", require("./routes/localisationRoutes/countryRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/regionRoutes"));

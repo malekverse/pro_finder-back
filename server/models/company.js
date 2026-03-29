@@ -64,6 +64,9 @@ const companySchema = new mongoose.Schema(
       type: String,
       default: "pending",
     },
+    rejectionReason: {
+      type: String,
+    },
 
     roles: {
       type: [String],
