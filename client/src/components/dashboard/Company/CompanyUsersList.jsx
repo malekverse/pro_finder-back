@@ -13,17 +13,24 @@ const CompanyUsersList = forwardRef((props, ref) => {
 
   const [editingEmail, setEditingEmail] = useState(null);
   const [newRoleId, setNewRoleId] = useState("");
+  const [availableRoles, setAvailableRoles] = useState([]);
 
   const token =
     useSelector((state) => state.auth.token) ||
     localStorage.getItem("accessToken");
 
-  // ⚠️ IMPORTANT : mettre les vrais ids MongoDB
-  const availableRoles = [
-    { _id: "69b0491ae9ceee4218efbe47", name: "admin" },
-    { _id: "69ac40b1b42d9ccd56b21d12", name: "assistant_manager" },
-    { _id: "69ac6e507df0be4e31e9da57", name: "viewer" }
-  ];
+  const fetchRoles = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get("http://localhost:5000/roles/getRoles", {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
+      });
+      setAvailableRoles(response.data);
+    } catch (err) {
+      console.error("Erreur récupération rôles:", err);
+    }
+  };
 
   const fetchUsers = async () => {
     if (!token) return;
@@ -58,9 +65,8 @@ const CompanyUsersList = forwardRef((props, ref) => {
   }));
 
   useEffect(() => {
-
     fetchUsers();
-
+    fetchRoles();
   }, [token]);
 
   // DELETE ROLE

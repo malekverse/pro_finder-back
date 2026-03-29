@@ -2,6 +2,8 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Company = require("../models/company");
+const Follow = require("../models/follow");
+const Role = require("../models/Role");
 
 
 // ================= REGISTER =================
@@ -42,10 +44,21 @@ const register = async (req, res) => {
       });
     }
 
-   if (roles.includes("company")) {
+    if (roles.includes("company")) {
+      console.log("Creating company with payload:", {
+        email,
+        companyName,
+        phone,
+        country: req.body.country,
+        region: req.body.region,
+        city: req.body.city,
+        servicesCount: req.body.services?.length
+      });
     
-      if (!companyName || !email) {
-        return res.status(400).json({ message: "Company name and email are required" });
+      if (!companyName || !email || !phone || !req.body.country || !req.body.region || !req.body.city) {
+        return res.status(400).json({ 
+          message: "Tous les champs obligatoires doivent être remplis (Nom, Email, Téléphone, Pays, Région, Ville)" 
+        });
       }
 
       // 2. Création avec TOUS les champs du schéma
@@ -61,6 +74,7 @@ const register = async (req, res) => {
         country: req.body.country, 
         region: req.body.region,
         city: req.body.city,
+        services: req.body.services || [],
         roles: ["company"]
       });
     }
@@ -80,7 +94,7 @@ const register = async (req, res) => {
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "7d" }
     );
 
     // REFRESH TOKEN
@@ -110,7 +124,8 @@ const register = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: "Register error" });
+    console.error("[register]", err);
+    res.status(500).json({ message: "Register error: " + err.message });
   }
 };
 
@@ -132,18 +147,62 @@ const login = async (req, res) => {
   }
 
   if (!account) {
-    return res.status(400).json({ message: "Account not found" });
+    return res.status(400).json({ message: "Identifiants invalides, veuillez vérifier votre email et mot de passe" });
   } 
   if (accountType === "company" && account.Status === "pending") {
     return res.status(403).json({ 
       message: "Votre compte est en attente de validation par un administrateur." 
     });
   } 
+  if (accountType === "company" && account.Status === "rejected") {
+    return res.status(403).json({ 
+      message: `Votre demande d'inscription a été refusée pour le motif suivant : ${account.rejectionReason || "Motif non spécifié"}. Veuillez nous contacter pour plus d'informations.` 
+    });
+  } 
 
   // Vérifier le mot de passe
   const match = await bcrypt.compare(password, account.password);
   if (!match) {
-    return res.status(400).json({ message: "Invalid password" });
+    return res.status(400).json({ message: "Identifiants invalides, veuillez vérifier votre email et mot de passe" });
+  }
+
+  // Initialisation des rôles et companyId
+  let roles = account.roles || [accountType];
+  let companyId = accountType === "company" ? account._id : null;
+
+  // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie
+  if (accountType === "user") {
+    // 1. Récupérer TOUTES les relations de cet utilisateur avec des compagnies
+    // On peuple également les infos de la compagnie pour pouvoir debugger si besoin
+    const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null } })
+      .populate("role_id")
+      .populate("company_id")
+      .sort({ updatedAt: -1 })
+      .lean();
+        
+    if (allFollows.length > 0) {
+      // 2. Chercher en priorité celle où il est "owner"
+      // On s'assure de comparer le nom du rôle de manière stricte
+      // On logue toutes les compagnies trouvées pour aider l'admin
+      console.log("Compagnies liées à l'utilisateur:");
+      allFollows.forEach(f => {
+        console.log(`- ${f.company_id?.companyName} (ID: ${f.company_id?._id}) avec le rôle: ${f.role_id?.name}`);
+      });
+
+      const ownerFollow = allFollows.find(f => f.role_id && f.role_id.name.toLowerCase() === 'owner');
+      
+      if (ownerFollow) {
+        console.log(`Priorité OWNER sélectionnée: ${ownerFollow.company_id?.companyName}`);
+      }
+
+      // 3. Utiliser l'enregistrement "owner" s'il existe, sinon le plus récent
+      const finalTeamMember = ownerFollow || allFollows[0];
+      
+      if (finalTeamMember && finalTeamMember.role_id) {
+        roles.push(finalTeamMember.role_id.name);
+        companyId = finalTeamMember.company_id._id || finalTeamMember.company_id;
+      }
+    }
   }
 
   // Générer accessToken
@@ -151,12 +210,13 @@ const login = async (req, res) => {
     {
       UserInfo: {
         id: account._id,
-        roles: account.roles || [accountType], 
+        roles: roles,
+        companyId: companyId,
         status: account.Status || "active" 
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "7d" }
   );
 
   // Générer refreshToken
@@ -180,8 +240,9 @@ const login = async (req, res) => {
     account: {
       id: account._id,
       email: account.email,
-      fullName: account.fullName || account.name,
-      roles: account.roles || [accountType],
+      fullName: account.fullName || account.companyName,
+      roles: roles,
+      companyId: companyId,
       status: account.Status
     },
   });
@@ -212,16 +273,45 @@ const refresh = async (req, res) => {
 
     if (!account) return res.status(401).json({ message: "Account not found" });
 
+    // Initialisation des rôles et companyId
+    let roles = account.roles || [accountType];
+    let companyId = accountType === "company" ? account._id : null;
+
+    // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie
+    if (accountType === "user") {
+      // 1. Récupérer TOUTES les relations
+      const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null } })
+        .populate("role_id")
+        .populate("company_id")
+        .sort({ updatedAt: -1 })
+        .lean();
+      
+      if (allFollows.length > 0) {
+        // 2. Chercher celle où il est "owner"
+        const ownerFollow = allFollows.find(f => f.role_id && f.role_id.name.toLowerCase() === 'owner');
+        
+        // 3. Priorité à l'owner, sinon le plus récent
+        const finalTeamMember = ownerFollow || allFollows[0];
+
+        if (finalTeamMember && finalTeamMember.role_id) {
+          roles.push(finalTeamMember.role_id.name);
+          companyId = finalTeamMember.company_id._id || finalTeamMember.company_id;
+        }
+      }
+    }
+
     // Générer un nouvel accessToken
     const accessToken = jwt.sign(
       {
         UserInfo: {
           id: account._id,
-          roles: account.roles || [accountType],
+          roles: roles,
+          companyId: companyId,
+          status: account.Status || "active"
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "7d" }
     );
 
     res.json({
@@ -229,9 +319,10 @@ const refresh = async (req, res) => {
       account: {
         id: account._id,
         email: account.email,
-        fullName: account.fullName || account.name,
-        roles: account.roles || [accountType],
-        type: accountType,
+        fullName: account.fullName || account.companyName,
+        roles: roles,
+        companyId: companyId,
+        status: account.Status
       },
     });
   });

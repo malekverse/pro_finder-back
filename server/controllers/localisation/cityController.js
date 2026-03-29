@@ -1,5 +1,6 @@
 const City = require("../../models/city");
 const Region = require("../../models/region");
+const Activity = require("../../models/Activity");
 
 
 const createCity = async (req, res) => {
@@ -14,6 +15,15 @@ const createCity = async (req, res) => {
       return res.status(404).json({ message: "Region not found" });
 
     const city = await City.create({ name, region });
+
+    if (req.user) {
+      await Activity.create({
+        adminId: req.user,
+        action: "Création de ville",
+        target: name,
+        status: "success"
+      });
+    }
 
     res.status(201).json(city);
   } catch (error) {
@@ -69,16 +79,22 @@ const updateCity = async (req, res) => {
     if (!id || (!name && !region))
       return res.status(400).json({ message: "All fields are required" });
 
-    // Check for duplicate
-    const duplicate = await City.findOne({ name }).exec();
-    if (duplicate)
-      return res.status(409).json({ message: "Duplicate city name" });
-
     // Update the city
     const result = await City.findByIdAndUpdate(id, {
       name,
       region
-    });
+    }, { new: true });
+
+    if (!result) return res.status(404).json({ message: "City not found" });
+
+    if (req.user) {
+      await Activity.create({
+        adminId: req.user,
+        action: "Modification de ville",
+        target: name || result.name,
+        status: "info"
+      });
+    }
 
     res.status(200).json({ message: "City updated", city: result });
   } catch (error) {
@@ -120,14 +136,34 @@ const getCityByName = async (req, res) => {
 const deleteCity = async (req, res) => {
     try {
         const { id } = req.params;
-        const city = await City.findByIdAndDelete(id);
+        const Company = require("../../models/company");
 
-        if (!city) {
-            return res.status(404).json({ message: "Ville non trouvée" });
+        const city = await City.findById(id);
+        if (!city) return res.status(404).json({ message: "Ville non trouvée" });
+
+        // Vérifier si des entreprises utilisent cette ville
+        const isUsed = await Company.findOne({ city: id });
+        if (isUsed) {
+            return res.status(400).json({ 
+                message: "Impossible de supprimer cette ville car elle est utilisée par une ou plusieurs entreprises." 
+            });
+        }
+
+        const name = city.name;
+        await City.findByIdAndDelete(id);
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Suppression de ville",
+                target: name,
+                status: "error"
+            });
         }
 
         res.status(200).json({ message: "Ville supprimée avec succès" });
     } catch (error) {
+        console.error("Error deleting city:", error);
         res.status(500).json({ message: error.message });
     }
 };

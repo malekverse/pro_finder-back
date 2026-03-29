@@ -10,8 +10,17 @@ const ensureDir = (dir) => {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folder = 'uploads/profiles';
-    if (['logo', 'cover'].includes(file.fieldname)) folder = 'uploads/companies';
-    ensureDir(folder);
+if (['logo', 'cover'].includes(file.fieldname)) {
+      folder = 'uploads/companies';
+    }
+    // ✅ Images de posts
+    else if (file.fieldname === 'images') {
+      folder = 'uploads/posts';
+    }
+    // ✅ Avatar user/admin
+    else if (file.fieldname === 'avatar') {
+      folder = 'uploads/profiles';
+    }    ensureDir(folder);
     cb(null, folder);
   },
   filename: (req, file, cb) => {

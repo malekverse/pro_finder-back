@@ -15,6 +15,7 @@ const LoginForm = () => {
     const [password, setPassword] = useState('');
 
     const [login, { isLoading, isError, error }] = useLoginMutation();
+    const errorMsg = isError ? (error?.data?.message || 'Identifiants invalides') : null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -37,17 +38,16 @@ const LoginForm = () => {
   })
 );
 
-const roles = response.account?.roles || [];
+            const roles = response.account?.roles || [];
 
-if (roles.includes("admin")) {
-  navigate("/admin/dashboard"); 
-} 
-else if (roles.includes("company")) {
-  navigate("/company/stats");
-} 
-else {
-  navigate("/profile");
-}
+            if (roles.includes("admin")) {
+                navigate("/admin/dashboard");
+            } else if (roles.includes("company")) {
+                navigate("/company/stats");
+            } else {
+                // Les users et les owners vont sur leur profil par défaut
+                navigate("/user/dashboard");
+            }
             
         } catch (err) {
             console.error("Erreur de connexion :", err);
@@ -55,59 +55,55 @@ else {
     };
 
     return (
-        <div className={styles.splitContainer}>
-            <div className={styles.leftPanel}>
-                <div className={styles.brandContent}>
-                    <h2 className={styles.logo}>🔷 Pro Finder</h2>
-                </div>
-            </div>
+    <div className={styles.splitContainer}>
+      <div className={styles.rightPanel}>
+        <div className={styles.loginCard}>
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <h1 style={{ color: '#1E3A5F', fontSize: '32px', fontWeight: '800', marginBottom: '10px' }}>ProFinder</h1>
+            <h2 className={styles.loginTitle}>Bon retour !</h2>
+            <p className={styles.loginSubtitle}>Connectez-vous pour accéder à votre espace</p>
+          </div>
 
-            <div className={styles.rightPanel}>
-                <div className={styles.loginCard}>
-                    <h2 className={styles.loginTitle}>Login</h2>
-                    <p className={styles.loginSubtitle}>Entrez vos identifiants ci-dessous</p>
-
-                    <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
                         <div className={styles.inputGroup}>
-                            <label>EMAIL</label>
+                            <label>Adresse Email</label>
                             <input
                                 type="email"
-                                placeholder="votre@email.com"
-                                required
+                                placeholder="nom@exemple.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                required
                             />
                         </div>
 
                         <div className={styles.inputGroup}>
-                            <label>PASSWORD</label>
+                            <label>Mot de passe</label>
                             <input
                                 type="password"
                                 placeholder="••••••••"
-                                required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                required
                             />
                         </div>
 
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className={styles.submitButton}
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Connexion...' : 'Se connecter'}
+                            {isLoading ? "Connexion..." : "Se connecter"}
                         </button>
-                    </form>
 
-                    {isError && (
-                        <p style={{ color: '#e74c3c', fontSize: '12px', marginTop: '10px', textAlign: 'center' }}>
-                            {error?.data?.message || 'Identifiants invalides'}
+                        {errorMsg && <p className={styles.errorText} style={{ color: '#e74c3c', fontSize: '12px', marginTop: '10px', textAlign: 'center' }}>{errorMsg}</p>}
+
+                        <p className={styles.footerText} style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px' }}>
+                            Pas encore de compte ?{' '}
+                            <Link to="/auth/signup" className={styles.footerLink} style={{ color: '#1E3A5F', fontWeight: 'bold' }}>
+                                S'inscrire gratuitement
+                            </Link>
                         </p>
-                    )}
-
-                    <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px' }}>
-                        Pas encore de compte ? <Link to="/auth/signup" style={{ color: '#1E3A5F', fontWeight: 'bold' }}>S'inscrire</Link>
-                    </p>
+                    </form>
                 </div>
             </div>
         </div>

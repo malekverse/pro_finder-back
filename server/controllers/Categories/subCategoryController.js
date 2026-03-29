@@ -1,5 +1,5 @@
 const SubCategory = require("../../models/SubCategory");
-
+const Activity = require("../../models/Activity");
 
 const getSubCategories = async (req,res)=>{
     try {
@@ -25,6 +25,16 @@ const createSubCategory=async (req,res)=>{
         const { category_id, name } = req.body;
         const subCategory = new SubCategory({ category_id, name });
         await subCategory.save();
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Création de sous-catégorie",
+                target: name,
+                status: "success"
+            });
+        }
+
         res.json({ message: "Subcategory created successfully" });
     } catch (err) {
         res.status(500).json({ message: "Error creating subcategory" });
@@ -38,6 +48,15 @@ const updateSubCategory=async (req,res)=>{
         const subCategory = await SubCategory.findByIdAndUpdate(id, { name });
         if (!subCategory){
              return res.status(404).json({ message: "Subcategory not found" });}
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Modification de sous-catégorie",
+                target: name,
+                status: "info"
+            });
+        }
         
         res.json({ message: "Subcategory updated successfully" });
     } catch (err) {
@@ -48,9 +67,20 @@ const updateSubCategory=async (req,res)=>{
 const deleteSubCategory=async (req,res)=>{
     try {
         const { id } = req.params;
-        const subCategory = await SubCategory.findByIdAndDelete(id);
-        if (!subCategory){
-             return res.status(404).json({ message: "Subcategory not found" });}
+        const subCategory = await SubCategory.findById(id);
+        if (!subCategory) return res.status(404).json({ message: "Subcategory not found" });
+
+        const name = subCategory.name;
+        await SubCategory.findByIdAndDelete(id);
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Suppression de sous-catégorie",
+                target: name,
+                status: "error"
+            });
+        }
         
         res.json({ message: "Subcategory deleted successfully" });
     } catch (err) {

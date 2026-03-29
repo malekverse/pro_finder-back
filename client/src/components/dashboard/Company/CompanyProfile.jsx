@@ -3,6 +3,7 @@ import {
   Box, Container, Card, CardContent, Typography, Button, TextField,
   IconButton, Avatar, Grid, Divider, Paper, Stack, CircularProgress, InputAdornment
 } from '@mui/material';
+import { useSelector } from 'react-redux';
 import {
   PhotoCamera, Edit, Save, Language, Email, Phone, Place, Lock
 } from '@mui/icons-material';
@@ -14,7 +15,12 @@ import Autocomplete from "../../auth/Autocomplete";
 const SERVER_URL = 'http://localhost:5000';
 
 const CompanyProfile = () => {
-  const { data: profileData, isLoading: isFetching } = useGetCompanyProfileQuery();
+  const authUser = useSelector((state) => state.auth.user);
+  const companyId = authUser?.companyId;
+
+  const { data: profileData, isLoading: isFetching } = useGetCompanyProfileQuery(companyId, {
+    skip: !companyId
+  });
   const [updateProfile, { isLoading: isUpdating }] = useUpdateCompanyProfileMutation();
 
   const [editMode, setEditMode] = useState(false);
@@ -49,11 +55,16 @@ const CompanyProfile = () => {
         coverFile:   null,
       }));
 
-      // ✅ Construire l'URL complète pour afficher les images depuis le serveur
-      setPreviews({
-        logo:  profileData.logoUrl  ? `${SERVER_URL}/${profileData.logoUrl}`  : null,
-        cover: profileData.coverUrl ? `${SERVER_URL}/${profileData.coverUrl}` : null,
-      });
+    const toImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url; // Cloudinary → on garde tel quel
+    return `${SERVER_URL}/${url}`; // chemin local → on préfixe
+    };
+
+    setPreviews({
+      logo:  toImageUrl(profileData.logoUrl),
+      cover: toImageUrl(profileData.coverUrl),
+    });
     }
   }, [profileData]);
 

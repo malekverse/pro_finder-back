@@ -1,4 +1,5 @@
 const Service = require("../../models/Service");
+const Activity = require("../../models/Activity");
 
 const getServicesBySubCategory = async (req, res) => {
   try {
@@ -23,6 +24,16 @@ const createService = async (req,res)=>{
         }
         const service = new Service({ name, subcategory_id }); // <-- CORRECT
         await service.save();
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Création de service",
+                target: name,
+                status: "success"
+            });
+        }
+
         res.status(201).json({ message: "Service created successfully", service });
     } catch (err) {
         console.error("Error creating service:", err);
@@ -37,6 +48,16 @@ const updateService=async (req,res)=>{
         const service = await Service.findByIdAndUpdate(id, { name, subcategory_id });
         if (!service){
              return res.status(404).json({ message: "Service not found" });}
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Modification de service",
+                target: name,
+                status: "info"
+            });
+        }
+
         res.json({ message: "Service updated successfully" });
     } catch (err) {
         res.status(500).json({ message: "Error updating service" });
@@ -46,11 +67,35 @@ const updateService=async (req,res)=>{
 const deleteService=async (req,res)=>{
     try {
         const { id } = req.params;
-        const service = await Service.findByIdAndDelete(id);
-        if (!service){
-             return res.status(404).json({ message: "Service not found" });}
+        const Service = require("../../models/Service");
+        const Company = require("../../models/company");
+        
+        const service = await Service.findById(id);
+        if (!service) return res.status(404).json({ message: "Service not found" });
+
+        // Vérifier si des entreprises utilisent ce service
+        const isUsed = await Company.findOne({ services: id });
+        if (isUsed) {
+            return res.status(400).json({ 
+                message: "Impossible de supprimer ce service car il est utilisé par une ou plusieurs entreprises." 
+            });
+        }
+
+        const name = service.name;
+        await Service.findByIdAndDelete(id);
+
+        if (req.user) {
+            await Activity.create({
+                adminId: req.user,
+                action: "Suppression de service",
+                target: name,
+                status: "error"
+            });
+        }
+
         res.json({ message: "Service deleted successfully" });
     } catch (err) {
+        console.error("Error deleting service:", err);
         res.status(500).json({ message: "Error deleting service" });
     }
 };

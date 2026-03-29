@@ -1,4 +1,5 @@
 const Role = require("../models/Role");
+const Activity = require("../models/Activity");
 
 // créer un role global
 const createRole = async (req, res) => {
@@ -23,6 +24,13 @@ const createRole = async (req, res) => {
       name,
       permissions
     });
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Création de rôle",
+      target: name,
+      status: "success"
+    });
     
 
     res.status(201).json(role);
@@ -38,19 +46,36 @@ const createRole = async (req, res) => {
 
 // voir tous les roles
 const getRoles = async (req, res) => {
-
   try {
-
     const roles = await Role.find();
 
+    // Si aucun rôle n'existe du tout, on crée les rôles de base
+    if (roles.length === 0) {
+      const defaultRoles = [
+        { 
+          name: "owner", 
+          permissions: [
+            "manage_all", 
+            "manage_roles", 
+            "manage_settings", 
+            "assign_role", 
+            "delete_role", 
+            "update_role",
+            "view_stats"
+          ] 
+        },
+        { name: "manager", permissions: ["view_stats", "manage_users", "create_post"] },
+        { name: "viewer", permissions: ["view_only"] }
+      ];
+      await Role.insertMany(defaultRoles);
+      const allRoles = await Role.find();
+      return res.json(allRoles);
+    }
+
     res.json(roles);
-
   } catch (err) {
-
     res.status(500).json({ message:"get roles failed" });
-
   }
-
 };
 
 
@@ -69,6 +94,13 @@ const role = await Role.findById(req.params.roleId); // Utilise roleId pour corr
 
     await role.save();
 
+    await Activity.create({
+      adminId: req.user,
+      action: "Modification de rôle",
+      target: role.name,
+      status: "info"
+    });
+
     res.json(role);
 
   } catch (err) {
@@ -84,13 +116,31 @@ const role = await Role.findById(req.params.roleId); // Utilise roleId pour corr
 const deleteRole = async (req, res) => {
 
   try {
+    const { roleId } = req.params;
 
-// Dans updateRole et deleteRole
-const role = await Role.findById(req.params.roleId); // Utilise roleId pour correspondre à la route
+    // Vérifier si le rôle est utilisé par une entreprise (via Follow)
+    const Follow = require("../models/follow");
+    const isUsed = await Follow.findOne({ role_id: roleId });
+
+    if (isUsed) {
+      return res.status(400).json({ 
+        message: "Un rôle déjà utilisé par une entreprise ne peut pas être supprimé." 
+      });
+    }
+
+    const role = await Role.findById(roleId); 
     if (!role)
       return res.status(404).json({ message: "Role not found" });
 
+    const name = role.name;
     await role.deleteOne();
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Suppression de rôle",
+      target: name,
+      status: "error"
+    });
 
     res.json({ message: "Role deleted" });
 

@@ -46,12 +46,11 @@ const AdminDashboardLayout = () => {
             <img
               src={`${SERVER_URL}/${profile.avatarUrl}`}
               alt="avatar"
-              className={styles.avatarCircle}
-              style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }}
+              style={{ width: 48, height: 48, borderRadius: '12px', objectFit: 'cover', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
             />
           ) : (
             <div className={styles.avatarCircle}>
-              <UserCog size={24} color="#2563eb" />
+              <UserCog size={24} color="#24416b" />
             </div>
           )}
 

@@ -2,13 +2,7 @@ import { useState, useEffect } from "react";
 import { useAddUserToCompanyMutation } from "../../../redux/features/users/usersApiSlice";
 import styles from "../../../styles/AddUserModal.module.css";
 
-const roles = [
-   { _id: "69b0491ae9ceee4218efbe47", name: "admin" },
-    { _id: "69ac40b1b42d9ccd56b21d12", name: "assistant_manager" },
-    { _id: "69ac6e507df0be4e31e9da57", name: "viewer" }
-];
-
-const AddUserModal = ({ onClose, onUserAdded, followers }) => {
+const AddUserModal = ({ onClose, onUserAdded, followers, availableRoles }) => {
   const [email, setEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -16,11 +10,15 @@ const AddUserModal = ({ onClose, onUserAdded, followers }) => {
   const [filteredFollowers, setFilteredFollowers] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Utiliser les rôles fournis ou un fallback vide
+  const roles = availableRoles || [];
+
   useEffect(() => {
-    // MODIFICATION 1 : Si l'email est vide, on montre TOUS les followers
-    if (followers) {
+    // Si followers est un tableau, on filtre ou on montre tout
+    if (Array.isArray(followers)) {
       if (email.length > 0) {
         const filtered = followers.filter(f => {
+          // On cherche l'email soit dans user_id.email (si populate) soit dans email direct
           const targetEmail = f.user_id?.email || f.email || "";
           return targetEmail.toLowerCase().includes(email.toLowerCase());
         });
@@ -31,7 +29,9 @@ const AddUserModal = ({ onClose, onUserAdded, followers }) => {
     }
   }, [email, followers]);
 
-  const handleSelectUser = (selectedEmail) => {
+  const handleSelectUser = (follower) => {
+    // On récupère l'email du follower sélectionné
+    const selectedEmail = follower.user_id?.email || follower.email;
     setEmail(selectedEmail);
     setShowSuggestions(false);
   };
@@ -43,6 +43,7 @@ const AddUserModal = ({ onClose, onUserAdded, followers }) => {
     }
     try {
       setErrorMessage("");
+      // On envoie l'email au backend
       await addUser({ email, role: selectedRole }).unwrap();
       onUserAdded?.(); 
       onClose(); 
@@ -56,37 +57,63 @@ const AddUserModal = ({ onClose, onUserAdded, followers }) => {
       <div className={styles.modalCard}>
         <div className={styles.modalHeader}>
           <h3>Inviter un membre</h3>
-        </div>
+        </div>  
 
         <div className={styles.modalBody}>
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label className={styles.label}>Email du follower</label>
             <input
               className={styles.inputField}
-              type="email"
-              placeholder="Chercher un email..."
+              type="text"
+              placeholder="Chercher par nom ou email..."
               value={email}
               autoComplete="off"
               onChange={(e) => setEmail(e.target.value)}
-              // MODIFICATION 2 : On affiche les suggestions même si email.length est 0
               onFocus={() => setShowSuggestions(true)}
-              // Petit délai pour permettre le clic sur un élément de la liste avant qu'elle ne disparaisse
+              // Délai pour permettre le clic sur la suggestion
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             />
 
             {/* LISTE D'AUTO-COMPLÉTION */}
             {showSuggestions && filteredFollowers.length > 0 && (
-              <ul className={styles.suggestionList}>
-                {filteredFollowers.map((f) => (
-                  <li 
-                    key={f._id || f.id} 
-                    onClick={() => handleSelectUser(f.user_id?.email || f.email)}
-                    className={styles.suggestionItem}
-                  >
-                    <span className={styles.suggestName}>{f.user_id?.fullName || f.fullName}</span>
-                    <span className={styles.suggestEmail}>{f.user_id?.email || f.email}</span>
-                  </li>
-                ))}
+              <ul style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                zIndex: 10,
+                listStyle: 'none',
+                padding: 0,
+                margin: '4px 0 0 0'
+              }}>
+                {filteredFollowers.map((f) => {
+                  const fEmail = f.user_id?.email || f.email;
+                  const fName = f.user_id?.fullName || f.fullName || "Utilisateur";
+                  return (
+                    <li 
+                      key={f._id || f.id} 
+                      onClick={() => handleSelectUser(f)}
+                      style={{
+                        padding: '10px 15px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <span style={{ fontWeight: '600', fontSize: '13px', color: '#1e293b' }}>{fName}</span>
+                      <span style={{ fontSize: '12px', color: '#64748b' }}>{fEmail}</span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
