@@ -9,7 +9,9 @@ import {
   Wrench,
   FileText, 
   Users,
-  LogOut 
+  LogOut,
+  ShoppingBag,
+  Star
 } from "lucide-react";
 import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
 
@@ -20,25 +22,27 @@ const DashboardLayout = () => {
   const navigate = useNavigate(); 
   const dispatch = useDispatch();
   const authUser = useSelector((state) => state.auth.user);
+  const permissions = authUser?.permissions || [];
   const companyId = authUser?.companyId;
 
-  console.log("DashboardLayout AuthUser:", authUser);
-  console.log("DashboardLayout CompanyId:", companyId);
+  const hasPermission = (perm) => permissions.includes(perm) || permissions.includes("all_access");
 
   const { data: company, refetch } = useGetCompanyProfileQuery(companyId, {
     skip: !companyId
   });
 
   const mainMenu = [
-    { path: "/company/stats", label: "Dashboard", icon: <BarChart3 size={20} /> },
-    { path: "/company/posts", label: "Publications", icon: <LayoutDashboard size={20} /> },
-    { path: "/company/documents", label: "Documents", icon: <FileText size={20} /> },
+    { path: "/company/stats", label: "Dashboard", icon: <BarChart3 size={20} />, show: true },
+    { path: "/company/commandes", label: "Commandes & Réservations", icon: <ShoppingBag size={20} />, show: true },
+    { path: "/company/reviews", label: "Avis clients", icon: <Star size={20} />, show: true },
+    { path: "/company/posts", label: "Publications", icon: <LayoutDashboard size={20} />, show: hasPermission("create_post") },
+    { path: "/company/documents", label: "Documents", icon: <FileText size={20} />, show: true },
   ];
 
   const managementMenu = [
-    { path: "/company/produits", label: "Mes Produits", icon: <Package size={20} /> },
-    { path: "/company/services", label: "Mes Services", icon: <Wrench size={20} /> },
-    { path: "/company/users", label: "Gestion des accès", icon: <Users size={20} /> },
+    { path: "/company/produits", label: "Mes Produits", icon: <Package size={20} />, show: true },
+    { path: "/company/services", label: "Mes Services", icon: <Wrench size={20} />, show: true },
+    { path: "/company/users", label: "Gestion des accès", icon: <Users size={20} />, show: hasPermission("manage_team") },
   ];
 
   const handleLogout = () => {
@@ -89,7 +93,7 @@ const DashboardLayout = () => {
         <p className={styles.menuLabel}>Menu principal</p>
 
         <ul className={styles.menu}>
-          {mainMenu.map((item) => (
+          {mainMenu.filter(item => item.show).map((item) => (
             <li key={item.path}>
               <NavLink 
                 to={item.path} 
@@ -107,7 +111,7 @@ const DashboardLayout = () => {
         <p className={styles.menuLabel}>Gestion</p>
 
         <ul className={styles.menu}>
-          {managementMenu.map((item) => (
+          {managementMenu.filter(item => item.show).map((item) => (
             <li key={item.path}>
               <NavLink 
                 to={item.path} 

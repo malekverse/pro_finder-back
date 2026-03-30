@@ -40,6 +40,7 @@ export const companyServiceApiSlice = apiSlice.injectEndpoints({
 
 export const {
   useGetCompanyServicesQuery,
+  useGetAllServicesQuery,
   useCreateServiceMutation,
   useUpdateServiceMutation,
   useDeleteServiceMutation,

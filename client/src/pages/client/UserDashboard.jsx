@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { logOut } from "../../redux/features/auth/authSlice";
 import { apiSlice } from "../../redux/app/api/apiSlice";
 import { useGetFollowedFeedQuery } from "../../redux/features/posts/postApiSlice";
+import { useGetAllProductsQuery } from "../../redux/features/products/productApiSlice";
+import { useGetAllServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
 import {
   useGetSuggestedCompaniesQuery,
   useFollowCompanyMutation,
@@ -13,6 +15,7 @@ import PostCard from "../../components/posts/PostCard";
 import {
   Loader, Users, ChevronDown, LogOut, Bell,
   Home, User, Newspaper, Building2, MapPin, Search, X,
+  Package, Wrench, ShoppingBag, Clock, Calendar
 } from "lucide-react";
 
 const SERVER_URL = "http://localhost:5000";
@@ -28,7 +31,8 @@ const toImageUrl = (url) => {
 };
 
 // Header
-const Header = ({ user, onProfileClick, onLogout }) => {
+const Header = ({ user, onProfileClick, onLogout, onCompanyClick }) => {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const initials = user?.fullName
     ? user.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
@@ -67,6 +71,17 @@ const Header = ({ user, onProfileClick, onLogout }) => {
               <button style={h.dropItem} onClick={() => { setMenuOpen(false); onProfileClick(); }}>
                 <User size={15} color="#1E3A5F" /> Mon profil
               </button>
+
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/purchases"); }}>
+                <ShoppingBag size={15} color="#1E3A5F" /> Mes Achats
+              </button>
+              
+              {onCompanyClick && (
+                <button style={h.dropItem} onClick={() => { setMenuOpen(false); onCompanyClick(); }}>
+                  <Building2 size={15} color="#1E3A5F" /> Espace Fournisseur
+                </button>
+              )}
+
               <div style={h.dropDivider} />
               <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
                 <LogOut size={15} color="#dc2626" /> Déconnexion
@@ -107,9 +122,10 @@ const CompanySearchBar = () => {
     }, 350);
   };
 
-  const { data: results = [], isFetching } = useSearchCompaniesQuery(debouncedQ, {
+ const { data: results = [], isFetching } = useSearchCompaniesQuery({ q: debouncedQ }, {
     skip: !debouncedQ,
   });
+
 
   const clear = () => { setQuery(""); setDebouncedQ(""); setOpen(false); };
 
@@ -276,9 +292,13 @@ const Feed = () => {
 
 // Page principale
 const UserDashboard = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
+  const roles = user?.roles || [];
+  const hasCompanyAccess = user?.companyId && roles.length > 1;
+
+  const [activeTab, setActiveTab] = useState("feed"); // feed, services, products
 
   const handleLogout = () => {
     dispatch(logOut());
@@ -288,21 +308,106 @@ const UserDashboard = () => {
 
   return (
     <div style={p.root}>
-      <Header user={user} onProfileClick={() => navigate("/profile")} onLogout={handleLogout} />
+      <Header 
+        user={user} 
+        onProfileClick={() => navigate("/profile")} 
+        onLogout={handleLogout}
+        onCompanyClick={hasCompanyAccess ? () => navigate("/company/stats") : null}
+      />
       <div style={p.layout}>
         <main style={p.main}>
           <div style={p.searchWrap}><CompanySearchBar /></div>
-          <div style={p.feedHeader}>
-            <Newspaper size={18} color="#1E3A5F" />
-            <h2 style={p.feedTitle}>Fil d'actualité</h2>
+          
+          <div style={p.tabs}>
+            <button 
+              onClick={() => setActiveTab("feed")} 
+              style={activeTab === "feed" ? p.tabActive : p.tab}
+            >
+              <Newspaper size={18} /> Fil d'actualité
+            </button>
+            <button 
+              onClick={() => setActiveTab("services")} 
+              style={activeTab === "services" ? p.tabActive : p.tab}
+            >
+              <Wrench size={18} /> Services
+            </button>
+            <button 
+              onClick={() => setActiveTab("products")} 
+              style={activeTab === "products" ? p.tabActive : p.tab}
+            >
+              <Package size={18} /> Produits
+            </button>
           </div>
+
           <div style={p.feedScroll}>
-            <Feed />
+            {activeTab === "feed" && <Feed />}
+            {activeTab === "services" && <AllServices />}
+            {activeTab === "products" && <AllProducts />}
           </div>
         </main>
         <aside style={p.rightSidebar}><SuggestedCompanies /></aside>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+
+// All Services Browser
+const AllServices = () => {
+  const navigate = useNavigate();
+  const { data: services = [], isLoading } = useGetAllServicesQuery();
+
+  if (isLoading) return <div style={f.center}><Loader size={28} className="animate-spin" color="#1E3A5F" /></div>;
+
+  return (
+    <div style={g.grid}>
+      {services.map(s => (
+        <div 
+          key={s._id} 
+          style={g.card} 
+          onClick={() => navigate(`/user/company/${s.companyId._id}`, { state: { activeTab: 'services', selectServiceId: s._id } })}
+        >
+          {s.images?.[0] && <img src={toImageUrl(s.images[0])} alt="" style={g.img} />}
+          <div style={g.content}>
+            <div style={g.companyName}><Building2 size={12} /> {s.companyId?.companyName}</div>
+            <h3 style={g.title}>{s.name}</h3>
+            <div style={g.footer}>
+              <span style={g.price}>{s.price} €</span>
+              <span style={g.meta}><Clock size={12} /> {s.duration} min</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// All Products Browser
+const AllProducts = () => {
+  const navigate = useNavigate();
+  const { data: products = [], isLoading } = useGetAllProductsQuery();
+
+  if (isLoading) return <div style={f.center}><Loader size={28} className="animate-spin" color="#1E3A5F" /></div>;
+
+  return (
+    <div style={g.grid}>
+      {products.map(p => (
+        <div 
+          key={p._id} 
+          style={g.card} 
+          onClick={() => navigate(`/user/company/${p.companyId._id}`, { state: { activeTab: 'products', selectProductId: p._id } })}
+        >
+          {p.images?.[0] && <img src={toImageUrl(p.images[0])} alt="" style={g.img} />}
+          <div style={g.content}>
+            <div style={g.companyName}><Building2 size={12} /> {p.companyId?.companyName}</div>
+            <h3 style={g.title}>{p.name}</h3>
+            <div style={g.footer}>
+              <span style={g.price}>{p.price} €</span>
+              <span style={{ ...g.meta, color: '#16a34a' }}>{p.stock} en stock</span>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -369,6 +474,46 @@ const p = {
   },
   main: { flex: 1, minWidth: 0 },
   searchWrap: { marginBottom: 16 },
+  tabs: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "16px",
+    background: "#fff",
+    padding: "6px",
+    borderRadius: "12px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+  },
+  tab: {
+    flex: 1,
+    padding: "10px",
+    border: "none",
+    background: "none",
+    color: "#64748b",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontSize: "13px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    borderRadius: "8px",
+    transition: "0.2s",
+  },
+  tabActive: {
+    flex: 1,
+    padding: "10px",
+    background: "#eff6ff",
+    border: "none",
+    color: "#1E3A5F",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontSize: "13px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    borderRadius: "8px",
+  },
   feedHeader: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingLeft: 2 },
   feedTitle: { fontWeight: 800, fontSize: 18, color: "#0f172a", margin: 0 },
   feedScroll: {
@@ -469,6 +614,29 @@ const sg = {
     transition: "all 0.2s", whiteSpace: "nowrap",
   },
   followBtnActive: { background: "#e2e8f0", color: "#1e293b" },
+};
+
+const g = {
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+    gap: "16px",
+  },
+  card: {
+    background: "#fff",
+    borderRadius: "12px",
+    border: "1px solid #e9eef5",
+    overflow: "hidden",
+    cursor: "pointer",
+    transition: "transform 0.2s",
+  },
+  img: { width: "100%", height: "140px", objectFit: "cover" },
+  content: { padding: "12px" },
+  companyName: { fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" },
+  title: { fontSize: "14px", fontWeight: "700", color: "#0f172a", margin: "0 0 8px" },
+  footer: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  price: { fontSize: "15px", fontWeight: "800", color: "#1E3A5F" },
+  meta: { fontSize: "11px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "3px" },
 };
 
 export default UserDashboard;

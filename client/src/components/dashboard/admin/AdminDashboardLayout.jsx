@@ -21,7 +21,6 @@ const AdminDashboardLayout = () => {
     { path: "/admin/geography", label: "Géographie",    icon: <Globe size={20}/> },
     { path: "/admin/taxonomy",  label: "Taxonomie",     icon: <Tags size={20}/> },
     { path: "/admin/moderation",label: "Modération",    icon: <Eye size={20}/> },
-    { path: "/admin/users",     label: "Utilisateurs",  icon: <Users size={20}/> },
     { path: "/admin/roles",     label: "Rôles",         icon: <ShieldCheck size={20}/> },
   ];
 

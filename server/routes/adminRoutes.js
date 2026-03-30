@@ -17,7 +17,7 @@ router.get("/pending-companies",verifyJWT,authorizeRoles("admin"),adminControlle
 router.put("/verify/:companyId",verifyJWT,authorizeRoles("admin"),adminController.verifyCompany);
 router.get("/users",verifyJWT,authorizeRoles("admin"),adminController.getAllUsers);
 router.delete("/reject/:companyId", verifyJWT, authorizeRoles("admin"), adminController.rejectCompany);
-
+router.put("/resolve/:companyId", verifyJWT, authorizeRoles("admin"), adminController.resolveCompany);
 
 module.exports = router;
 

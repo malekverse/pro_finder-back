@@ -2,6 +2,7 @@ const Company = require("../models/company");
 const Follow = require("../models/follow");
 const Role = require("../models/Role");
 const User = require("../models/User");
+const Review = require("../models/Review");
 const fs = require('fs');
 const mongoose = require("mongoose");
 const path = require("path");
@@ -15,19 +16,78 @@ const getDashboard = async (req, res) => {
   res.json({ message: "Company Dashboard", companyId: req.user });
 };
 const getCompanyFollowers = async (req, res) => {
-  const companyId = req.companyId || req.user;
-  const company = await Company.findById(companyId);
-  if (!company) return res.status(404).json({ message: "Company not found" });
-  const followers = await Follow.find({ company_id: companyId })
-    .populate("user_id", "fullName email")
-    .populate("role_id", "name permissions");
-  res.json(followers);
+  try {
+    const idToUse = req.companyId || req.user;
+    const companyId = new mongoose.Types.ObjectId(idToUse);
+    const company = await Company.findById(companyId);
+    if (!company) return res.status(404).json({ message: "Company not found" });
+    
+    // On ne récupère que les abonnés ACTIFS (non bloqués) qui n'ont PAS de role_id
+    const followers = await Follow.find({ 
+      company_id: companyId, 
+      role_id: null
+    })
+      .populate("user_id", "fullName email avatarUrl phone")
+      .sort({ createdAt: -1 });
+
+    // Filtrer manuellement pour être sûr (migration au vol)
+    const activeFollowers = followers.filter(f => f.is_blocked !== true);
+      
+    res.json(activeFollowers);
+  } catch (error) {
+    console.error("Error fetching followers:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getBlockedUsers = async (req, res) => {
+  try {
+    const idToUse = req.companyId || req.user;
+    const companyId = new mongoose.Types.ObjectId(idToUse);
+    
+    const blocked = await Follow.find({ 
+      company_id: companyId, 
+      is_blocked: true 
+    })
+      .populate("user_id", "fullName email avatarUrl phone")
+      .sort({ updatedAt: -1 });
+      
+    res.json(blocked);
+  } catch (error) {
+    console.error("Error fetching blocked users:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const toggleBlockFollower = async (req, res) => {
+  try {
+    const { followId } = req.params;
+    const idToUse = req.companyId || req.user;
+    const companyId = new mongoose.Types.ObjectId(idToUse);
+
+    const follow = await Follow.findOne({ _id: followId, company_id: companyId });
+    if (!follow) {
+      return res.status(404).json({ message: "Relation d'abonnement non trouvée" });
+    }
+
+    follow.is_blocked = !follow.is_blocked;
+    await follow.save();
+
+    res.json({ 
+      message: follow.is_blocked ? "Utilisateur bloqué" : "Utilisateur débloqué", 
+      is_blocked: follow.is_blocked 
+    });
+  } catch (error) {
+    console.error("Error toggling block status:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 const getCompanyProfile = async (req, res) => {
   try {
     // Utiliser req.companyId (pour les team members comme owner) ou req.user (pour le compte principal)
-    const companyId = req.companyId || req.user;
+    const idToUse = req.companyId || req.user;
+    const companyId = new mongoose.Types.ObjectId(idToUse);
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
@@ -64,8 +124,8 @@ const getPublicCompanyProfile = async (req, res) => {
       return res.status(404).json({ message: "Company not found" });
     }
 
-    // Récupérer le nombre de followers
-    const followersCount = await Follow.countDocuments({ company_id: companyId });
+    // Récupérer le nombre de followers (uniquement non bloqués)
+    const followersCount = await Follow.countDocuments({ company_id: companyId, is_blocked: { $ne: true } });
 
     // Récupérer les noms des localisations manuellement pour plus de robustesse
     let cName = null, rName = null, cityName = null;
@@ -106,7 +166,8 @@ const getPublicCompanyProfile = async (req, res) => {
 
 const updateCompanyProfile = async (req, res) => {
   const { companyName, phone, website, description, country, region, city } = req.body;
-  const companyId = req.companyId || req.user;
+  const idToUse = req.companyId || req.user;
+  const companyId = new mongoose.Types.ObjectId(idToUse);
 
   const company = await Company.findById(companyId);
   if (!company) return res.status(404).json({ message: "Company not found" });
@@ -135,24 +196,24 @@ const updateCompanyProfile = async (req, res) => {
   res.json(updatedCompany);
 };
 
-//  Lister tous les users de la company avec rôle et permissions
+//  Lister tous les membres de l'équipe de la company (avec rôle, non bloqués)
 const getCompanyUsers = async (req, res) => {
   try {
-    const companyId = req.companyId || req.user;
-    const follows = await Follow.find({ company_id: companyId })
-      .populate("user_id", "fullName email")
+    const idToUse = req.companyId || req.user;
+    const companyId = new mongoose.Types.ObjectId(idToUse);
+    const follows = await Follow.find({ 
+      company_id: companyId, 
+      role_id: { $ne: null }
+    })
+      .populate("user_id", "fullName email avatarUrl phone")
       .populate("role_id", "name permissions");
 
-    const users = follows.filter(f => f.user_id).map(f => ({
-      fullName: f.user_id.fullName,
-      email: f.user_id.email,
-      role: f.role_id ? f.role_id.name : null,
-      permissions: f.role_id ? f.role_id.permissions : []
-    }));
+    // Filtrer manuellement pour être sûr (migration au vol)
+    const activeTeam = follows.filter(f => f.is_blocked !== true);
 
-    res.json(users);
+    res.json(activeTeam);
   } catch (err) {
-    console.error(err);
+    console.error("Error in getCompanyUsers:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -161,7 +222,8 @@ const getCompanyUsers = async (req, res) => {
 const assignRoleToUser = async (req, res) => {
   const { email, role } = req.body;
   try {
-    const companyId = req.companyId || req.user;
+    const idToUse = req.companyId || req.user;
+    const companyId = new mongoose.Types.ObjectId(idToUse);
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -185,7 +247,8 @@ const assignRoleToUser = async (req, res) => {
 // Mettre à jour le rôle d’un utilisateur
 const updateRoleToUser = async (req, res) => {
   const { email, role_id } = req.body;
-  const companyId = req.companyId || req.user;
+  const idToUse = req.companyId || req.user;
+  const companyId = new mongoose.Types.ObjectId(idToUse);
 
   try {
     const user = await User.findOne({ email });
@@ -216,7 +279,8 @@ const updateRoleToUser = async (req, res) => {
 // Supprimer le rôle d’un utilisateur
 const deleteRoleToUser = async (req, res) => {
   const { email } = req.body;
-  const companyId = req.companyId || req.user;
+  const idToUse = req.companyId || req.user;
+  const companyId = new mongoose.Types.ObjectId(idToUse);
 
   try {
     const user = await User.findOne({ email });
@@ -297,8 +361,10 @@ const getSuggestedCompanies = async (req, res) => {
       {
         $lookup: {
           from: "follows", 
-          localField: "_id",
-          foreignField: "company_id",
+          let: { companyId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $and: [ { $eq: ["$company_id", "$$companyId"] }, { $ne: ["$is_blocked", true] } ] } } }
+          ],
           as: "followers"
         }
       },
@@ -405,10 +471,40 @@ const searchCompanies = async (req, res) => {
     }
 
 
-    const companies = await Company.find(query)
+    let companies = await Company.find(query)
       .select("companyName logoUrl description city region country website phone services Status")
-      .limit(20)
+      .limit(50)
       .lean();
+
+    // Tri par pertinence si une recherche textuelle est effectuée
+    if (q && q.trim() !== "") {
+      const searchTerm = q.toLowerCase().trim();
+      companies.sort((a, b) => {
+        const nameA = a.companyName.toLowerCase();
+        const nameB = b.companyName.toLowerCase();
+
+        // 1. Match exact
+        if (nameA === searchTerm && nameB !== searchTerm) return -1;
+        if (nameB === searchTerm && nameA !== searchTerm) return 1;
+
+        // 2. Commence par
+        const startsWithA = nameA.startsWith(searchTerm);
+        const startsWithB = nameB.startsWith(searchTerm);
+        if (startsWithA && !startsWithB) return -1;
+        if (startsWithB && !startsWithA) return 1;
+
+        // 3. Contient le terme (déjà filtré par MongoDB regex, mais au cas où pour la stabilité du tri)
+        const indexA = nameA.indexOf(searchTerm);
+        const indexB = nameB.indexOf(searchTerm);
+        if (indexA !== indexB) return indexA - indexB;
+
+        return nameA.localeCompare(nameB);
+      });
+      
+      // Limiter à 20 résultats après le tri
+      companies = companies.slice(0, 20);
+    }
+
 
     // Pour chaque entreprise, récupérer son nombre de followers et les NOMS de localisation
     const Country = mongoose.model("Country");
@@ -417,8 +513,25 @@ const searchCompanies = async (req, res) => {
 
     const companiesWithDetails = await Promise.all(
       companies.map(async (company) => {
-        const followersCount = await Follow.countDocuments({ company_id: company._id });
+        const followersCount = await Follow.countDocuments({ company_id: company._id, is_blocked: { $ne: true } });
         
+        // Récupérer les stats d'avis
+        const stats = await Review.aggregate([
+          { $match: { company_id: company._id } },
+          {
+            $group: {
+              _id: "$company_id",
+              averageRating: { $avg: "$rating" },
+              totalReviews: { $sum: 1 },
+            },
+          },
+        ]);
+
+        const rating = stats.length > 0 ? {
+          average: stats[0].averageRating.toFixed(1),
+          count: stats[0].totalReviews
+        } : { average: 0, count: 0 };
+
         let cName = null, rName = null, cityName = null;
         
         try {
@@ -439,6 +552,7 @@ const searchCompanies = async (req, res) => {
         return { 
           ...company, 
           followersCount,
+          rating,
           country: cName,
           region: rName,
           city: cityName
@@ -449,6 +563,62 @@ const searchCompanies = async (req, res) => {
     res.json(companiesWithDetails);
   } catch (err) {
     res.status(500).json({ message: "Erreur lors de la recherche" });
+  }
+};
+
+const getRecommendedCompanies = async (req, res) => {
+  try {
+    // 1. Obtenir les IDs des entreprises avec les meilleures notes
+    const topReviews = await Review.aggregate([
+      {
+        $group: {
+          _id: "$company_id",
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+      { $match: { totalReviews: { $gt: 0 } } },
+      { $sort: { averageRating: -1, totalReviews: -1 } },
+      { $limit: 6 }
+    ]);
+
+    const topCompanyIds = topReviews.map(r => r._id);
+
+    // 2. Récupérer les détails des entreprises
+    const companies = await Company.find({ 
+      _id: { $in: topCompanyIds },
+      Status: "active" 
+    })
+    .select("companyName logoUrl city region country description")
+    .lean();
+
+    // 3. Enrichir avec les stats et les noms de localisation
+    const enriched = await Promise.all(
+      companies.map(async (company) => {
+        const reviewStat = topReviews.find(r => r._id.toString() === company._id.toString());
+        
+        let cityName = null;
+        if (company.city) {
+          const cityDoc = await mongoose.model("City").findById(company.city).select("name").lean();
+          cityName = cityDoc?.name || null;
+        }
+
+        return {
+          ...company,
+          city: cityName,
+          averageRating: reviewStat?.averageRating.toFixed(1) || 0,
+          totalReviews: reviewStat?.totalReviews || 0
+        };
+      })
+    );
+
+    // Trier par note (car .find ne garde pas l'ordre du $in)
+    enriched.sort((a, b) => b.averageRating - a.averageRating);
+
+    res.json(enriched);
+  } catch (err) {
+    console.error("[getRecommendedCompanies]", err);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
@@ -478,5 +648,8 @@ module.exports = {
   getUserAccessToCompany,
   getCompaniesByService,
   getSuggestedCompanies,
-  searchCompanies
+  getRecommendedCompanies,
+  searchCompanies,
+  toggleBlockFollower,
+  getBlockedUsers
 };

@@ -23,6 +23,7 @@ require("./models/Service");
 require("./models/city");
 require("./models/country");
 require("./models/region");
+require("./models/Review");
 
 connectDB();
 
@@ -45,6 +46,8 @@ app.use("/admin", require("./routes/adminRoutes"));
 app.use("/company", require("./routes/companyRoutes"));
 app.use("/products", require("./routes/productRoutes"));
 app.use("/company-services", require("./routes/companyServiceRoutes"));
+app.use("/reservations", require("./routes/reservationRoutes"));
+app.use("/orders", require("./routes/orderRoutes"));
 
 app.use("/localisation", require("./routes/localisationRoutes/countryRoutes"));
 app.use("/localisation", require("./routes/localisationRoutes/regionRoutes"));
@@ -53,6 +56,9 @@ app.use("/localisation", require("./routes/localisationRoutes/cityRoutes"));
 app.use("/roles", require("./routes/roleRoutes"));
 
 app.use("/followers", require("./routes/followerRoutes"));
+
+app.use("/reports", require("./routes/reportRoutes"));
+app.use("/reviews", require("./routes/reviewRoutes"));
 
 app.use("/categories", require("./routes/categoriesRoutes/subCategoryRoutes"));
 app.use("/categories", require("./routes/categoriesRoutes/serviceRoutes"));

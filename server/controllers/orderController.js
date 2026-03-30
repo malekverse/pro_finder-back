@@ -1,0 +1,80 @@
+const Order = require("../models/Order");
+const Product = require("../models/Product");
+
+// Client: Create an order
+exports.createOrder = async (req, res) => {
+  try {
+    const { companyId, items, totalPrice, shippingAddress, notes } = req.body;
+    const userId = req.user;
+
+    const newOrder = new Order({
+      userId,
+      companyId,
+      items,
+      totalPrice,
+      shippingAddress,
+      notes,
+    });
+
+    await newOrder.save();
+    res.status(201).json({ message: "Commande effectuée avec succès", order: newOrder });
+  } catch (error) {
+    console.error("Error creating order:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+// Client: Get my orders
+exports.getMyOrders = async (req, res) => {
+  try {
+    const userId = req.user;
+    const orders = await Order.find({ userId })
+      .populate("companyId", "companyName logoUrl")
+      .populate("items.productId", "name price images")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching my orders:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+// Company: Get company orders
+exports.getCompanyOrders = async (req, res) => {
+  try {
+    const companyId = req.companyId || req.user;
+    const orders = await Order.find({ companyId })
+      .populate("userId", "fullName email avatarUrl phone")
+      .populate("items.productId", "name price images")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching company orders:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+// Company: Update order status
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status, adminNotes } = req.body;
+    const companyId = req.companyId || req.user;
+
+    const order = await Order.findOne({ _id: orderId, companyId });
+    if (!order) {
+      return res.status(404).json({ message: "Commande non trouvée" });
+    }
+
+    order.status = status || order.status;
+    order.adminNotes = adminNotes || order.adminNotes;
+    await order.save();
+
+    res.json({ message: `Commande ${status}`, order });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};

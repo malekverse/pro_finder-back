@@ -156,7 +156,7 @@ const login = async (req, res) => {
   } 
   if (accountType === "company" && account.Status === "rejected") {
     return res.status(403).json({ 
-      message: `Votre demande d'inscription a été refusée pour le motif suivant : ${account.rejectionReason || "Motif non spécifié"}. Veuillez nous contacter pour plus d'informations.` 
+      message: `Votre compte a été suspendu pour cette raison : ${account.rejectionReason || "Motif non spécifié"}. Veuillez nous contacter pour plus d'informations.` 
     });
   } 
 
@@ -169,40 +169,37 @@ const login = async (req, res) => {
   // Initialisation des rôles et companyId
   let roles = account.roles || [accountType];
   let companyId = accountType === "company" ? account._id : null;
+  let permissions = [];
 
-  // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie
+  // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie (uniquement s'il n'est pas bloqué)
   if (accountType === "user") {
-    // 1. Récupérer TOUTES les relations de cet utilisateur avec des compagnies
-    // On peuple également les infos de la compagnie pour pouvoir debugger si besoin
-    const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null } })
+    const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null }, is_blocked: { $ne: true } })
       .populate("role_id")
       .populate("company_id")
       .sort({ updatedAt: -1 })
       .lean();
         
     if (allFollows.length > 0) {
-      // 2. Chercher en priorité celle où il est "owner"
-      // On s'assure de comparer le nom du rôle de manière stricte
-      // On logue toutes les compagnies trouvées pour aider l'admin
-      console.log("Compagnies liées à l'utilisateur:");
-      allFollows.forEach(f => {
-        console.log(`- ${f.company_id?.companyName} (ID: ${f.company_id?._id}) avec le rôle: ${f.role_id?.name}`);
-      });
-
       const ownerFollow = allFollows.find(f => f.role_id && f.role_id.name.toLowerCase() === 'owner');
-      
-      if (ownerFollow) {
-        console.log(`Priorité OWNER sélectionnée: ${ownerFollow.company_id?.companyName}`);
-      }
-
-      // 3. Utiliser l'enregistrement "owner" s'il existe, sinon le plus récent
       const finalTeamMember = ownerFollow || allFollows[0];
       
       if (finalTeamMember && finalTeamMember.role_id) {
         roles.push(finalTeamMember.role_id.name);
         companyId = finalTeamMember.company_id._id || finalTeamMember.company_id;
+        permissions = finalTeamMember.role_id.permissions || [];
       }
     }
+  } else if (accountType === "company") {
+    // Les entreprises ont par défaut toutes les permissions
+    permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
+  } else {
+    // Les utilisateurs simples peuvent par exemple liker et commenter
+    permissions = ["like_post", "comment_post"];
+  }
+
+  // Si c'est un admin, on lui donne aussi toutes les permissions
+  if (roles.includes("admin")) {
+    permissions = ["all_access", "manage_admin"];
   }
 
   // Générer accessToken
@@ -211,6 +208,7 @@ const login = async (req, res) => {
       UserInfo: {
         id: account._id,
         roles: roles,
+        permissions: permissions,
         companyId: companyId,
         status: account.Status || "active" 
       },
@@ -242,6 +240,7 @@ const login = async (req, res) => {
       email: account.email,
       fullName: account.fullName || account.companyName,
       roles: roles,
+      permissions: permissions,
       companyId: companyId,
       status: account.Status
     },
@@ -276,28 +275,34 @@ const refresh = async (req, res) => {
     // Initialisation des rôles et companyId
     let roles = account.roles || [accountType];
     let companyId = accountType === "company" ? account._id : null;
+    let permissions = [];
 
-    // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie
+    // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie (uniquement s'il n'est pas bloqué)
     if (accountType === "user") {
-      // 1. Récupérer TOUTES les relations
-      const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null } })
+      const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null }, is_blocked: { $ne: true } })
         .populate("role_id")
         .populate("company_id")
         .sort({ updatedAt: -1 })
         .lean();
       
       if (allFollows.length > 0) {
-        // 2. Chercher celle où il est "owner"
         const ownerFollow = allFollows.find(f => f.role_id && f.role_id.name.toLowerCase() === 'owner');
-        
-        // 3. Priorité à l'owner, sinon le plus récent
         const finalTeamMember = ownerFollow || allFollows[0];
 
         if (finalTeamMember && finalTeamMember.role_id) {
           roles.push(finalTeamMember.role_id.name);
           companyId = finalTeamMember.company_id._id || finalTeamMember.company_id;
+          permissions = finalTeamMember.role_id.permissions || [];
         }
       }
+    } else if (accountType === "company") {
+      permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
+    } else {
+      permissions = ["like_post", "comment_post"];
+    }
+
+    if (roles.includes("admin")) {
+      permissions = ["all_access", "manage_admin"];
     }
 
     // Générer un nouvel accessToken
@@ -306,6 +311,7 @@ const refresh = async (req, res) => {
         UserInfo: {
           id: account._id,
           roles: roles,
+          permissions: permissions,
           companyId: companyId,
           status: account.Status || "active"
         },
@@ -321,6 +327,7 @@ const refresh = async (req, res) => {
         email: account.email,
         fullName: account.fullName || account.companyName,
         roles: roles,
+        permissions: permissions,
         companyId: companyId,
         status: account.Status
       },

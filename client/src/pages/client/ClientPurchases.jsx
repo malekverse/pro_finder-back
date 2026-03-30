@@ -1,51 +1,23 @@
 import React, { useState } from "react";
-import { 
-  useGetCompanyOrdersQuery, 
-  useUpdateOrderStatusMutation 
-} from "../../redux/features/orderApiSlice";
-import { 
-  useGetCompanyReservationsQuery, 
-  useUpdateReservationStatusMutation 
-} from "../../redux/features/reservationApiSlice";
+import { useGetMyOrdersQuery } from "../../redux/features/orderApiSlice";
+import { useGetMyReservationsQuery } from "../../redux/features/reservationApiSlice";
 import { 
   ShoppingBag, 
   Calendar, 
   Clock, 
-  User, 
   MapPin, 
-  CheckCircle, 
-  XCircle, 
-  Truck, 
   Package,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from "lucide-react";
-import styles from "../../styles/Commandes.module.css";
+import styles from "../../styles/Commandes.module.css"; // Reuse same styles for consistency
 
-const Commandes = () => {
-  const [activeTab, setActiveTab] = useState("orders"); // orders or reservations
+const ClientPurchases = () => {
+  const [activeTab, setActiveTab] = useState("orders");
 
-  const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery();
-  const { data: reservations = [], isLoading: loadingReservations } = useGetCompanyReservationsQuery();
-
-  const [updateOrderStatus] = useUpdateOrderStatusMutation();
-  const [updateReservationStatus] = useUpdateReservationStatusMutation();
-
-  const handleUpdateOrder = async (orderId, status) => {
-    try {
-      await updateOrderStatus({ orderId, status }).unwrap();
-    } catch (err) {
-      console.error("Failed to update order:", err);
-    }
-  };
-
-  const handleUpdateReservation = async (reservationId, status) => {
-    try {
-      await updateReservationStatus({ reservationId, status }).unwrap();
-    } catch (err) {
-      console.error("Failed to update reservation:", err);
-    }
-  };
+  const { data: orders = [], isLoading: loadingOrders } = useGetMyOrdersQuery();
+  const { data: reservations = [], isLoading: loadingReservations } = useGetMyReservationsQuery();
 
   const getStatusBadge = (status) => {
     const s = {
@@ -71,24 +43,23 @@ const Commandes = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleSection}>
-          <h1>Gestion des Ventes</h1>
-          <p>Suivez vos commandes de produits et vos réservations de services</p>
+          <h1>Mes Achats & Réservations</h1>
+          <p>Suivez l'état de vos commandes et vos rendez-vous</p>
         </div>
       </div>
 
-      {/* TABS */}
       <div className={styles.tabs}>
         <button 
           onClick={() => setActiveTab("orders")}
           className={activeTab === "orders" ? styles.tabActive : styles.tab}
         >
-          <ShoppingBag size={18} /> Commandes ({orders.length})
+          <ShoppingBag size={18} /> Mes Commandes ({orders.length})
         </button>
         <button 
           onClick={() => setActiveTab("reservations")}
           className={activeTab === "reservations" ? styles.tabActive : styles.tab}
         >
-          <Calendar size={18} /> Réservations ({reservations.length})
+          <Calendar size={18} /> Mes Réservations ({reservations.length})
         </button>
       </div>
 
@@ -99,7 +70,7 @@ const Commandes = () => {
           ) : orders.length === 0 ? (
             <div className={styles.empty}>
               <Package size={48} />
-              <p>Aucune commande pour le moment.</p>
+              <p>Vous n'avez passé aucune commande.</p>
             </div>
           ) : (
             <div className={styles.grid}>
@@ -112,10 +83,9 @@ const Commandes = () => {
                   
                   <div className={styles.cardBody}>
                     <div className={styles.userSection}>
-                      <User size={16} />
+                      <Building2 size={16} />
                       <div>
-                        <div className={styles.userName}>{order.userId?.fullName}</div>
-                        <div className={styles.userMeta}>{order.userId?.email}</div>
+                        <div className={styles.userName}>{order.companyId?.companyName}</div>
                       </div>
                     </div>
 
@@ -128,32 +98,10 @@ const Commandes = () => {
                       ))}
                     </div>
 
-                    <div className={styles.addressSection}>
-                      <MapPin size={16} />
-                      <div className={styles.address}>
-                        {order.shippingAddress.street}, {order.shippingAddress.city} {order.shippingAddress.zipCode}
-                      </div>
-                    </div>
-
                     <div className={styles.totalRow}>
-                      <span>Total :</span>
+                      <span>Total payé :</span>
                       <span className={styles.totalPrice}>{order.totalPrice} €</span>
                     </div>
-                  </div>
-
-                  <div className={styles.cardFooter}>
-                    {order.status === "pending" && (
-                      <>
-                        <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm}>Confirmer</button>
-                        <button onClick={() => handleUpdateOrder(order._id, "cancelled")} className={styles.btnCancel}>Refuser</button>
-                      </>
-                    )}
-                    {order.status === "confirmed" && (
-                      <button onClick={() => handleUpdateOrder(order._id, "shipped")} className={styles.btnShip}><Truck size={16} /> Marquer comme expédié</button>
-                    )}
-                    {order.status === "shipped" && (
-                      <button onClick={() => handleUpdateOrder(order._id, "delivered")} className={styles.btnDeliver}>Marquer comme livré</button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -167,7 +115,7 @@ const Commandes = () => {
           ) : reservations.length === 0 ? (
             <div className={styles.empty}>
               <Calendar size={48} />
-              <p>Aucune réservation pour le moment.</p>
+              <p>Vous n'avez aucune réservation.</p>
             </div>
           ) : (
             <div className={styles.grid}>
@@ -180,10 +128,9 @@ const Commandes = () => {
 
                   <div className={styles.cardBody}>
                     <div className={styles.userSection}>
-                      <User size={16} />
+                      <Building2 size={16} />
                       <div>
-                        <div className={styles.userName}>{res.userId?.fullName}</div>
-                        <div className={styles.userMeta}>{res.userId?.phone}</div>
+                        <div className={styles.userName}>{res.companyId?.companyName}</div>
                       </div>
                     </div>
 
@@ -202,25 +149,6 @@ const Commandes = () => {
                         <Clock size={14} /> {res.timeSlot}
                       </div>
                     </div>
-
-                    {res.notes && (
-                      <div className={styles.notesBox}>
-                        <AlertCircle size={14} />
-                        <p>{res.notes}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.cardFooter}>
-                    {res.status === "pending" && (
-                      <>
-                        <button onClick={() => handleUpdateReservation(res._id, "confirmed")} className={styles.btnConfirm}>Accepter</button>
-                        <button onClick={() => handleUpdateReservation(res._id, "cancelled")} className={styles.btnCancel}>Décliner</button>
-                      </>
-                    )}
-                    {res.status === "confirmed" && (
-                      <button onClick={() => handleUpdateReservation(res._id, "completed")} className={styles.btnDeliver}>Terminé</button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -232,4 +160,4 @@ const Commandes = () => {
   );
 };
 
-export default Commandes;
+export default ClientPurchases;

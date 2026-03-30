@@ -5,11 +5,19 @@ const mongoose = require("mongoose");
 // suivre une company
 const followCompany = async (req, res) => {
   try {
-      console.log("BODY:", req.body);      // ← ajoute ça
-  console.log("USER:", req.user);
     const { company_id } = req.body;
-    const alreadyFollow = await Follow.findOne({ user_id: req.user, company_id });
-    if (alreadyFollow) return res.status(400).json({ message: "Already following" });
+    
+    // On cherche toutes les relations existantes
+    const follows = await Follow.find({ user_id: req.user, company_id });
+    
+    if (follows.length > 0) {
+      const isBlocked = follows.some(f => f.is_blocked);
+      if (isBlocked) {
+        return res.status(403).json({ message: "Vous avez été bloqué par cette entreprise." });
+      }
+      return res.status(400).json({ message: "Already following" });
+    }
+    
     const follow = await Follow.create({ user_id: req.user, company_id });
     res.status(201).json(follow);
   } catch (err) {
@@ -21,8 +29,16 @@ const followCompany = async (req, res) => {
 const unfollowCompany = async (req, res) => {
   try {
     const { company_id } = req.body;
-    const follow = await Follow.findOneAndDelete({ user_id: req.user, company_id });
+    
+    // Si l'utilisateur est bloqué, on ne supprime pas la relation (pour garder le blocage)
+    const follow = await Follow.findOne({ user_id: req.user, company_id: company_id });
     if (!follow) return res.status(404).json({ message: "Follow not found" });
+
+    if (follow.is_blocked) {
+      return res.status(403).json({ message: "Impossible de se désabonner d'une entreprise qui vous a bloqué." });
+    }
+
+    await Follow.deleteOne({ _id: follow._id });
     res.json({ message: "Unfollowed company" });
   } catch (err) {
     res.status(500).json({ message: "unfollow company failed" });
@@ -32,7 +48,8 @@ const unfollowCompany = async (req, res) => {
 const getFollowerCount = async (req, res) => {
   try {
     const idToUse = req.companyId || req.user;
-    const followers = await Follow.countDocuments({ company_id: idToUse });
+    // On ne compte que les abonnés non bloqués
+    const followers = await Follow.countDocuments({ company_id: idToUse, is_blocked: { $ne: true } });
     res.json({ followers });
   } catch (err) {
     console.error(err);
@@ -46,9 +63,9 @@ const getFollowersStats = async (req, res) => {
     const idToUse = req.companyId || req.user;
     const companyId = new mongoose.Types.ObjectId(idToUse);
 
-    // Stats des followers par mois
+    // Stats des followers par mois (uniquement non bloqués)
     const monthlyStats = await Follow.aggregate([
-      { $match: { company_id: companyId } },
+      { $match: { company_id: companyId, is_blocked: { $ne: true } } },
       { $group: { _id: { $month: "$createdAt" }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } }
     ]);
@@ -60,32 +77,35 @@ const getFollowersStats = async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    // Stats de l'engagement (likes + comments) par mois
+    // Engagement total (Likes & Comments)
+    const posts = await Post.find({ author_id: companyId, authorType: "Company", isDeleted: false });
+    const totalLikes = posts.reduce((sum, p) => sum + (p.likes?.length || 0), 0);
+    const totalComments = posts.reduce((sum, p) => sum + (p.comments?.length || 0), 0);
+
+    // Stats d'engagement par mois
     const monthlyEngagementStats = await Post.aggregate([
       { $match: { author_id: companyId, authorType: "Company", isDeleted: false } },
-      { 
-        $group: { 
-          _id: { $month: "$createdAt" }, 
-          likes: { $sum: { $size: "$likes" } },
-          comments: { $sum: { $size: "$comments" } }
-        } 
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          likes: { $sum: { $size: { $ifNull: ["$likes", []] } } },
+          comments: { $sum: { $size: { $ifNull: ["$comments", []] } } }
+        }
       },
       { $sort: { _id: 1 } }
     ]);
 
-    const totalFollowers = await Follow.countDocuments({ company_id: companyId });
+    const totalFollowers = await Follow.countDocuments({ company_id: companyId, is_blocked: { $ne: true } });
     const teamMembers = await Follow.countDocuments({ company_id: companyId, role_id: { $ne: null } });
     const totalPosts = await Post.countDocuments({ author_id: companyId, authorType: "Company", isDeleted: false });
     
-    // Calcul du total des likes et commentaires
-    const posts = await Post.find({ author_id: companyId, authorType: "Company", isDeleted: false });
-    const totalLikes = posts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
-    const totalComments = posts.reduce((acc, p) => acc + (p.comments?.length || 0), 0);
+    // ...
 
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const newFollowersThisMonth = await Follow.countDocuments({
       company_id: companyId,
+      is_blocked: { $ne: true },
       createdAt: { $gte: firstDayOfMonth }
     });
 
@@ -122,9 +142,9 @@ const getFollowedFeed = async (req, res) => {
       return res.status(401).json({ message: "Utilisateur non identifié" });
     }
 
-    // 1. Companies suivies par l'user
+    // 1. Companies suivies par l'user (uniquement celles où il n'est PAS bloqué)
     const userId = new mongoose.Types.ObjectId(req.user);
-    const follows = await Follow.find({ user_id: userId }).lean();
+    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } }).lean();
     
     // On récupère aussi les IDs des compagnies dont l'utilisateur est membre (owner/manager)
     // pour qu'il voie aussi les posts de sa propre entreprise dans son feed
@@ -210,10 +230,23 @@ const getFollowedFeed = async (req, res) => {
 const checkFollowStatus = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const follow = await Follow.findOne({ user_id: req.user, company_id: companyId });
-    res.json({ isFollowing: !!follow });
+    
+    // On cherche s'il existe une relation, en priorité celle qui est bloquée
+    const follows = await Follow.find({ user_id: req.user, company_id: companyId });
+    
+    if (follows.length === 0) {
+      return res.json({ isFollowing: false, isBlocked: false });
+    }
+
+    const blockedRelation = follows.find(f => f.is_blocked);
+    if (blockedRelation) {
+      return res.json({ isFollowing: false, isBlocked: true });
+    }
+
+    // Si on a plusieurs relations non bloquées (normalement impossible), on en prend une
+    res.json({ isFollowing: true, isBlocked: false });
   } catch (err) {
-    res.status(500).json({ message: "Error checking follow status" });
+    res.status(500).json({ message: "check follow status failed" });
   }
 };
 

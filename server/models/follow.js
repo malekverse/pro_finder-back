@@ -15,11 +15,15 @@ const followSchema = new mongoose.Schema(
   },
 
   role_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Role",
-    default: null
-  }
-},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
+      default: null
+    },
+    is_blocked: {
+      type: Boolean,
+      default: false
+    }
+  },
 { timestamps: true }
 );
 

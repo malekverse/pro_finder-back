@@ -4,6 +4,7 @@ const Activity = require("../models/Activity");
 const Category = require("../models/Category");
 const Service = require("../models/Service");
 const City = require("../models/city");
+const Report = require("../models/Report");
 const bcrypt = require("bcrypt");
 
 const getDashboard = async (req, res) => {
@@ -13,6 +14,7 @@ const getDashboard = async (req, res) => {
     const totalCities = await City.countDocuments();
     const totalCategories = await Category.countDocuments();
     const totalServices = await Service.countDocuments();
+    const totalReports = await Report.countDocuments({ status: "pending" });
     
     const pendingCompanies = await Company.countDocuments({ Status: "pending" });
     const verifiedCompanies = await Company.countDocuments({ Status: "active" });
@@ -48,6 +50,7 @@ const getDashboard = async (req, res) => {
       totalCompanies,
       pendingCompanies,
       verifiedCompanies,
+      totalReports,
       recentPending,
       growthData, // Données réelles pour la courbe
       stats: {
@@ -55,7 +58,8 @@ const getDashboard = async (req, res) => {
         companies: totalCompanies,
         villes: totalCities, 
         categories: totalCategories, 
-        services: totalServices 
+        services: totalServices,
+        reports: totalReports
       }
     });
   } catch (error) {
@@ -198,7 +202,29 @@ const rejectCompany = async (req, res) => {
         res.status(500).json({ message: "Erreur lors du rejet de l'entreprise." });
     }
 };
+const resolveCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const { reason } = req.body;
 
+     const company = await Company.findById(companyId);
+        if (!company) return res.status(404).json({ message: "Company not found" });
+
+        const name = company.companyName;
+        company.Status = "active ";
+        await company.save();
+        
+        await Activity.create({
+          adminId: req.user,
+          action: "Résolution d'entreprise",
+          target: `${name} (Motif: ${reason || 'Non spécifié'})`,
+          status: "success"
+        });
+        
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors du résolution de l'entreprise." });
+    }
+};
 module.exports = {
   getDashboard,
   getActivities,
@@ -207,5 +233,6 @@ module.exports = {
   verifyCompany,
   getPendingCompanies,
   rejectCompany,
-  changePassword
+  changePassword,
+  resolveCompany
 };

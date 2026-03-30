@@ -12,6 +12,11 @@ const RequireRole = ({ allowedRoles, children }) => {
 
   const userRoles = user.roles || [];
 
+  // Si on autorise n'importe quel membre d'une entreprise
+  if (allowedRoles.includes("ANY_TEAM_MEMBER") && user.companyId) {
+    return children;
+  }
+
   const hasRole = userRoles.some(role =>
     allowedRoles.includes(role)
   );

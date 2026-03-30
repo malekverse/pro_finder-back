@@ -35,6 +35,20 @@ export const companyApiSlice = apiSlice.injectEndpoints({
 
     getCompanyFollowers: builder.query({
       query: () => "company/followers",
+      providesTags: ["Followers"],
+    }),
+
+    getBlockedUsers: builder.query({
+      query: () => "company/blocked",
+      providesTags: ["Followers"],
+    }),
+
+    toggleBlockFollower: builder.mutation({
+      query: (followId) => ({
+        url: `company/followers/${followId}/block`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["Followers"],
     }),
 
     getFollowersStats: builder.query({
@@ -115,6 +129,11 @@ export const companyApiSlice = apiSlice.injectEndpoints({
       query: () => "categories/services",
     }),
 
+    getRecommendedCompanies: builder.query({
+      query: () => "company/recommended",
+      providesTags: ["Company"],
+    }),
+
   })
 });
 
@@ -124,6 +143,8 @@ export const {
   useGetCompanyProfileQuery,
   useGetPublicCompanyProfileQuery,
   useGetCompanyFollowersQuery,
+  useGetBlockedUsersQuery,
+  useToggleBlockFollowerMutation,
   useGetFollowerCountQuery,
   useUpdateCompanyProfileMutation,
   useSearchCompaniesQuery,
@@ -137,4 +158,5 @@ export const {
   useGetSubCategoriesQuery,
   useGetServicesBySubQuery,
   useGetServicesQuery,
+  useGetRecommendedCompaniesQuery,
 } = companyApiSlice;
