@@ -32,7 +32,7 @@ const AdminHome = () => {
     { title: "Utilisateurs", value: stats.users, icon: <Users size={22}/>, color: "#6366f1", bg: "#eef2ff", trend: "+8%", path: "/admin/users" },
     { title: "Villes", value: stats.villes, icon: <Globe size={22}/>, color: "#a855f7", bg: "#faf5ff", trend: "Stable", path: "/admin/geography" },
     { title: "Catégories", value: stats.categories, icon: <Tags size={22}/>, color: "#22c55e", bg: "#f0fdf4", trend: "+2", path: "/admin/taxonomy" },
-    { title: "Services", value: stats.services, icon: <Wrench size={22}/>, color: "#f59e0b", bg: "#fffbeb", trend: "+15%", path: "/admin/services" },
+    { title: "Signalements", value: stats.reports || 0, icon: <AlertCircle size={22}/>, color: "#ef4444", bg: "#fef2f2", trend: stats.reports > 0 ? "Urgent" : "OK", path: "/admin/moderation" },
   ];
 
   // Helper pour formater le temps écoulé (ex: "10 min", "2h")

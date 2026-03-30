@@ -3,25 +3,26 @@ const router = express.Router();
 const companyController = require("../controllers/companyController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorizeRoles = require("../middleware/authorizeRoles");
+const checkPermission = require("../middleware/checkPermission");
 const upload = require("../config/cloudinary").upload;
 
-router.get("/followers", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.getCompanyFollowers);
-router.get("/dashboard", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.getDashboard);
+router.get("/followers", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getCompanyFollowers);
+router.get("/dashboard", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getDashboard);
 
-// Tout utilisateur connecté peut voir le profil public d'une entreprise (fil d'actualité)
-router.get("/public/:companyId", verifyJWT, companyController.getPublicCompanyProfile);
-router.get("/profile", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.getCompanyProfile);
+// Tout le monde peut voir le profil public d'une entreprise (visiteurs compris)
+router.get("/public/:companyId", companyController.getPublicCompanyProfile);
+router.get("/profile", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getCompanyProfile);
 router.put(
   "/updateprofile",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner"),
+  authorizeRoles("company", "admin", "owner", "team_member"),
   upload.fields([{ name: "logo", maxCount: 1 }, { name: "cover", maxCount: 1 }]),
   companyController.updateCompanyProfile
 );
-router.get("/users", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.getCompanyUsers);
-router.put("/assign-role", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.assignRoleToUser);
-router.put("/update-role", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.updateRoleToUser);
-router.delete("/delete-role", verifyJWT, authorizeRoles("company", "admin", "owner"), companyController.deleteRoleToUser);
+router.get("/users", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getCompanyUsers);
+router.put("/assign-role", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.assignRoleToUser);
+router.put("/update-role", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.updateRoleToUser);
+router.delete("/delete-role", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.deleteRoleToUser);
 router.get("/my-access/:companyId", verifyJWT, companyController.getUserAccessToCompany);
 router.get("/services/:serviceId", verifyJWT, authorizeRoles("company", "admin"), companyController.getCompaniesByService);
 
@@ -30,5 +31,10 @@ router.get("/suggested", verifyJWT, companyController.getSuggestedCompanies);
 
 // ✅ Route recherche publique
 router.get("/search", companyController.searchCompanies);
+router.get("/recommended", companyController.getRecommendedCompanies);
+
+// Gestion des followers (blocage)
+router.get("/blocked", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getBlockedUsers);
+router.put("/followers/:followId/block", verifyJWT, checkPermission("block_user"), companyController.toggleBlockFollower);
 
 module.exports = router;

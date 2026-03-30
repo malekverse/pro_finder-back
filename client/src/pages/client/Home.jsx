@@ -14,12 +14,13 @@ import {
   useGetCategoriesQuery,
   useGetSubCategoriesQuery,
   useGetServicesBySubQuery,
+  useGetRecommendedCompaniesQuery,
 } from "../../redux/features/company/companyApiSlice";
 import PostCard from "../../components/posts/PostCard";
 import {
   Loader, Users, ChevronDown, LogOut, Bell,
   Home as HomeIcon, User, Newspaper, Building2, MapPin, Search, X,
-  LogIn, UserPlus, Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store
+  LogIn, UserPlus, Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star
 } from "lucide-react";
 
 const SERVER_URL = "http://localhost:5000";
@@ -265,6 +266,47 @@ const SuggestedCompanies = () => {
 
 };
 
+const RecommendedCompanies = () => {
+  const { data: recommended = [], isLoading } = useGetRecommendedCompaniesQuery();
+  const navigate = useNavigate();
+
+  if (isLoading || recommended.length === 0) return null;
+
+  return (
+    <div style={r.section}>
+      <div style={r.header}>
+        <h2 style={r.title}>Sociétés Recommandées</h2>
+        <button style={r.moreBtn} onClick={() => window.scrollTo({ top: 500, behavior: 'smooth' })}>
+          Voir plus <ChevronRight size={14} />
+        </button>
+      </div>
+      <div style={r.grid}>
+        {recommended.map((company) => (
+          <div key={company._id} style={r.card} onClick={() => navigate(`/user/company/${company._id}`)}>
+            <div style={r.logoBox}>
+              {company.logoUrl 
+                ? <img src={toImageUrl(company.logoUrl)} alt="" style={r.logo} />
+                : <Building2 size={24} color="#94a3b8" />
+              }
+            </div>
+            <div style={r.info}>
+              <h4 style={r.companyName}>{company.companyName}</h4>
+              <div style={r.ratingRow}>
+                <div style={r.stars}>
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={12} fill={s <= Math.round(company.averageRating) ? "#fbbf24" : "none"} color={s <= Math.round(company.averageRating) ? "#fbbf24" : "#cbd5e1"} />
+                  ))}
+                </div>
+                <span style={r.cityText}>{company.city || "Tunisie"}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const CompanyFeed = ({ filters }) => {
   const { data: companies = [], isLoading, isFetching } = useSearchCompaniesQuery(filters);
 
@@ -286,31 +328,41 @@ const CompanyFeed = ({ filters }) => {
   );
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
       {companies.map((company) => (
-        <div key={company._id} style={c.card}>
-          <div style={c.header}>
-            <div style={c.logoWrap}>
+        <div key={company._id} style={c.listCard}>
+          <div style={c.listHeader}>
+            <div style={c.listLogoWrap}>
               {company.logoUrl 
-                ? <img src={toImageUrl(company.logoUrl)} alt={company.companyName} style={c.logo} />
-                : <div style={c.logoFallback}><Building2 size={24} color="#94a3b8" /></div>
+                ? <img src={toImageUrl(company.logoUrl)} alt={company.companyName} style={c.listLogo} />
+                : <div style={c.listLogoFallback}><Building2 size={20} color="#94a3b8" /></div>
               }
             </div>
-            <div style={c.titleWrap}>
-              <h3 style={c.name}>{company.companyName}</h3>
-              <p style={c.city}>
-                <MapPin size={12} /> 
-                {company.city 
-                  ? `${company.city}${company.region ? ', ' + company.region : ''}${company.country ? ', ' + company.country : ''}` 
-                  : "Tunisie"}
-              </p>
+            <div style={c.listInfo}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h3 style={c.listName}>{company.companyName}</h3>
+                  <p style={c.listMeta}>
+                    <MapPin size={12} /> {company.city || "Tunisie"}
+                  </p>
+                </div>
+                <div style={c.listRating}>
+                  <div style={c.listStars}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} size={14} fill={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
+                    ))}
+                  </div>
+                  {company.rating?.count > 0 && (
+                    <span style={c.listReviewCount}>{company.rating.count} avis</span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-          <p style={c.desc}>{company.description || "Aucune description disponible pour le moment."}</p>
-          <div style={c.footer}>
-            <Link to={`/user/company/${company._id}`} style={c.viewBtn}>
-              Voir le profil <ChevronRight size={16} />
-            </Link>
+            <div style={c.listActions}>
+              <Link to={`/user/company/${company._id}`} style={c.listBtn}>
+                Voir Profil
+              </Link>
+            </div>
           </div>
         </div>
       ))}
@@ -340,9 +392,11 @@ const Home = () => {
         
         <div style={p.contentWrapper}>
           <main style={p.main}>
+            <RecommendedCompanies />
+            
             <div style={p.feedHeader}>
-              <Building2 size={18} color="#1E3A5F" />
-              <h2 style={p.feedTitle}>Professionnels recommandés</h2>
+              <Search size={18} color="#1E3A5F" />
+              <h2 style={p.feedTitle}>Résultats de Recherche</h2>
             </div>
             <div style={p.feedScroll}>
               <CompanyFeed filters={filters} />
@@ -354,30 +408,6 @@ const Home = () => {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
-};
-
-const c = {
-  card: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '20px',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px'
-  },
-  header: { display: 'flex', alignItems: 'center', gap: '15px' },
-  logoWrap: { width: '56px', height: '56px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, border: '1px solid #f1f5f9' },
-  logo: { width: '100%', height: '100%', objectFit: 'cover' },
-  logoFallback: { width: '100%', height: '100%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  titleWrap: { flex: 1, minWidth: 0 },
-  name: { fontSize: '17px', fontWeight: '800', color: '#1E3A5F', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  city: { fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' },
-  desc: { fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: 0, display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden', height: '63px' },
-  footer: { marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid #f1f5f9' },
-  viewBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '10px', borderRadius: '10px', background: '#f1f5f9', color: '#1E3A5F', fontWeight: '700', fontSize: '14px', textDecoration: 'none', transition: 'all 0.2s' }
 };
 
 const h = {
@@ -443,6 +473,38 @@ const h = {
     fontWeight: '700', fontSize: '14px', textDecoration: 'none',
     border: '2px solid #1E3A5F', transition: 'all 0.2s'
   }
+};
+
+const r = {
+  section: { marginBottom: 40 },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  title: { fontSize: 20, fontWeight: 800, color: '#1e293b', margin: 0 },
+  moreBtn: { display: 'flex', alignItems: 'center', gap: 5, color: '#3b82f6', fontSize: 14, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 },
+  card: { background: '#fff', padding: 15, borderRadius: 16, border: '1px solid #e2e8f0', display: 'flex', gap: 15, alignItems: 'center', cursor: 'pointer', transition: 'transform 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
+  logoBox: { width: 60, height: 60, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' },
+  logo: { width: '100%', height: '100%', objectFit: 'cover' },
+  info: { flex: 1, minWidth: 0 },
+  companyName: { fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  ratingRow: { display: 'flex', alignItems: 'center', gap: 8 },
+  stars: { display: 'flex', gap: 2 },
+  cityText: { fontSize: 12, color: '#64748b', fontWeight: 500 },
+};
+
+const c = {
+  listCard: { background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
+  listHeader: { display: 'flex', padding: 20, gap: 20, alignItems: 'center' },
+  listLogoWrap: { width: 80, height: 80, borderRadius: 14, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', border: '1px solid #f1f5f9' },
+  listLogo: { width: '100%', height: '100%', objectFit: 'cover' },
+  listLogoFallback: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  listInfo: { flex: 1, minWidth: 0 },
+  listName: { fontSize: 18, fontWeight: 800, color: '#1e293b', margin: '0 0 4px' },
+  listMeta: { fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4, margin: 0 },
+  listRating: { textAlign: 'right' },
+  listStars: { display: 'flex', gap: 2, marginBottom: 4, justifyContent: 'flex-end' },
+  listReviewCount: { fontSize: 12, color: '#fbbf24', fontWeight: 700, background: '#fef3c7', padding: '2px 8px', borderRadius: 10 },
+  listActions: { paddingLeft: 20, borderLeft: '1px solid #f1f5f9' },
+  listBtn: { display: 'inline-flex', alignItems: 'center', background: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' },
 };
 
 const p = {

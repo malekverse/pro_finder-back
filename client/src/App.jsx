@@ -15,6 +15,7 @@ import Home from './pages/client/Home';
 import Profile from './pages/client/Profile';
 import UserDashboard from './pages/client/UserDashboard';
 import CompanyPublicProfile from './pages/client/CompanyPublicProfile';
+import ClientPurchases from './pages/client/ClientPurchases';
 
 // Pages Company
 import UserManagement from './pages/company/UserManagement';
@@ -24,6 +25,8 @@ import Produits from './pages/company/Produits';
 import MesServices from './pages/company/MesServices';
 import CompanyProfile from './components/dashboard/Company/CompanyProfile';
 import Publication from './pages/company/Publication';
+import Commandes from './pages/company/Commandes';
+import Reviews from './pages/company/Reviews';
 
 // Pages Admin
 import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
@@ -44,6 +47,8 @@ function App() {
         <Route path="auth/login"  element={<Login />} />
         <Route path="auth/signup" element={<Signup />} />
 
+        <Route path="unauthorized" element={<div>Accès non autorisé</div>} />
+
         {/* CLIENT - Profil */}
         <Route
           path="profile"
@@ -51,6 +56,16 @@ function App() {
             <RequireAuth>
               <RequireRole allowedRoles={[ROLES.USER]}>
                 <Profile />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="purchases"
+          element={
+            <RequireAuth>
+              <RequireRole allowedRoles={[ROLES.USER]}>
+                <ClientPurchases />
               </RequireRole>
             </RequireAuth>
           }
@@ -69,13 +84,7 @@ function App() {
         />
         <Route
           path="user/company/:companyId"
-          element={
-            <RequireAuth>
-              <RequireRole allowedRoles={[ROLES.USER, "admin"]}>
-                <CompanyPublicProfile />
-              </RequireRole>
-            </RequireAuth>
-          }
+          element={<CompanyPublicProfile />}
         />
 
         {/* ADMIN */}
@@ -104,7 +113,7 @@ function App() {
           path="company"
           element={
             <RequireAuth>
-              <RequireRole allowedRoles={[ROLES.COMPANY, "admin", "owner", "assistant_manager", "viewer"]}>
+              <RequireRole allowedRoles={[ROLES.COMPANY, "admin", "ANY_TEAM_MEMBER"]}>
                 <DashboardLayout />
               </RequireRole>
             </RequireAuth>
@@ -112,6 +121,8 @@ function App() {
         >
           <Route index element={<Statistiques />} />
           <Route path="stats"     element={<Statistiques />} />
+          <Route path="commandes" element={<Commandes />} />
+          <Route path="reviews"   element={<Reviews />} />
           <Route path="produits"  element={<Produits />} />
           <Route path="services"  element={<MesServices />} />
           <Route path="users"     element={<UserManagement />} />

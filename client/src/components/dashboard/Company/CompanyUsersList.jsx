@@ -40,7 +40,7 @@ const CompanyUsersList = forwardRef((props, ref) => {
       setLoading(true);
 
       const response = await axios.get(
-        "http://localhost:5000/company/followers",
+        "http://localhost:5000/company/users",
         {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true

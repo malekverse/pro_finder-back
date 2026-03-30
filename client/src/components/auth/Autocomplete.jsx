@@ -17,9 +17,25 @@ const Autocomplete = ({ options, placeholder, label, onSelect, value, getOptionL
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredOptions = options.filter(opt =>
-    labelFn(opt).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+   const filteredOptions = options
+    .filter(opt => labelFn(opt).toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const labelA = labelFn(a).toLowerCase();
+      const labelB = labelFn(b).toLowerCase();
+      const search = searchTerm.toLowerCase();
+
+      // Match exact
+      if (labelA === search && labelB !== search) return -1;
+      if (labelB === search && labelA !== search) return 1;
+
+      // Commence par
+      const startsWithA = labelA.startsWith(search);
+      const startsWithB = labelB.startsWith(search);
+      if (startsWithA && !startsWithB) return -1;
+      if (startsWithB && !startsWithA) return 1;
+
+      return labelA.localeCompare(labelB);
+    });
   const selected = typeof value === 'object' ? value : options.find(opt => opt._id === value);
   const displayText = isOpen ? searchTerm : (selected ? labelFn(selected) : '');
 

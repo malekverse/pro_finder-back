@@ -7,7 +7,7 @@ import { apiSlice } from "../../redux/app/api/apiSlice";
 import {
   LayoutDashboard, LogOut, Camera, User, Phone, Mail,
   Lock, CheckCircle, AlertCircle, ChevronRight, Shield,
-  Pencil, X, Save
+  Pencil, X, Save, Building2, ShoppingBag
 } from "lucide-react";
 
 const SERVER_URL = "http://localhost:5000";
@@ -21,7 +21,8 @@ const Profile = () => {
   const roles = authUser?.roles || [];
   const isOwner = roles.includes("owner");
   const isCompany = roles.includes("company");
-  const canAccessDashboard = isOwner || isCompany;
+  const isTeamMember = authUser?.companyId && roles.length > 1; // User + un autre rôle
+  const canAccessDashboard = isOwner || isCompany || isTeamMember;
 
   const { data: profile, isLoading, refetch } = useGetProfileQuery(undefined, {
     skip: !token,
@@ -328,6 +329,46 @@ const Profile = () => {
                 <LogOut size={15} />
                 Se déconnecter
               </button>
+
+              <button 
+                onClick={() => navigate("/purchases")}
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #1E3A5F',
+                  backgroundColor: 'white',
+                  color: '#1E3A5F',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <ShoppingBag size={16} /> Mes Achats & Réservations
+              </button>
+
+              {canAccessDashboard && (
+                <button 
+                  onClick={() => navigate("/company/stats")}
+                  style={{
+                    marginTop: '10px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#1E3A5F',
+                    color: 'white',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Building2 size={16} /> Accéder à l'Espace Fournisseur
+                </button>
+              )}
             </div>
           </div>
 
