@@ -28,7 +28,8 @@ const DashboardLayout = () => {
   const hasPermission = (perm) => permissions.includes(perm) || permissions.includes("all_access");
 
   const { data: company, refetch } = useGetCompanyProfileQuery(companyId, {
-    skip: !companyId
+    skip: !companyId,
+    pollingInterval: 3000 
   });
 
   const mainMenu = [

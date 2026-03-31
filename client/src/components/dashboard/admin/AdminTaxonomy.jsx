@@ -34,7 +34,11 @@ export default function AdminTaxonomy() {
     } catch (err) { console.error("Erreur de chargement", err); }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadData(); 
+    const interval = setInterval(loadData, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // CETTE FONCTION COMMUNIQUE AVEC TON BACKEND
   const toggleStatus = async (item, type) => {

@@ -5,7 +5,7 @@ const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_BASE_URL,
   credentials: 'include', // pour cookies si nécessaire
 prepareHeaders: (headers, { getState }) => {
-  const token = getState().auth?.accessToken || localStorage.getItem("accessToken");
+  const token = getState().auth?.token || localStorage.getItem("accessToken");
 
   if (token) {
     headers.set("authorization", `Bearer ${token}`);

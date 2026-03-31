@@ -18,8 +18,8 @@ const AdminProfile = () => {
   const navigate  = useNavigate();
 
   const authUser = useSelector((state) => state.auth.account);
-  const { data: profile, isLoading, refetch } = useGetProfileQuery();
-  const { data: realActivities, isLoading: activitiesLoading } = useGetAdminActivitiesQuery();
+  const { data: profile, isLoading, refetch } = useGetProfileQuery(undefined, { pollingInterval: 3000 });
+  const { data: realActivities, isLoading: activitiesLoading } = useGetAdminActivitiesQuery(undefined, { pollingInterval: 3000 });
   const [updateProfile] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangeAdminPasswordMutation();
 

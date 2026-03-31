@@ -25,8 +25,8 @@ import styles from "../../styles/Commandes.module.css";
 const Commandes = () => {
   const [activeTab, setActiveTab] = useState("orders"); // orders or reservations
 
-  const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery();
-  const { data: reservations = [], isLoading: loadingReservations } = useGetCompanyReservationsQuery();
+  const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery(undefined, { pollingInterval: 3000 });
+  const { data: reservations = [], isLoading: loadingReservations } = useGetCompanyReservationsQuery(undefined, { pollingInterval: 3000 });
 
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
   const [updateReservationStatus] = useUpdateReservationStatusMutation();

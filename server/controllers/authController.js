@@ -171,7 +171,12 @@ const login = async (req, res) => {
   let companyId = accountType === "company" ? account._id : null;
   let permissions = [];
 
-  // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie (uniquement s'il n'est pas bloqué)
+  // 1. Permissions de base pour tous les utilisateurs (liker/commenter/partager)
+  if (accountType === "user") {
+    permissions = ["like_post", "comment_post"];
+  }
+
+  // 2. Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie (uniquement s'il n'est pas bloqué)
   if (accountType === "user") {
     const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null }, is_blocked: { $ne: true } })
       .populate("role_id")
@@ -186,21 +191,16 @@ const login = async (req, res) => {
       if (finalTeamMember && finalTeamMember.role_id) {
         roles.push(finalTeamMember.role_id.name);
         companyId = finalTeamMember.company_id._id || finalTeamMember.company_id;
-        permissions = finalTeamMember.role_id.permissions || [];
+        // Fusionner les permissions RBAC avec les permissions de base
+        const rbacPermissions = finalTeamMember.role_id.permissions || [];
+        permissions = [...new Set([...permissions, ...rbacPermissions])];
       }
     }
   } else if (accountType === "company") {
     // Les entreprises ont par défaut toutes les permissions
     permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
-  } else {
-    // Les utilisateurs simples peuvent par exemple liker et commenter
-    permissions = ["like_post", "comment_post"];
   }
 
-  // Si c'est un admin, on lui donne aussi toutes les permissions
-  if (roles.includes("admin")) {
-    permissions = ["all_access", "manage_admin"];
-  }
 
   // Générer accessToken
   const accessToken = jwt.sign(
@@ -277,7 +277,12 @@ const refresh = async (req, res) => {
     let companyId = accountType === "company" ? account._id : null;
     let permissions = [];
 
-    // Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie (uniquement s'il n'est pas bloqué)
+    // 1. Permissions de base pour tous les utilisateurs (liker/commenter/partager)
+    if (accountType === "user") {
+      permissions = ["like_post", "comment_post"];
+    }
+
+    // 2. Si c'est un utilisateur, vérifier s'il a un rôle RBAC dans une compagnie (uniquement s'il n'est pas bloqué)
     if (accountType === "user") {
       const allFollows = await Follow.find({ user_id: account._id, role_id: { $ne: null }, is_blocked: { $ne: true } })
         .populate("role_id")
@@ -292,13 +297,13 @@ const refresh = async (req, res) => {
         if (finalTeamMember && finalTeamMember.role_id) {
           roles.push(finalTeamMember.role_id.name);
           companyId = finalTeamMember.company_id._id || finalTeamMember.company_id;
-          permissions = finalTeamMember.role_id.permissions || [];
+          // Fusionner les permissions RBAC avec les permissions de base
+          const rbacPermissions = finalTeamMember.role_id.permissions || [];
+          permissions = [...new Set([...permissions, ...rbacPermissions])];
         }
       }
     } else if (accountType === "company") {
       permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
-    } else {
-      permissions = ["like_post", "comment_post"];
     }
 
     if (roles.includes("admin")) {

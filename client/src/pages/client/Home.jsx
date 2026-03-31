@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { logOut } from "../../redux/features/auth/authSlice";
 import { apiSlice } from "../../redux/app/api/apiSlice";
-import { useGetPublicFeedQuery } from "../../redux/features/posts/postApiSlice";
 import {
   useGetSuggestedCompaniesQuery,
   useFollowCompanyMutation,
@@ -16,7 +15,6 @@ import {
   useGetServicesBySubQuery,
   useGetRecommendedCompaniesQuery,
 } from "../../redux/features/company/companyApiSlice";
-import PostCard from "../../components/posts/PostCard";
 import {
   Loader, Users, ChevronDown, LogOut, Bell,
   Home as HomeIcon, User, Newspaper, Building2, MapPin, Search, X,
@@ -110,14 +108,14 @@ const CompanySearchBar = ({ onFilterChange }) => {
   const [service, setService] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  const { data: countries = [] } = useGetCountriesQuery();
-  const { data: regionsData } = useGetRegionsQuery(country, { skip: !country });
+  const { data: countries = [] } = useGetCountriesQuery(undefined, { pollingInterval: 3000 });
+  const { data: regionsData } = useGetRegionsQuery(country, { skip: !country, pollingInterval: 3000 });
   const regions = regionsData?.regions || [];
-  const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region });
+  const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region, pollingInterval: 3000 });
 
-  const { data: categories = [] } = useGetCategoriesQuery();
-  const { data: subCategories = [] } = useGetSubCategoriesQuery(category, { skip: !category });
-  const { data: services = [] } = useGetServicesBySubQuery(subCategory, { skip: !subCategory });
+  const { data: categories = [] } = useGetCategoriesQuery(undefined, { pollingInterval: 3000 });
+  const { data: subCategories = [] } = useGetSubCategoriesQuery(category, { skip: !category, pollingInterval: 3000 });
+  const { data: services = [] } = useGetServicesBySubQuery(subCategory, { skip: !subCategory, pollingInterval: 3000 });
 
   const handleSearch = () => {
     setIsSearching(true);
@@ -267,7 +265,7 @@ const SuggestedCompanies = () => {
 };
 
 const RecommendedCompanies = () => {
-  const { data: recommended = [], isLoading } = useGetRecommendedCompaniesQuery();
+  const { data: recommended = [], isLoading } = useGetRecommendedCompaniesQuery(undefined, { pollingInterval:3000 });
   const navigate = useNavigate();
 
   if (isLoading || recommended.length === 0) return null;
@@ -308,7 +306,7 @@ const RecommendedCompanies = () => {
 };
 
 const CompanyFeed = ({ filters }) => {
-  const { data: companies = [], isLoading, isFetching } = useSearchCompaniesQuery(filters);
+  const { data: companies = [], isLoading, isFetching } = useSearchCompaniesQuery(filters, { pollingInterval: 3000 });
 
   if (isLoading) return (
     <div style={f.center}>

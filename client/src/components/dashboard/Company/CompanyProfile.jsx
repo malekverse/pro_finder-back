@@ -18,9 +18,7 @@ const CompanyProfile = () => {
   const authUser = useSelector((state) => state.auth.user);
   const companyId = authUser?.companyId;
 
-  const { data: profileData, isLoading: isFetching } = useGetCompanyProfileQuery(companyId, {
-    skip: !companyId
-  });
+  const { data: profileData, isLoading: isFetching } = useGetCompanyProfileQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
   const [updateProfile, { isLoading: isUpdating }] = useUpdateCompanyProfileMutation();
 
   const [editMode, setEditMode] = useState(false);

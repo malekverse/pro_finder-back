@@ -14,7 +14,7 @@ const AdminDashboardLayout = () => {
   const location = useLocation();
 
   // ✅ Charger le profil admin
-  const { data: profile } = useGetProfileQuery();
+  const { data: profile } = useGetProfileQuery(undefined, { pollingInterval: 3000 });
 
   const adminMenu = [
     { path: "/admin/dashboard", label: "Dashboard",     icon: <LayoutDashboard size={20}/> },

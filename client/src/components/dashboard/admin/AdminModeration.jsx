@@ -12,12 +12,12 @@ const AdminModeration = () => {
     const [activeTab, setActiveTab] = useState("companies"); // 'companies' or 'reports'
     
     // Companies logic
-    const { data: companies = [], isLoading: loadingCompanies, error: errorCompanies, refetch: refetchCompanies } = useGetPendingCompaniesQuery();
+    const { data: companies = [], isLoading: loadingCompanies, error: errorCompanies, refetch: refetchCompanies } = useGetPendingCompaniesQuery(undefined, { pollingInterval: 3000 });
     const [verifyCompany, { isLoading: isVerifying }] = useVerifyCompanyMutation();
     const [rejectCompany, { isLoading: isRejecting }] = useRejectCompanyMutation();
     
     // Reports logic
-    const { data: reports = [], isLoading: loadingReports, error: errorReports, refetch: refetchReports } = useGetAllReportsQuery();
+    const { data: reports = [], isLoading: loadingReports, error: errorReports, refetch: refetchReports } = useGetAllReportsQuery(undefined, { pollingInterval: 3000 });
     const [updateReportStatus, { isLoading: isUpdatingReport }] = useUpdateReportStatusMutation();
     
     const [selectedCompany, setSelectedCompany] = useState(null);

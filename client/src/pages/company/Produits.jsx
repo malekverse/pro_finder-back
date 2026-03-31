@@ -15,7 +15,7 @@ const Produits = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId || user?.id;
 
-  const { data: products = [], isLoading, isError, refetch } = useGetCompanyProductsQuery(companyId, { skip: !companyId });
+  const { data: products = [], isLoading, isError, refetch } = useGetCompanyProductsQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();

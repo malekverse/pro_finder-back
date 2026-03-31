@@ -8,8 +8,8 @@ const Reviews = () => {
   const authUser = useSelector((state) => state.auth.user);
   const companyId = authUser?.companyId;
 
-  const { data: reviews = [], isLoading: loadingReviews } = useGetCompanyReviewsQuery(companyId, { skip: !companyId });
-  const { data: ratingStats } = useGetAverageRatingQuery(companyId, { skip: !companyId });
+  const { data: reviews = [], isLoading: loadingReviews } = useGetCompanyReviewsQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
+  const { data: ratingStats } = useGetAverageRatingQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
 
   if (loadingReviews) {
     return (

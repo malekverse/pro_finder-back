@@ -16,8 +16,8 @@ import styles from "../../styles/Commandes.module.css"; // Reuse same styles for
 const ClientPurchases = () => {
   const [activeTab, setActiveTab] = useState("orders");
 
-  const { data: orders = [], isLoading: loadingOrders } = useGetMyOrdersQuery();
-  const { data: reservations = [], isLoading: loadingReservations } = useGetMyReservationsQuery();
+  const { data: orders = [], isLoading: loadingOrders } = useGetMyOrdersQuery(undefined, { pollingInterval: 3000 });
+  const { data: reservations = [], isLoading: loadingReservations } = useGetMyReservationsQuery(undefined, { pollingInterval: 3000 });
 
   const getStatusBadge = (status) => {
     const s = {

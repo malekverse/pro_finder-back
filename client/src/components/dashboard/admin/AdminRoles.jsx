@@ -37,6 +37,8 @@ const AdminRoles = () => {
 
     useEffect(() => { 
         fetchRoles(); 
+        const interval = setInterval(fetchRoles, 3000);
+        return () => clearInterval(interval);
     }, []);
 
     // Gestion de la modale
