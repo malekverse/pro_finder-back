@@ -42,7 +42,8 @@ const updateProfile = async (req, res) => {
     user.phone = phone ?? user.phone;
 
     if (req.file) {
-      user.avatarUrl = req.file.path; // Cloudinary URL
+      const relativePath = path.relative(path.join(__dirname, '..'), req.file.path);
+      user.avatarUrl = relativePath.replace(/\\/g, '/');
     }
 
     const updatedUser = await user.save();

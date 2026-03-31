@@ -1,3 +1,4 @@
+const path = require("path");
 const Product = require("../models/Product");
 
 // CREATE
@@ -10,7 +11,10 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: "Nom, catégorie et prix sont obligatoires" });
     }
 
-    const images = req.files && req.files.images ? req.files.images.map((f) => f.path) : [];
+    const images = req.files && req.files.images ? req.files.images.map((f) => {
+      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
+      return relativePath.replace(/\\/g, '/');
+    }) : [];
 
     const product = await Product.create({
       name,
@@ -54,7 +58,10 @@ const updateProduct = async (req, res) => {
     }
 
     // New images
-    const newImages = req.files && req.files.images ? req.files.images.map((f) => f.path) : [];
+    const newImages = req.files && req.files.images ? req.files.images.map((f) => {
+      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
+      return relativePath.replace(/\\/g, '/');
+    }) : [];
     
     let finalImages = [];
     if (existingImages) {

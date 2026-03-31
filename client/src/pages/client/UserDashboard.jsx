@@ -439,6 +439,12 @@ const h = {
   brand: { display: "flex", alignItems: "center", gap: 8 },
   brandDot: { width: 10, height: 10, borderRadius: "50%", background: "#1E3A5F" },
   brandName: { fontWeight: 800, fontSize: 18, color: "#1E3A5F", letterSpacing: "-0.5px" },
+  coverImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block"
+  },
   centerArea: {
     display: "flex",
     alignItems: "center",

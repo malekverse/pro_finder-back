@@ -3,7 +3,7 @@ const router = express.Router();
 const productController = require("../controllers/productController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorizeRoles = require("../middleware/authorizeRoles");
-const { upload } = require("../config/cloudinary");
+const upload = require("../config/multer");
 
 // Toutes les routes de gestion exigent d'être authentifié en tant qu'entreprise/admin/owner
 router.post("/create",verifyJWT,authorizeRoles("company", "admin", "owner"),upload.fields([{ name: "images", maxCount: 5 }]),productController.createProduct);

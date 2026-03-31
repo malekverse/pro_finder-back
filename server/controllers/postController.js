@@ -31,8 +31,12 @@ const createPost = async (req, res) => {
     const authorType  = getAuthorType(req.roles);
     const authorId    = (authorType === "Company") ? (req.companyId || req.user) : req.user;
 
-    // Cloudinary : f.path est déjà une URL complète
-    const images = req.files ? req.files.map((f) => f.path) : [];
+    // Local storage: f.path est le chemin relatif sur le disque
+    // On convertit les antislashs en slashs pour les URLs
+    const images = req.files ? req.files.map((f) => {
+      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
+      return relativePath.replace(/\\/g, '/');
+    }) : [];
 
     if (!content && images.length === 0) {
       return res.status(400).json({ message: "Le post doit contenir du texte ou une image" });

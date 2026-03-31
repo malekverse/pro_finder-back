@@ -31,8 +31,14 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads/posts", express.static(path.join(__dirname, "uploads/posts")));
+app.use("/uploads/companies", express.static(path.join(__dirname, "uploads/companies")));
+app.use("/uploads/profiles", express.static(path.join(__dirname, "uploads/profiles")));
+app.use("/uploads/services", express.static(path.join(__dirname, "uploads/services")));
+app.use("/uploads/products", express.static(path.join(__dirname, "uploads/products")));
+
 app.use("/posts", require("./routes/postRoutes"));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/users",require("./routes/usersRoutes"));
 
 app.use("/",require("./routes/root"));

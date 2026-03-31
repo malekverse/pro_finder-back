@@ -11,6 +11,16 @@ import {
   DollarSign, Tag, Info, Layers, Loader2, AlertCircle, Image as ImageIcon
 } from "lucide-react";
 
+const SERVER_URL = "http://localhost:5000";
+
+const toImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("data:") || url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return url;
+  const clean = url.startsWith("/") ? url.slice(1) : url;
+  return `${SERVER_URL}/${clean}`;
+};
+
 const Produits = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId || user?.id;
@@ -208,7 +218,7 @@ const Produits = () => {
             <div key={product._id} style={{ backgroundColor: 'white', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
               <div style={{ height: '200px', backgroundColor: '#f8fafc', position: 'relative' }}>
                 {product.images?.[0] ? (
-                  <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={toImageUrl(product.images[0])} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <Package size={48} color="#e2e8f0" />
@@ -307,7 +317,7 @@ const Produits = () => {
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                   {previewImages.map((url, idx) => (
                     <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden' }}>
-                      <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={toImageUrl(url)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <button type="button" onClick={() => handleRemoveImage(idx)} style={{ position: 'absolute', top: '2px', right: '2px', backgroundColor: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', padding: '2px', cursor: 'pointer' }}><X size={12} /></button>
                     </div>
                   ))}

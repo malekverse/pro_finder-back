@@ -229,6 +229,7 @@ const PostCard = ({ post, onDeleted }) => {
   const resolveImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    if (url.startsWith("data:")) return url;
     const clean = url.startsWith("/") ? url.slice(1) : url;
     return `http://localhost:5000/${clean}`;
   };
@@ -377,7 +378,7 @@ const PostCard = ({ post, onDeleted }) => {
                 }}
                 onClick={() => setLightboxIdx(i)}
               >
-                <img src={img} alt="" style={s.postImg} />
+                <img src={resolveImageUrl(img)} alt="" style={s.postImg} />
                 {i === 3 && imgs.length > 4 && (
                   <div style={s.moreOverlay}>+{imgs.length - 4}</div>
                 )}
@@ -429,10 +430,14 @@ const PostCard = ({ post, onDeleted }) => {
                 {post.comments.map((c) => {
                   const cAuthor = c.commentAuthor;
                   const cName   = cAuthor?.name || "Utilisateur";
-                  const cAvatar = cAuthor?.avatarUrl || null;
-                  const isMe    = c.author_id?.toString() === currentId ||
-                                  c.author_id?.toString() === currentCompany ||
-                                  isAuthor; // owner/auteur du post peut supprimer tous les commentaires
+                  const cAvatar = resolveImageUrl(cAuthor?.avatarUrl);
+                  
+                  // Permissions de suppression : 
+                  // 1. L'auteur du commentaire (isMyComment)
+                  // 2. L'owner/auteur du post (isAuthor) - SEULEMENT s'il a accès à l'entreprise
+                  const isMyComment = c.author_id?.toString() === currentId;
+                  const canDelete = isMyComment || (isAuthor && currentCompany === post.author_id?.toString());
+
                   return (
                     <div key={c._id} style={s.comment}>
                       {cAvatar ? (
@@ -444,8 +449,8 @@ const PostCard = ({ post, onDeleted }) => {
                         <span style={s.commentAuthor}>{cName}</span>
                         <span style={s.commentText}> {c.text}</span>
                       </div>
-                      {isMe && (
-                        <button onClick={() => handleDeleteComment(c._id)} style={s.delCommentBtn}><X size={11} /></button>
+                      {canDelete && (
+                        <button onClick={() => handleDeleteComment(c._id)} style={s.delCommentBtn} title="Supprimer le commentaire"><X size={11} /></button>
                       )}
                     </div>
                   );
