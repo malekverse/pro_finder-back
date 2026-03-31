@@ -13,6 +13,13 @@ updateProfile: builder.mutation({
         body: formData,
       }),
     }),
+    changePassword: builder.mutation({
+      query: (passwords) => ({
+        url: '/profile/change-password',
+        method: 'PUT',
+        body: passwords,
+      }),
+    }),
     changeAdminPassword: builder.mutation({
       query: (passwords) => ({
         url: '/admin/change-password',
@@ -54,6 +61,7 @@ updateProfile: builder.mutation({
 export const { 
   useGetProfileQuery, 
   useUpdateProfileMutation, 
+  useChangePasswordMutation,
   useChangeAdminPasswordMutation,
   useGetAdminDashboardQuery,
   useGetAdminActivitiesQuery,

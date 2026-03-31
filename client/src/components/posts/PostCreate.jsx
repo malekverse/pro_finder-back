@@ -8,7 +8,7 @@ const PostCreate = ({ onSuccess }) => {
   const [createPost, { isLoading }] = useCreatePostMutation();
   const account = useSelector((state) => state.auth.user);
   const companyId = account?.companyId || account?.id;
-  const { data: company } = useGetCompanyProfileQuery(companyId, { skip: !companyId });
+  const { data: company } = useGetCompanyProfileQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
 
   const [content,  setContent]  = useState("");
   const [previews, setPreviews] = useState([]);

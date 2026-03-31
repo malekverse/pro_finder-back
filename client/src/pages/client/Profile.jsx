@@ -1,4 +1,8 @@
-import { useGetProfileQuery, useUpdateProfileMutation } from "../../redux/features/profileApiSlice";
+import { 
+  useGetProfileQuery, 
+  useUpdateProfileMutation, 
+  useChangePasswordMutation 
+} from "../../redux/features/profileApiSlice";
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logOut } from "../../redux/features/auth/authSlice";
@@ -7,7 +11,7 @@ import { apiSlice } from "../../redux/app/api/apiSlice";
 import {
   LayoutDashboard, LogOut, Camera, User, Phone, Mail,
   Lock, CheckCircle, AlertCircle, ChevronRight, Shield,
-  Pencil, X, Save, Building2, ShoppingBag
+  Pencil, X, Save, Building2, ShoppingBag, Key, Loader2
 } from "lucide-react";
 
 const SERVER_URL = "http://localhost:5000";
@@ -26,13 +30,23 @@ const Profile = () => {
 
   const { data: profile, isLoading, refetch } = useGetProfileQuery(undefined, {
     skip: !token,
+    pollingInterval: 3000,
     refetchOnMountOrArgChange: true,
   });
 
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
 
+  const [activeTab, setActiveTab] = useState("profile"); // "profile" or "security"
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", avatarUrl: null });
+  
+  const [securityForm, setSecurityForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
   const [previewUrl, setPreviewUrl] = useState(null);
   const [feedback, setFeedback] = useState({ type: null, message: "" }); // type: "success" | "error"
   const fileInputRef = useRef(null);
@@ -100,6 +114,42 @@ const Profile = () => {
     }
   };
 
+  const handleSecuritySubmit = async (e) => {
+    e.preventDefault();
+    setFeedback({ type: null, message: "" });
+
+    if (securityForm.newPassword !== securityForm.confirmPassword) {
+      setFeedback({ type: "error", message: "Les nouveaux mots de passe ne correspondent pas." });
+      return;
+    }
+
+    // Validation mot de passe (8+ chars, 1 lettre, 1 chiffre, 1 spécial)
+    const pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    if (!pwdRegex.test(securityForm.newPassword)) {
+      setFeedback({ 
+        type: "error", 
+        message: "Le mot de passe doit contenir au moins 8 caractères, une lettre, un chiffre et un caractère spécial." 
+      });
+      return;
+    }
+
+    try {
+      await changePassword({
+        oldPassword: securityForm.oldPassword,
+        newPassword: securityForm.newPassword,
+      }).unwrap();
+
+      setFeedback({ type: "success", message: "Mot de passe mis à jour avec succès !" });
+      setSecurityForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setFeedback({ type: null, message: "" }), 4000);
+    } catch (err) {
+      setFeedback({ 
+        type: "error", 
+        message: err.data?.message || "Erreur lors du changement de mot de passe." 
+      });
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditMode(false);
     setFeedback({ type: null, message: "" });
@@ -142,7 +192,10 @@ const Profile = () => {
       <div style={s.pageGrid}>
         {/* ── Left sidebar ── */}
         <aside style={s.sidebar}>
-          <div style={s.sidebarLogo}>
+          <div 
+            style={{ ...s.sidebarLogo, cursor: 'pointer' }} 
+            onClick={() => navigate("/user/dashboard")}
+          >
             <span style={s.logoMark}>◆</span>
             <span style={s.logoText}>Pro Finder</span>
           </div>
@@ -150,9 +203,26 @@ const Profile = () => {
           <div style={s.sidebarContent}>
             <p style={s.sidebarLabel}>Navigation</p>
 
-            <button style={s.sideNavItem} onClick={() => navigate("/")}>
-              <User size={17} color="#64748b" />
+            <button style={s.sideNavItem} onClick={() => navigate("/user/dashboard")}>
+              <LayoutDashboard size={17} color="#64748b" />
               <span>Fil d'actualité</span>
+            </button>
+
+            <button 
+              style={{ ...s.sideNavItem, background: activeTab === 'profile' ? '#fff' : 'transparent' }} 
+              onClick={() => { setActiveTab('profile'); setEditMode(false); }}
+            >
+              <User size={17} color={activeTab === 'profile' ? "#1E3A5F" : "#64748b"} />
+              <span style={{ color: activeTab === 'profile' ? "#1E3A5F" : "#334155", fontWeight: activeTab === 'profile' ? 700 : 500 }}>Mon Profil</span>
+            </button>
+
+            <button 
+              style={{ ...s.sideNavItem, background: activeTab === 'security' ? '#fff' : 'transparent' }} 
+              onClick={() => { setActiveTab('security'); setEditMode(false); }}
+            >
+              <Shield size={17} color={activeTab === 'security' ? "#1E3A5F" : "#64748b"} />
+              <span style={{ color: activeTab === 'security' ? "#1E3A5F" : "#334155", fontWeight: activeTab === 'security' ? 700 : 500 }}>Sécurité</span>
+              <ChevronRight size={14} color="#cbd5e1" style={{ marginLeft: "auto" }} />
             </button>
 
             {canAccessDashboard && (
@@ -162,12 +232,6 @@ const Profile = () => {
                 <ChevronRight size={14} color="#cbd5e1" style={{ marginLeft: "auto" }} />
               </button>
             )}
-
-            <button style={s.sideNavItem} onClick={() => {}}>
-              <Shield size={17} color="#64748b" />
-              <span>Sécurité</span>
-              <ChevronRight size={14} color="#cbd5e1" style={{ marginLeft: "auto" }} />
-            </button>
           </div>
 
           <button style={s.logoutBtn} onClick={handleLogout}>
@@ -182,19 +246,26 @@ const Profile = () => {
           {/* Page title bar */}
           <div style={s.titleBar}>
             <div>
-              <h1 style={s.pageTitle}>Mon profil</h1>
-              <p style={s.pageSubtitle}>Gérez vos informations personnelles</p>
+              <h1 style={s.pageTitle}>{activeTab === 'profile' ? "Mon profil" : "Sécurité du compte"}</h1>
+              <p style={s.pageSubtitle}>
+                {activeTab === 'profile' 
+                  ? "Gérez vos informations personnelles" 
+                  : "Mettez à jour votre mot de passe pour protéger votre compte"
+                }
+              </p>
             </div>
-            {!editMode ? (
-              <button style={s.editBtn} onClick={() => setEditMode(true)}>
-                <Pencil size={15} />
-                Modifier
-              </button>
-            ) : (
-              <button style={s.cancelBtn} onClick={handleCancelEdit}>
-                <X size={15} />
-                Annuler
-              </button>
+            {activeTab === 'profile' && (
+              !editMode ? (
+                <button style={s.editBtn} onClick={() => setEditMode(true)}>
+                  <Pencil size={15} />
+                  Modifier
+                </button>
+              ) : (
+                <button style={s.cancelBtn} onClick={handleCancelEdit}>
+                  <X size={15} />
+                  Annuler
+                </button>
+              )
             )}
           </div>
 
@@ -209,168 +280,231 @@ const Profile = () => {
             </div>
           )}
 
-          {/* ── Avatar card ── */}
-          <div style={s.avatarCard}>
-            <div style={s.avatarSection}>
-              <div style={s.avatarWrap}>
-                {previewUrl
-                  ? <img src={previewUrl} alt="avatar" style={s.avatar} />
-                  : <div style={s.avatarInitials}>{initials}</div>
-                }
+          {activeTab === 'profile' ? (
+            <>
+              {/* ── Avatar card ── */}
+              <div style={s.avatarCard}>
+                <div style={s.avatarSection}>
+                  <div style={s.avatarWrap}>
+                    {previewUrl
+                      ? <img src={previewUrl} alt="avatar" style={s.avatar} />
+                      : <div style={s.avatarInitials}>{initials}</div>
+                    }
+                    {editMode && (
+                      <button
+                        style={s.avatarEditBtn}
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Changer la photo"
+                      >
+                        <Camera size={14} color="#fff" />
+                      </button>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleAvatarChange}
+                      style={{ display: "none" }}
+                    />
+                  </div>
+
+                  <div style={s.avatarInfo}>
+                    <span style={s.avatarName}>{form.fullName || "Utilisateur"}</span>
+                    <span style={s.avatarEmail}>{form.email}</span>
+                    {roles.length > 0 && (
+                      <div style={s.rolesRow}>
+                        {roles.map((role) => (
+                          <span key={role} style={s.roleChip}>{role}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 {editMode && (
-                  <button
-                    style={s.avatarEditBtn}
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Changer la photo"
-                  >
-                    <Camera size={14} color="#fff" />
-                  </button>
+                  <p style={s.avatarHint}>
+                    <Camera size={12} /> Cliquez sur l'avatar pour changer votre photo
+                  </p>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.webp"
-                  onChange={handleAvatarChange}
-                  style={{ display: "none" }}
-                />
               </div>
 
-              <div style={s.avatarInfo}>
-                <span style={s.avatarName}>{form.fullName || "Utilisateur"}</span>
-                <span style={s.avatarEmail}>{form.email}</span>
-                {roles.length > 0 && (
-                  <div style={s.rolesRow}>
-                    {roles.map((role) => (
-                      <span key={role} style={s.roleChip}>{role}</span>
-                    ))}
+              {/* ── Form card ── */}
+              <form onSubmit={handleSubmit} style={s.formCard}>
+                <h2 style={s.formTitle}>Informations personnelles</h2>
+
+                <div style={s.formGrid}>
+                  {/* Full name */}
+                  <div style={s.fieldGroup}>
+                    <label style={s.label}>
+                      <User size={13} /> Nom complet
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={form.fullName}
+                        onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                        placeholder="Ex: Jean Dupont"
+                        style={s.input}
+                      />
+                    ) : (
+                      <div style={s.readonlyValue}>{form.fullName || <span style={s.empty}>Non renseigné</span>}</div>
+                    )}
+                  </div>
+
+                  {/* Email — always readonly */}
+                  <div style={s.fieldGroup}>
+                    <label style={s.label}>
+                      <Mail size={13} /> Email
+                      <span style={s.lockedBadge}><Lock size={10} /> Non modifiable</span>
+                    </label>
+                    <div style={{ ...s.readonlyValue, ...s.readonlyLocked }}>{form.email}</div>
+                  </div>
+
+                  {/* Phone */}
+                  <div style={s.fieldGroup}>
+                    <label style={s.label}>
+                      <Phone size={13} /> Téléphone
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="tel"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        placeholder="+216 00 000 000"
+                        style={s.input}
+                      />
+                    ) : (
+                      <div style={s.readonlyValue}>{form.phone || <span style={s.empty}>Non renseigné</span>}</div>
+                    )}
+                  </div>
+                </div>
+
+                {editMode && (
+                  <div style={s.formActions}>
+                    <button type="submit" style={s.saveBtn} disabled={isUpdating}>
+                      {isUpdating ? (
+                        <><div style={s.btnSpinner} /> Enregistrement...</>
+                      ) : (
+                        <><Save size={15} /> Enregistrer les modifications</>
+                      )}
+                    </button>
                   </div>
                 )}
-              </div>
-            </div>
-            {editMode && (
-              <p style={s.avatarHint}>
-                <Camera size={12} /> Cliquez sur l'avatar pour changer votre photo
+              </form>
+            </>
+          ) : (
+            /* ── Security Tab Content ── */
+            <div style={s.formCard}>
+              <h2 style={s.formTitle}>Changer le mot de passe</h2>
+              <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+                Assurez-vous d'utiliser un mot de passe fort pour protéger votre compte.
               </p>
-            )}
-          </div>
 
-          {/* ── Form card ── */}
-          <form onSubmit={handleSubmit} style={s.formCard}>
-            <h2 style={s.formTitle}>Informations personnelles</h2>
-
-            <div style={s.formGrid}>
-              {/* Full name */}
-              <div style={s.fieldGroup}>
-                <label style={s.label}>
-                  <User size={13} /> Nom complet
-                </label>
-                {editMode ? (
+              <form onSubmit={handleSecuritySubmit}>
+                <div style={{ ...s.fieldGroup, marginBottom: '1.5rem' }}>
+                  <label style={s.label}>Mot de passe actuel</label>
                   <input
-                    type="text"
-                    value={form.fullName}
-                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                    placeholder="Ex: Jean Dupont"
+                    type="password"
+                    value={securityForm.oldPassword}
+                    onChange={(e) => setSecurityForm({ ...securityForm, oldPassword: e.target.value })}
+                    required
                     style={s.input}
+                    placeholder="Entrez votre mot de passe actuel"
                   />
-                ) : (
-                  <div style={s.readonlyValue}>{form.fullName || <span style={s.empty}>Non renseigné</span>}</div>
-                )}
-              </div>
+                </div>
 
-              {/* Email — always readonly */}
-              <div style={s.fieldGroup}>
-                <label style={s.label}>
-                  <Mail size={13} /> Email
-                  <span style={s.lockedBadge}><Lock size={10} /> Non modifiable</span>
-                </label>
-                <div style={{ ...s.readonlyValue, ...s.readonlyLocked }}>{form.email}</div>
-              </div>
-
-              {/* Phone */}
-              <div style={s.fieldGroup}>
-                <label style={s.label}>
-                  <Phone size={13} /> Téléphone
-                </label>
-                {editMode ? (
+                <div style={{ ...s.fieldGroup, marginBottom: '1.5rem' }}>
+                  <label style={s.label}>Nouveau mot de passe</label>
                   <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="+216 00 000 000"
+                    type="password"
+                    value={securityForm.newPassword}
+                    onChange={(e) => setSecurityForm({ ...securityForm, newPassword: e.target.value })}
+                    required
                     style={s.input}
+                    placeholder="8 caractères minimum"
                   />
-                ) : (
-                  <div style={s.readonlyValue}>{form.phone || <span style={s.empty}>Non renseigné</span>}</div>
-                )}
-              </div>
-            </div>
+                  <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', lineHeight: '1.4' }}>
+                    Condition : 8 caractères minimum, incluant au moins une lettre, un chiffre et un symbole spécial (@$!%*#?&).
+                  </p>
+                </div>
 
-            {editMode && (
-              <div style={s.formActions}>
-                <button type="submit" style={s.saveBtn} disabled={isUpdating}>
-                  {isUpdating ? (
-                    <><div style={s.btnSpinner} /> Enregistrement...</>
+                <div style={{ ...s.fieldGroup, marginBottom: '2rem' }}>
+                  <label style={s.label}>Confirmer le nouveau mot de passe</label>
+                  <input
+                    type="password"
+                    value={securityForm.confirmPassword}
+                    onChange={(e) => setSecurityForm({ ...securityForm, confirmPassword: e.target.value })}
+                    required
+                    style={s.input}
+                    placeholder="Répétez le nouveau mot de passe"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  style={{ ...s.saveBtn, width: '100%', justifyContent: 'center' }} 
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? (
+                    <><Loader2 className="animate-spin" size={18} /> Mise à jour...</>
                   ) : (
-                    <><Save size={15} /> Enregistrer les modifications</>
+                    <><Key size={16} /> Mettre à jour le mot de passe</>
                   )}
                 </button>
-              </div>
-            )}
-          </form>
-
-          {/* ── Danger zone ── */}
-          <div style={s.dangerZone}>
-            <div style={s.dangerRow}>
-              <div>
-                <p style={s.dangerTitle}>Déconnexion</p>
-                <p style={s.dangerDesc}>Quitter votre session sur cet appareil.</p>
-              </div>
-              <button style={s.dangerBtn} onClick={handleLogout}>
-                <LogOut size={15} />
-                Se déconnecter
-              </button>
-
-              <button 
-                onClick={() => navigate("/purchases")}
-                style={{
-                  marginTop: '10px',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: '1px solid #1E3A5F',
-                  backgroundColor: 'white',
-                  color: '#1E3A5F',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <ShoppingBag size={16} /> Mes Achats & Réservations
-              </button>
-
-              {canAccessDashboard && (
-                <button 
-                  onClick={() => navigate("/company/stats")}
-                  style={{
-                    marginTop: '10px',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#1E3A5F',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Building2 size={16} /> Accéder à l'Espace Fournisseur
-                </button>
-              )}
+              </form>
             </div>
-          </div>
+          )}
+
+          {/* ── Purchases & Company Dashboard buttons (Only visible on Profile tab for better UX) ── */}
+          {activeTab === 'profile' && (
+            <div style={s.dangerZone}>
+              <div style={s.dangerRow}>
+                <div>
+                  <p style={s.dangerTitle}>Accès rapides</p>
+                  <p style={s.dangerDesc}>Gérez vos transactions ou votre entreprise.</p>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={() => navigate("/purchases")}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #1E3A5F',
+                      backgroundColor: 'white',
+                      color: '#1E3A5F',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <ShoppingBag size={16} /> Mes Achats
+                  </button>
+
+                  {canAccessDashboard && (
+                    <button 
+                      onClick={() => navigate("/company/stats")}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        backgroundColor: '#1E3A5F',
+                        color: 'white',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <Building2 size={16} /> Dashboard Pro
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
         </main>
       </div>

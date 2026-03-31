@@ -7,7 +7,7 @@ import styles from "../../../styles/dashboardAdmin.module.css";
 
 const AdminHome = () => {
   const navigate = useNavigate();
-  const { data: dashboardData, isLoading } = useGetAdminDashboardQuery();
+  const { data: dashboardData, isLoading } = useGetAdminDashboardQuery(undefined, { pollingInterval: 3000 });
 
   // Stats du dashboard (réelles si chargées, sinon fallback)
   const stats = dashboardData?.stats || { 

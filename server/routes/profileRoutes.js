@@ -8,5 +8,6 @@ router.use(verifyJWT);
 
 router.get("/", profileController.getProfile);
 router.put("/", upload.single('avatar'), profileController.updateProfile);
+router.put("/change-password", profileController.changePassword);
 
 module.exports = router;

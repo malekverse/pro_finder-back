@@ -22,7 +22,11 @@ const AdminGeography = () => {
 
   const API = "http://localhost:5000/localisation";
 
-  useEffect(() => { refreshData(); }, []);
+  useEffect(() => { 
+    refreshData(); 
+    const interval = setInterval(refreshData, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const refreshData = async () => {
     try {

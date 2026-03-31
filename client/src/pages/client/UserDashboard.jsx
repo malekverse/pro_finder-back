@@ -31,7 +31,7 @@ const toImageUrl = (url) => {
 };
 
 // Header
-const Header = ({ user, onProfileClick, onLogout, onCompanyClick }) => {
+const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick }) => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const initials = user?.fullName
@@ -40,18 +40,29 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick }) => {
 
   return (
     <div style={h.bar}>
-      <div style={h.brand}>
+      <div style={h.brand} onClick={() => navigate("/user/dashboard")} style ={{ ...h.brand, cursor: 'pointer' }}>
         <div style={h.brandDot} />
         <span style={h.brandName}>ProFinder</span>
       </div>
-      <div style={h.nav}>
-        <button style={{ ...h.navBtn, color: "#1E3A5F", borderBottom: "2px solid #1E3A5F" }}>
-          <Home size={18} /><span style={h.navLabel}>Accueil</span>
-        </button>
-        <button style={h.navBtn}>
-          <Bell size={18} /><span style={h.navLabel}>Notifications</span>
-        </button>
+
+      <div style={h.centerArea}>
+        <div style={h.searchWrapper}>
+          <CompanySearchBar />
+        </div>
+        <div style={h.nav}>
+          <button 
+            style={{ ...h.navBtn, color: "#1E3A5F", borderBottom: "2px solid #1E3A5F" }}
+            onClick={onHomeClick}
+          >
+            <Home size={18} /><span style={h.navLabel}>Accueil</span>
+          </button>
+          <button style={h.navBtn}>
+            <Bell size={18} /><span style={h.navLabel}>Notifications</span>
+          </button>
+        </div>
+        
       </div>
+
       <div style={{ position: "relative" }}>
         <button style={h.profileBtn} onClick={() => setMenuOpen((v) => !v)}>
           {user?.avatarUrl
@@ -124,6 +135,7 @@ const CompanySearchBar = () => {
 
  const { data: results = [], isFetching } = useSearchCompaniesQuery({ q: debouncedQ }, {
     skip: !debouncedQ,
+    pollingInterval: 10000
   });
 
 
@@ -186,7 +198,7 @@ const CompanySearchBar = () => {
 // Suggestions sidebar droite
 const SuggestedCompanies = () => {
   const navigate = useNavigate();
-  const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 5000 });
+  const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 10000 });
   const [followCompany, { isLoading: following }] = useFollowCompanyMutation();
   const [followedIds, setFollowedIds] = useState([]);
 
@@ -255,7 +267,7 @@ const SuggestedCompanies = () => {
 // Feed
 const Feed = () => {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isFetching, refetch } = useGetFollowedFeedQuery({ page, limit: 10 }, { pollingInterval: 5000 });
+  const { data, isLoading, isFetching, refetch } = useGetFollowedFeedQuery({ page, limit: 10 }, { pollingInterval: 3000 });
   const posts = data?.posts || [];
   const totalPages = data?.totalPages || 1;
 
@@ -313,11 +325,13 @@ const UserDashboard = () => {
         onProfileClick={() => navigate("/profile")} 
         onLogout={handleLogout}
         onCompanyClick={hasCompanyAccess ? () => navigate("/company/stats") : null}
+        onHomeClick={() => {
+          setActiveTab("feed");
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
       <div style={p.layout}>
         <main style={p.main}>
-          <div style={p.searchWrap}><CompanySearchBar /></div>
-          
           <div style={p.tabs}>
             <button 
               onClick={() => setActiveTab("feed")} 
@@ -355,7 +369,7 @@ const UserDashboard = () => {
 // All Services Browser
 const AllServices = () => {
   const navigate = useNavigate();
-  const { data: services = [], isLoading } = useGetAllServicesQuery();
+  const { data: services = [], isLoading } = useGetAllServicesQuery(undefined, { pollingInterval: 3000 });
 
   if (isLoading) return <div style={f.center}><Loader size={28} className="animate-spin" color="#1E3A5F" /></div>;
 
@@ -385,7 +399,7 @@ const AllServices = () => {
 // All Products Browser
 const AllProducts = () => {
   const navigate = useNavigate();
-  const { data: products = [], isLoading } = useGetAllProductsQuery();
+  const { data: products = [], isLoading } = useGetAllProductsQuery(undefined, { pollingInterval: 3000 });
 
   if (isLoading) return <div style={f.center}><Loader size={28} className="animate-spin" color="#1E3A5F" /></div>;
 
@@ -425,6 +439,19 @@ const h = {
   brand: { display: "flex", alignItems: "center", gap: 8 },
   brandDot: { width: 10, height: 10, borderRadius: "50%", background: "#1E3A5F" },
   brandName: { fontWeight: 800, fontSize: 18, color: "#1E3A5F", letterSpacing: "-0.5px" },
+  centerArea: {
+    display: "flex",
+    alignItems: "center",
+    gap: 32,
+    flex: 1,
+    justifyContent: "center",
+    marginLeft: 40,
+    marginRight: 40,
+  },
+  searchWrapper: {
+    width: "100%",
+    maxWidth: 400,
+  },
   nav: { display: "flex", gap: 4 },
   navBtn: {
     display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
@@ -473,7 +500,6 @@ const p = {
     display: "flex", gap: 24, alignItems: "flex-start",
   },
   main: { flex: 1, minWidth: 0 },
-  searchWrap: { marginBottom: 16 },
   tabs: {
     display: "flex",
     gap: "8px",

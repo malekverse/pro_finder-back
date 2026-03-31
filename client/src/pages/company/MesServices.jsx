@@ -15,7 +15,7 @@ const MesServices = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId || user?.id;
 
-  const { data: services = [], isLoading, isError, refetch } = useGetCompanyServicesQuery(companyId, { skip: !companyId });
+  const { data: services = [], isLoading, isError, refetch } = useGetCompanyServicesQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
   const [createService, { isLoading: isCreating }] = useCreateServiceMutation();
   const [updateService, { isLoading: isUpdating }] = useUpdateServiceMutation();
   const [deleteService] = useDeleteServiceMutation();

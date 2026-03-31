@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGetFollowersStatsQuery } from "../../redux/features/company/companyApiSlice";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, 
@@ -10,7 +10,8 @@ import styles from "../../styles/Dashboard.module.css";
 const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 
 const Statistiques = () => {
-  const { data: stats, isLoading } = useGetFollowersStatsQuery();
+  const [period, setPeriod] = useState("annual");
+  const { data: stats, isLoading } = useGetFollowersStatsQuery(period, { pollingInterval: 3000 });
 
   if (isLoading) {
     return (
@@ -21,39 +22,44 @@ const Statistiques = () => {
   }
 
   // Préparation des données du graphique
-  const monthlyStats = Array(12).fill(0);
-  const monthlyPostStats = Array(12).fill(0);
-  const monthlyEngagement = Array(12).fill(0);
+  const isMonthly = period === "monthly";
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dataLength = isMonthly ? daysInMonth : 12;
+
+  const aggregatedStats = Array(dataLength).fill(0);
+  const aggregatedPostStats = Array(dataLength).fill(0);
+  const aggregatedEngagement = Array(dataLength).fill(0);
 
   if (stats?.monthlyStats) {
     stats.monthlyStats.forEach(({ _id, count }) => {
-      if (_id >= 1 && _id <= 12) {
-        monthlyStats[_id - 1] = count;
+      if (_id >= 1 && _id <= dataLength) {
+        aggregatedStats[_id - 1] = count;
       }
     });
   }
 
   if (stats?.monthlyPostStats) {
     stats.monthlyPostStats.forEach(({ _id, count }) => {
-      if (_id >= 1 && _id <= 12) {
-        monthlyPostStats[_id - 1] = count;
+      if (_id >= 1 && _id <= dataLength) {
+        aggregatedPostStats[_id - 1] = count;
       }
     });
   }
 
   if (stats?.monthlyEngagementStats) {
     stats.monthlyEngagementStats.forEach(({ _id, likes, comments }) => {
-      if (_id >= 1 && _id <= 12) {
-        monthlyEngagement[_id - 1] = likes + comments;
+      if (_id >= 1 && _id <= dataLength) {
+        aggregatedEngagement[_id - 1] = likes + comments;
       }
     });
   }
 
-  const chartData = monthlyStats.map((count, index) => ({
-    month: monthNames[index],
+  const chartData = aggregatedStats.map((count, index) => ({
+    label: isMonthly ? `${index + 1}` : monthNames[index],
     followers: count,
-    posts: monthlyPostStats[index],
-    engagement: monthlyEngagement[index]
+    posts: aggregatedPostStats[index],
+    engagement: aggregatedEngagement[index]
   }));
 
   const kpis = [
@@ -82,7 +88,7 @@ const Statistiques = () => {
       trend: "+24%" 
     },
     { 
-      label: "Nouveaux (Mois)", 
+      label: `Nouveaux (${isMonthly ? 'Mois' : 'Année'})`, 
       value: `+${stats?.newFollowersThisMonth || 0}`, 
       icon: <UserPlus size={24} />, 
       color: "#10b981", 
@@ -90,6 +96,18 @@ const Statistiques = () => {
       trend: "En hausse" 
     },
   ];
+
+  const btnStyle = (active) => ({
+    padding: '8px 16px', 
+    borderRadius: '8px', 
+    border: 'none', 
+    background: active ? '#24416b' : 'transparent', 
+    color: active ? 'white' : '#64748b', 
+    fontWeight: '600', 
+    fontSize: '13px', 
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  });
 
   return (
     <div style={{ padding: "40px", backgroundColor: "#f8fafc", minHeight: "100%" }}>
@@ -103,8 +121,18 @@ const Statistiques = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', background: 'white', padding: '8px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-           <button style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#24416b', color: 'white', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}>Mensuel</button>
-           <button style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: 'transparent', color: '#64748b', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}>Annuel</button>
+           <button 
+             style={btnStyle(period === "monthly")} 
+             onClick={() => setPeriod("monthly")}
+           >
+             Mensuel
+           </button>
+           <button 
+             style={btnStyle(period === "annual")} 
+             onClick={() => setPeriod("annual")}
+           >
+             Annuel
+           </button>
         </div>
       </div>
 
@@ -165,7 +193,7 @@ const Statistiques = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
             <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#1e293b", margin: 0 }}>
-              Évolution de l'Audience
+              Évolution des abonnés ({isMonthly ? 'Ce mois' : 'Cette année'})
             </h3>
             <div style={{ display: 'flex', gap: '15px' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -183,9 +211,10 @@ const Statistiques = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} />
               <Tooltip 
+                labelFormatter={(value) => isMonthly ? `Jour ${value}` : value}
                 contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '15px' }}
               />
               <Area 
@@ -210,7 +239,7 @@ const Statistiques = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
             <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#1e293b", margin: 0 }}>
-              Engagement du Contenu
+              Engagement du Contenu ({isMonthly ? 'Ce mois' : 'Cette année'})
             </h3>
             <div style={{ display: 'flex', gap: '15px' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -222,9 +251,10 @@ const Statistiques = () => {
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} />
               <Tooltip 
+                labelFormatter={(value) => isMonthly ? `Jour ${value}` : value}
                 contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '15px' }}
                 cursor={{ fill: '#f8fafc' }}
               />

@@ -4,7 +4,7 @@ import PostCard   from "../../components/posts/PostCard";
 import { Loader, Newspaper } from "lucide-react";
 
 const Publication = () => {
-  const { data: posts, isLoading, refetch } = useGetMyPostsQuery();
+  const { data: posts, isLoading, refetch } = useGetMyPostsQuery(undefined, { pollingInterval: 3000 });
 
   const safePosts = Array.isArray(posts) ? posts : [];
 

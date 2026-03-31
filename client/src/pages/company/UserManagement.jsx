@@ -21,8 +21,8 @@ const UserManagement = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const listRef = useRef();
 
-  const { data: followers = [], refetch: refetchFollowers } = useGetCompanyFollowersQuery();
-  const { data: blockedUsers = [], refetch: refetchBlocked } = useGetBlockedUsersQuery();
+  const { data: followers = [], refetch: refetchFollowers } = useGetCompanyFollowersQuery(undefined, { pollingInterval: 3000 });
+  const { data: blockedUsers = [], refetch: refetchBlocked } = useGetBlockedUsersQuery(undefined, { pollingInterval: 3000 });
   const [toggleBlock, { isLoading: isBlocking }] = useToggleBlockFollowerMutation();
   const [roles, setRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");

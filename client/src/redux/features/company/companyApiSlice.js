@@ -52,7 +52,7 @@ export const companyApiSlice = apiSlice.injectEndpoints({
     }),
 
     getFollowersStats: builder.query({
-      query: () => "followers/followers-stats"
+      query: (period = "annual") => `followers/followers-stats?period=${period}`
     }),
 
     getFollowerCount: builder.query({

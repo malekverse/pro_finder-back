@@ -45,13 +45,13 @@ const CompanyPublicProfile = () => {
 
   const user = useSelector((state) => state.auth.user);
 
-  // ✅ Vérifier le statut de suivi depuis le backend (polling 5s)
+
   const {
     data: followStatusData,
     refetch: refetchFollowStatus,
   } = useCheckFollowStatusQuery(companyId, {
     skip: !companyId || !user,
-    pollingInterval: 5000,
+    pollingInterval: 3000,
   });
 
   const isFollowed = followStatusData?.isFollowing ?? false;
@@ -89,13 +89,13 @@ const CompanyPublicProfile = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [createReview, { isLoading: submittingReview }] = useCreateReviewMutation();
-  const { data: reviews = [], isLoading: loadingReviews } = useGetCompanyReviewsQuery(companyId, { skip: !companyId });
-  const { data: ratingStats } = useGetAverageRatingQuery(companyId, { skip: !companyId });
+  const { data: reviews = [], isLoading: loadingReviews } = useGetCompanyReviewsQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
+  const { data: ratingStats } = useGetAverageRatingQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
 
   const { data: company, isLoading: loadingProfile, refetch: refetchProfile } =
     useGetPublicCompanyProfileQuery(companyId, {
       skip: !companyId,
-      pollingInterval: 5000,
+      pollingInterval: 3000,
     });
 
   const {
@@ -105,11 +105,11 @@ const CompanyPublicProfile = () => {
     refetch: refetchPosts,
   } = useGetPostsByCompanyQuery(
     { companyId, page, limit: 10 },
-    { skip: !companyId, pollingInterval: 5000 }
+    { skip: !companyId, pollingInterval: 3000 }
   );
 
-  const { data: products = [], isLoading: loadingProducts } = useGetCompanyProductsQuery(companyId, { skip: !companyId });
-  const { data: companyServices = [], isLoading: loadingServices } = useGetCompanyServicesQuery(companyId, { skip: !companyId });
+  const { data: products = [], isLoading: loadingProducts } = useGetCompanyProductsQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
+  const { data: companyServices = [], isLoading: loadingServices } = useGetCompanyServicesQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
 
   // ✅ Auto-select tab and item if redirected from dashboard
   useEffect(() => {
@@ -150,7 +150,7 @@ const CompanyPublicProfile = () => {
       return;
     }
     try {
-      await followCompany({ company_id: companyId }).unwrap();
+      await followCompany({ companyId, isFollowed }).unwrap();
       // Refetch immédiat après l'action
       refetchFollowStatus();
       refetchProfile();
