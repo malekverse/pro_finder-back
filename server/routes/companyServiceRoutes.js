@@ -3,7 +3,7 @@ const router = express.Router();
 const companyServiceController = require("../controllers/companyServiceController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorizeRoles = require("../middleware/authorizeRoles");
-const { upload } = require("../config/cloudinary");
+const upload = require("../config/multer");
 
 // Toutes les routes de gestion exigent d'être authentifié en tant qu'entreprise/admin/owner
 router.post(

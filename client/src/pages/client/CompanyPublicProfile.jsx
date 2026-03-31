@@ -297,7 +297,7 @@ const CompanyPublicProfile = () => {
         </button>
 
         <div style={s.card}>
-          <div style={s.cover}>
+          <div style={{ ...s.cover, height: cover ? 200 : 80, background: cover ? 'transparent' : "linear-gradient(120deg, #dbeafe, #e2e8f0)" }}>
             {cover ? <img src={cover} alt="cover" style={s.coverImg} /> : null}
           </div>
 

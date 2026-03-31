@@ -17,7 +17,7 @@ const companyServiceSchema = new mongoose.Schema(
       min: 0,
     },
     duration: {
-      type: Number, // en minutes
+      type: Number,
       required: true,
       min: 0,
     },

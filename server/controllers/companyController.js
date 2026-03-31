@@ -182,14 +182,16 @@ const updateCompanyProfile = async (req, res) => {
 
   // Gestion logo
   if (req.files?.logo) {
-    if (company.logoUrl && fs.existsSync(company.logoUrl)) fs.unlinkSync(company.logoUrl);
-  company.logoUrl = req.files.logo[0].path; // Cloudinary URL
+    const file = req.files.logo[0];
+    const relativePath = path.relative(path.join(__dirname, '..'), file.path);
+    company.logoUrl = relativePath.replace(/\\/g, '/');
   }
 
   // Gestion cover
   if (req.files?.cover) {
-    if (company.coverUrl && fs.existsSync(company.coverUrl)) fs.unlinkSync(company.coverUrl);
-    company.coverUrl = req.files.cover[0].path; // Cloudinary URL
+    const file = req.files.cover[0];
+    const relativePath = path.relative(path.join(__dirname, '..'), file.path);
+    company.coverUrl = relativePath.replace(/\\/g, '/');
   }
 
   const updatedCompany = await company.save();

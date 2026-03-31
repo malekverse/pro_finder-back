@@ -4,7 +4,7 @@ const companyController = require("../controllers/companyController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorizeRoles = require("../middleware/authorizeRoles");
 const checkPermission = require("../middleware/checkPermission");
-const upload = require("../config/cloudinary").upload;
+const upload = require("../config/multer");
 
 router.get("/followers", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getCompanyFollowers);
 router.get("/dashboard", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getDashboard);

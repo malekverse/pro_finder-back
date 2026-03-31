@@ -1,3 +1,4 @@
+const path = require("path");
 const CompanyService = require("../models/CompanyService");
 
 // CREATE
@@ -10,7 +11,10 @@ const createService = async (req, res) => {
       return res.status(400).json({ message: "Nom, prix et durée sont obligatoires" });
     }
 
-    const images = req.files && req.files.images ? req.files.images.map((f) => f.path) : [];
+    const images = req.files && req.files.images ? req.files.images.map((f) => {
+      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
+      return relativePath.replace(/\\/g, '/');
+    }) : [];
 
     const service = await CompanyService.create({
       name,
@@ -53,7 +57,10 @@ const updateService = async (req, res) => {
     }
 
     // New images
-    const newImages = req.files && req.files.images ? req.files.images.map((f) => f.path) : [];
+    const newImages = req.files && req.files.images ? req.files.images.map((f) => {
+      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
+      return relativePath.replace(/\\/g, '/');
+    }) : [];
     
     let finalImages = [];
     if (existingImages) {

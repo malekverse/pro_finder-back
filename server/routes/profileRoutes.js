@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const profileController = require("../controllers/profileController");
 const verifyJWT = require("../middleware/verifyJWT");
-const upload = require("../config/cloudinary").upload;
+const upload = require("../config/multer");
 
 router.use(verifyJWT);
 

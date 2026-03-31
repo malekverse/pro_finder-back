@@ -3,7 +3,7 @@ const router     = express.Router();
 const postController = require("../controllers/postController");
 const verifyJWT  = require("../middleware/verifyJWT");
 const checkPermission = require("../middleware/checkPermission");
-const { upload } = require("../config/cloudinary");
+const upload = require("../config/multer");
 
 // ✅ Toutes les routes nécessitent un token
 router.use(verifyJWT);
