@@ -1,5 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const Notification = require("../models/Notification");
+const Company = require("../models/company");
 
 // Client: Create an order
 exports.createOrder = async (req, res) => {
@@ -17,6 +19,21 @@ exports.createOrder = async (req, res) => {
     });
 
     await newOrder.save();
+
+    // Notify Company (seulement si ce n'est pas le manager qui commande chez lui-même)
+    if (req.companyId?.toString() !== companyId.toString()) {
+      const User = require("../models/User");
+      const user = await User.findById(userId).select("fullName");
+      await Notification.create({
+        recipient_id: companyId,
+        recipient_type: "Company",
+        sender_id: userId,
+        type: "order",
+        related_id: newOrder._id,
+        message: `${user?.fullName || "Un client"} a passé une nouvelle commande.`
+      });
+    }
+
     res.status(201).json({ message: "Commande effectuée avec succès", order: newOrder });
   } catch (error) {
     console.error("Error creating order:", error);
@@ -68,9 +85,29 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Commande non trouvée" });
     }
 
+    const oldStatus = order.status;
     order.status = status || order.status;
     order.adminNotes = adminNotes || order.adminNotes;
     await order.save();
+
+    // Notify User if status changed
+    if (oldStatus !== status) {
+      const company = await Company.findById(companyId).select("companyName");
+      let statusFr = status;
+      if (status === "confirmed") statusFr = "confirmée";
+      if (status === "shipped") statusFr = "expédiée";
+      if (status === "delivered") statusFr = "livrée";
+      if (status === "cancelled") statusFr = "annulée";
+
+      await Notification.create({
+        recipient_id: order.userId,
+        recipient_type: "User",
+        sender_id: req.user, // The admin/manager who updated it
+        type: "order",
+        related_id: order._id,
+        message: `Votre commande chez ${company?.companyName} a été ${statusFr}.`
+      });
+    }
 
     res.json({ message: `Commande ${status}`, order });
   } catch (error) {

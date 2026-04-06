@@ -4,65 +4,54 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 /**
- * Assure que le dossier existe, sinon le crée de manière récursive.
+ * Assure que le dossier existe, sinon le crée récursivement.
  */
 const ensureDir = (dir) => {
-  const fullPath = path.join(__dirname, '..', dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
 };
 
-/**
- * Configuration du stockage local pour Multer.
- */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let folder = 'uploads';
+    let folder = 'uploads/';
 
-    // Détermination du dossier en fonction du nom du champ
+    // Détermination du sous-dossier selon le fieldname
     if (['logo', 'cover'].includes(file.fieldname)) {
       folder = 'uploads/companies';
-    } else if (file.fieldname === 'images') {
-      // Peut être pour les posts ou les produits selon la route
-      if (req.baseUrl.includes('posts')) {
-        folder = 'uploads/posts';
-      } else if (req.baseUrl.includes('products')) {
-        folder = 'uploads/products';
-      } else {
-        folder = 'uploads/services';
-      }
-    } else if (file.fieldname === 'avatarUrl') {
-      folder = 'uploads/profiles';}
-
-   
+    } else if (file.fieldname === 'avatar') {
+      folder = 'uploads/profiles';
+    } else if (file.fieldname === 'imagesPost') {
+      folder = 'uploads/posts';
+    } else if (file.fieldname === 'imagesProduct') {
+      folder = 'uploads/products';
+    } else if (file.fieldname === 'imagesServices') {
+      folder = 'uploads/services';
+    }
 
     ensureDir(folder);
-    cb(null, path.join(__dirname, '..', folder));
+    cb(null, folder);
   },
   filename: (req, file, cb) => {
+    // Génère un nom de fichier unique avec son extension d'origine
     const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}-${uuidv4()}${ext}`);
+    cb(null, `${uuidv4()}${ext}`);
   }
 });
 
-/**
- * Filtre pour n'accepter que les images.
- */
 const fileFilter = (req, file, cb) => {
-  const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
+  const allowedTypes = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) {
+  
+  if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Format de fichier non autorisé. Utilisez jpg, jpeg, png ou webp.'), false);
+    cb(new Error('Format de fichier non supporté. Utilisez JPG, PNG, WEBP ou GIF.'), false);
   }
 };
 
-const upload = multer({
+module.exports = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // Limite à 5MB
+  limits: { fileSize: 10 * 1024 * 1024 } // Limite à 10 Mo
 });
-
-module.exports = upload;

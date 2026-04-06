@@ -96,6 +96,16 @@ export const companyApiSlice = apiSlice.injectEndpoints({
       providesTags: (result, error, companyId) => [{ type: "Follow", id: companyId }],
     }),
 
+    getMyFollows: builder.query({
+      query: () => "followers/my-follows",
+      providesTags: ["Follow"],
+    }),
+
+    getMyManagedCompanies: builder.query({
+      query: () => "followers/my-managed",
+      providesTags: ["Company"],
+    }),
+
     // ✅ Nouveaux endpoints pour les filtres
     getCities: builder.query({
       query: () => "localisation/city/getCities",
@@ -159,4 +169,6 @@ export const {
   useGetServicesBySubQuery,
   useGetServicesQuery,
   useGetRecommendedCompaniesQuery,
+  useGetMyFollowsQuery,
+  useGetMyManagedCompaniesQuery,
 } = companyApiSlice;

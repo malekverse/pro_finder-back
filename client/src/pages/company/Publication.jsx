@@ -1,6 +1,6 @@
 import { useGetMyPostsQuery } from "../../redux/features/posts/postApiSlice";
-import PostCreate from "../../components/posts/postCreate";
-import PostCard   from "../../components/posts/PostCard";
+import PostCreate from "../../components/Posts/PostCreate";
+import PostCard   from "../../components/Posts/PostCard";
 import { Loader, Newspaper } from "lucide-react";
 
 const Publication = () => {

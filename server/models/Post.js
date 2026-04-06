@@ -18,17 +18,11 @@ const postSchema = new mongoose.Schema(
     authorType: { type: String, enum: ["User", "Company"], required: true },
 
     content: { type: String, trim: true, default: "" },
-
-    // ✅ Tableau de chemins d'images (pas de limite)
-    images: [{ type: String }],
-
-    // ✅ Likes — tableau d'IDs
+    imagesPost: [{ type: String }],
     likes: [{ type: mongoose.Schema.Types.ObjectId }],
 
-    // ✅ Commentaires
     comments: [commentSchema],
 
-    // ✅ Partages
     sharesCount: { type: Number, default: 0 },
     shares: [{ type: mongoose.Schema.Types.ObjectId }],
 

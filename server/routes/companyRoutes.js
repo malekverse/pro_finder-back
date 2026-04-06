@@ -16,7 +16,7 @@ router.put(
   "/updateprofile",
   verifyJWT,
   authorizeRoles("company", "admin", "owner", "team_member"),
-  upload.fields([{ name: "logo", maxCount: 1 }, { name: "cover", maxCount: 1 }]),
+  upload.any(),
   companyController.updateCompanyProfile
 );
 router.get("/users", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getCompanyUsers);

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation } from "../../../redux/features/profileApiSlice";
+import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation } from "../../../redux/features/profileApiSlice";
 import { useGetAllReportsQuery, useUpdateReportStatusMutation } from "../../../redux/features/reportApiSlice";
-import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "../../../styles/dashboardAdmin.module.css";
 
@@ -15,6 +15,7 @@ const AdminModeration = () => {
     const { data: companies = [], isLoading: loadingCompanies, error: errorCompanies, refetch: refetchCompanies } = useGetPendingCompaniesQuery(undefined, { pollingInterval: 3000 });
     const [verifyCompany, { isLoading: isVerifying }] = useVerifyCompanyMutation();
     const [rejectCompany, { isLoading: isRejecting }] = useRejectCompanyMutation();
+    const [contactCompany, { isLoading: isContacting }] = useContactCompanyMutation();
     
     // Reports logic
     const { data: reports = [], isLoading: loadingReports, error: errorReports, refetch: refetchReports } = useGetAllReportsQuery(undefined, { pollingInterval: 3000 });
@@ -24,13 +25,16 @@ const AdminModeration = () => {
     const [selectedReport, setSelectedReport] = useState(null);
     const [refusalReason, setRefusalReason] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [contactMessage, setContactMessage] = useState("");
+    const [contactType, setContactType] = useState("manual"); // 'manual' or 'pending'
     const [isReportActionModalOpen, setIsReportActionModalOpen] = useState(false);
     const [adminNotes, setAdminNotes] = useState("");
 
     const handleApprove = async (id) => {
         try {
             await verifyCompany(id).unwrap();
-            alert("Entreprise approuvée avec succès !");
+            alert("Entreprise approuvée avec succès ! Un email de bienvenue a été envoyé.");
         } catch (err) {
             console.error("Failed to verify company:", err);
             alert("Erreur lors de la validation");
@@ -52,9 +56,46 @@ const AdminModeration = () => {
             }).unwrap();
             setIsModalOpen(false);
             setSelectedCompany(null);
+            alert("Entreprise refusée. Un email a été envoyé avec le motif.");
         } catch (err) {
             console.error("Failed to reject company:", err);
             alert("L'action a échoué.");
+        }
+    };
+
+    const handleContactClick = (company) => {
+        setSelectedCompany(company);
+        setContactMessage("");
+        setContactType("manual");
+        setIsContactModalOpen(true);
+    };
+
+    const handleConfirmContact = async () => {
+        if (!selectedCompany) return;
+        try {
+            const finalMessage = contactType === "pending" 
+                ? "Votre dossier est actuellement en cours d'examen par notre équipe de modération. Nous vous contacterons prochainement."
+                : contactMessage;
+
+            if (!finalMessage && contactType === "manual") {
+                alert("Veuillez saisir un message.");
+                return;
+            }
+
+            await contactCompany({
+                companyId: selectedCompany._id,
+                message: finalMessage,
+                type: contactType
+            }).unwrap();
+            
+            setIsContactModalOpen(false);
+            setSelectedCompany(null);
+            alert("Email envoyé avec succès !");
+        } catch (err) {
+            console.error("Failed to contact company:", err);
+            const errorMessage = err?.data?.message || "L'envoi de l'email a échoué.";
+            const errorDetails = err?.data?.details || "";
+            alert(`${errorMessage}${errorDetails ? '\n\n' + errorDetails : ''}`);
         }
     };
 
@@ -214,6 +255,25 @@ const AdminModeration = () => {
                                                         style={{ padding: '6px 12px', fontSize: '12px' }}
                                                     >
                                                         <CheckCircle size={14} /> Approuver
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleContactClick(company)}
+                                                        disabled={isContacting}
+                                                        style={{ 
+                                                            padding: '6px 12px', 
+                                                            fontSize: '12px', 
+                                                            backgroundColor: '#f1f5f9', 
+                                                            color: '#475569',
+                                                            border: '1.5px solid #e2e8f0',
+                                                            borderRadius: '8px',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '5px'
+                                                        }}
+                                                    >
+                                                        <Mail size={14} /> Contacter
                                                     </button>
                                                     <button 
                                                         className={styles.deleteBtn} 
@@ -504,6 +564,104 @@ const AdminModeration = () => {
                                     <Trash2 size={16} /> Bloquer/Rejeter l'entreprise
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de contact (Manual Email) */}
+            {isContactModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+                        <div className={styles.modalHeader}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Mail size={20} color="#24416b" />
+                                <h3>Contacter l'entreprise</h3>
+                            </div>
+                            <button onClick={() => setIsContactModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '15px' }}>
+                                Destinataire : <strong>{selectedCompany?.companyName}</strong> ({selectedCompany?.email})
+                            </p>
+
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                <button 
+                                    onClick={() => setContactType("pending")}
+                                    style={{ 
+                                        flex: 1, 
+                                        padding: '10px', 
+                                        borderRadius: '8px', 
+                                        border: contactType === 'pending' ? '2px solid #24416b' : '1px solid #e2e8f0',
+                                        backgroundColor: contactType === 'pending' ? '#eff6ff' : 'white',
+                                        color: contactType === 'pending' ? '#24416b' : '#64748b',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+                                    }}
+                                >
+                                    <Info size={16} /> En attente
+                                </button>
+                                <button 
+                                    onClick={() => setContactType("manual")}
+                                    style={{ 
+                                        flex: 1, 
+                                        padding: '10px', 
+                                        borderRadius: '8px', 
+                                        border: contactType === 'manual' ? '2px solid #24416b' : '1px solid #e2e8f0',
+                                        backgroundColor: contactType === 'manual' ? '#eff6ff' : 'white',
+                                        color: contactType === 'manual' ? '#24416b' : '#64748b',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+                                    }}
+                                >
+                                    <Send size={16} /> Manuel
+                                </button>
+                            </div>
+
+                            {contactType === "pending" ? (
+                                <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>
+                                    <strong>Message pré-défini :</strong><br />
+                                    "Votre dossier est actuellement en cours d'examen par notre équipe de modération. Nous vous contacterons prochainement."
+                                </div>
+                            ) : (
+                                <textarea 
+                                    value={contactMessage}
+                                    onChange={(e) => setContactMessage(e.target.value)}
+                                    placeholder="Saisissez votre message ici..."
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '150px', 
+                                        padding: '12px', 
+                                        borderRadius: '12px', 
+                                        border: '1.5px solid #e2e8f0',
+                                        outline: 'none',
+                                        fontSize: '14px',
+                                        resize: 'none'
+                                    }}
+                                />
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button 
+                                className={styles.button} 
+                                style={{ flex: 1, background: '#24416b' }}
+                                onClick={handleConfirmContact}
+                                disabled={isContacting}
+                            >
+                                {isContacting ? <Loader2 className="animate-spin" size={18} /> : "Envoyer l'email"}
+                            </button>
+                            <button 
+                                className={styles.button} 
+                                style={{ flex: 1, background: '#f1f5f9', color: '#334155', boxShadow: 'none' }}
+                                onClick={() => setIsContactModalOpen(false)}
+                            >
+                                Annuler
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -10,16 +10,7 @@ import {
   Plus, Edit2, Trash2, Package, Search, X, Upload, 
   DollarSign, Tag, Info, Layers, Loader2, AlertCircle, Image as ImageIcon
 } from "lucide-react";
-
-const SERVER_URL = "http://localhost:5000";
-
-const toImageUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("data:") || url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return url;
-  const clean = url.startsWith("/") ? url.slice(1) : url;
-  return `${SERVER_URL}/${clean}`;
-};
+import { toImageUrl } from "../../utils/imageUtils";
 
 const Produits = () => {
   const user = useSelector((state) => state.auth.user);
@@ -41,7 +32,7 @@ const Produits = () => {
     price: "",
     description: "",
     stock: "",
-    images: [],
+    imagesProduct: [],
   });
 
   const [previewImages, setPreviewImages] = useState([]);
@@ -56,9 +47,9 @@ const Produits = () => {
         price: product.price,
         description: product.description,
         stock: product.stock,
-        images: [],
+        imagesProduct: [],
       });
-      setPreviewImages(product.images || []);
+      setPreviewImages(product.imagesProduct || []);
     } else {
       setEditMode(false);
       setSelectedProduct(null);
@@ -68,7 +59,7 @@ const Produits = () => {
         price: "",
         description: "",
         stock: "",
-        images: [],
+        imagesProduct: [],
       });
       setPreviewImages([]);
     }
@@ -79,13 +70,13 @@ const Produits = () => {
     setIsModalOpen(false);
     setEditMode(false);
     setSelectedProduct(null);
-    setFormData({ name: "", category: "", price: "", description: "", stock: "", images: [] });
+    setFormData({ name: "", category: "", price: "", description: "", stock: "", imagesProduct: [] });
     setPreviewImages([]);
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setFormData({ ...formData, images: [...formData.images, ...files] });
+    setFormData({ ...formData, imagesProduct: [...formData.imagesProduct, ...files] });
     
     const previews = files.map(file => URL.createObjectURL(file));
     setPreviewImages([...previewImages, ...previews]);
@@ -97,7 +88,7 @@ const Produits = () => {
     setPreviewImages(newPreviews);
     
     // Si c'était un fichier nouvellement ajouté
-    const newFiles = [...formData.images];
+    const newFiles = [...formData.imagesProduct];
 
   };
 
@@ -111,8 +102,8 @@ const Produits = () => {
     form.append("description", formData.description);
     form.append("stock", formData.stock);
     
-    formData.images.forEach(img => {
-      form.append("images", img);
+    formData.imagesProduct.forEach(img => {
+      form.append("imagesProduct", img);
     });
 
     if (editMode && selectedProduct) {
@@ -217,8 +208,8 @@ const Produits = () => {
           {filteredProducts.map(product => (
             <div key={product._id} style={{ backgroundColor: 'white', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
               <div style={{ height: '200px', backgroundColor: '#f8fafc', position: 'relative' }}>
-                {product.images?.[0] ? (
-                  <img src={toImageUrl(product.images[0])} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {product.imagesProduct?.[0] ? (
+                  <img src={toImageUrl(product.imagesProduct[0])} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <Package size={48} color="#e2e8f0" />
@@ -317,7 +308,11 @@ const Produits = () => {
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                   {previewImages.map((url, idx) => (
                     <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden' }}>
-                      <img src={toImageUrl(url)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img 
+                        src={url.startsWith('blob:') ? url : toImageUrl(url)} 
+                        alt="preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
                       <button type="button" onClick={() => handleRemoveImage(idx)} style={{ position: 'absolute', top: '2px', right: '2px', backgroundColor: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', padding: '2px', cursor: 'pointer' }}><X size={12} /></button>
                     </div>
                   ))}

@@ -1,5 +1,7 @@
 const Review = require("../models/Review");
 const Follow = require("../models/follow");
+const User = require("../models/User");
+const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
 
 // Ajouter un avis
@@ -26,6 +28,19 @@ exports.createReview = async (req, res) => {
       { rating, comment },
       { new: true, upsert: true, runValidators: true }
     );
+
+    // Notification (seulement si ce n'est pas sa propre entreprise)
+    if (req.companyId?.toString() !== company_id.toString()) {
+      const user = await User.findById(user_id);
+      await Notification.create({
+        recipient_id: company_id,
+        recipient_type: "Company",
+        sender_id: user_id,
+        type: "review",
+        related_id: review._id,
+        message: `${user.fullName} a laissé un avis de ${rating} étoiles.`
+      });
+    }
 
     res.status(201).json(review);
   } catch (err) {

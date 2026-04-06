@@ -17,11 +17,11 @@ const companyServiceSchema = new mongoose.Schema(
       min: 0,
     },
     duration: {
-      type: Number,
+      type: Number, // en minutes
       required: true,
       min: 0,
     },
-    images: [{
+    imagesServices: [{
       type: String,
     }],
     companyId: {

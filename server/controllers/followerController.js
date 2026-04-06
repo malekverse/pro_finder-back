@@ -1,5 +1,6 @@
 const Follow = require("../models/follow");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
 
 // suivre une company
@@ -27,6 +28,20 @@ const followCompany = async (req, res) => {
     }
     
     const follow = await Follow.create({ user_id: req.user, company_id });
+
+    // Notification (seulement si ce n'est pas sa propre entreprise)
+    if (req.companyId?.toString() !== company_id.toString()) {
+      const user = await User.findById(req.user);
+      await Notification.create({
+        recipient_id: company_id,
+        recipient_type: "Company",
+        sender_id: req.user,
+        type: "follow",
+        related_id: follow._id,
+        message: `${user.fullName} a commencé à vous suivre.`
+      });
+    }
+
     res.status(201).json(follow);
   } catch (err) {
     console.error("[followCompany Error]:", err);
@@ -250,7 +265,7 @@ const getFollowedFeed = async (req, res) => {
         ...post,
         author,
         comments: populatedComments,
-        images: (post.images || []).map((img) => {
+        imagesPost: (post.imagesPost || []).map((img) => {
           if (!img) return null;
           if (img.startsWith("http")) return img;
           const cleanImg = img.replace(/\\/g, "/").replace(/^\/+/, "");
@@ -264,6 +279,58 @@ const getFollowedFeed = async (req, res) => {
     res.json({ posts: populated, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+const getUserManagedCompanies = async (req, res) => {
+  try {
+    const userId = req.user;
+    // Trouver toutes les relations où l'user a un rôle (donc fait partie de l'équipe)
+    const follows = await Follow.find({ 
+      user_id: userId, 
+      role_id: { $ne: null },
+      is_blocked: { $ne: true } 
+    })
+    .populate({
+      path: "company_id",
+      select: "companyName logoUrl city Status",
+    })
+    .lean();
+
+    const companies = follows
+      .filter(f => f.company_id && f.company_id.Status === "active")
+      .map(f => f.company_id);
+
+    res.json(companies);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors de la récupération des entreprises gérées" });
+  }
+};
+
+const getUserFollowedCompanies = async (req, res) => {
+  try {
+    const userId = req.user;
+    if (!userId) return res.status(401).json({ message: "Non autorisé" });
+
+    const follows = await Follow.find({ 
+      user_id: userId, 
+      is_blocked: { $ne: true } 
+    })
+    .populate({
+      path: "company_id",
+      select: "companyName logoUrl description city region country",
+    })
+    .sort({ createdAt: -1 });
+
+    // Filtrer pour ne garder que les relations avec une compagnie existante
+    const companies = follows
+      .filter(f => f.company_id)
+      .map(f => f.company_id);
+
+    res.json(companies);
+  } catch (err) {
+    console.error("Error in getUserFollowedCompanies:", err);
+    res.status(500).json({ message: "Erreur lors de la récupération des entreprises suivies" });
   }
 };
 
@@ -297,4 +364,6 @@ module.exports = {
   getFollowersStats,
   getFollowedFeed,
   checkFollowStatus,
+  getUserFollowedCompanies,
+  getUserManagedCompanies,
 };

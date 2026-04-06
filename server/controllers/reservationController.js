@@ -1,5 +1,7 @@
 const Reservation = require("../models/Reservation");
 const CompanyService = require("../models/CompanyService");
+const Notification = require("../models/Notification");
+const Company = require("../models/company");
 
 // Client: Create a reservation
 exports.createReservation = async (req, res) => {
@@ -17,6 +19,21 @@ exports.createReservation = async (req, res) => {
     });
 
     await newReservation.save();
+
+    // Notify Company (seulement si ce n'est pas le manager qui réserve chez lui-même)
+    if (req.companyId?.toString() !== companyId.toString()) {
+      const User = require("../models/User");
+      const user = await User.findById(userId).select("fullName");
+      await Notification.create({
+        recipient_id: companyId,
+        recipient_type: "Company",
+        sender_id: userId,
+        type: "reservation",
+        related_id: newReservation._id,
+        message: `${user?.fullName || "Un client"} a pris un nouveau rendez-vous.`
+      });
+    }
+
     res.status(201).json({ message: "Réservation effectuée avec succès", reservation: newReservation });
   } catch (error) {
     console.error("Error creating reservation:", error);
@@ -68,9 +85,28 @@ exports.updateReservationStatus = async (req, res) => {
       return res.status(404).json({ message: "Réservation non trouvée" });
     }
 
+    const oldStatus = reservation.status;
     reservation.status = status || reservation.status;
     reservation.adminNotes = adminNotes || reservation.adminNotes;
     await reservation.save();
+
+    // Notify User if status changed
+    if (oldStatus !== status) {
+      const company = await Company.findById(companyId).select("companyName");
+      let statusFr = status;
+      if (status === "confirmed") statusFr = "confirmé";
+      if (status === "cancelled") statusFr = "annulé";
+      if (status === "completed") statusFr = "terminé";
+
+      await Notification.create({
+        recipient_id: reservation.userId,
+        recipient_type: "User",
+        sender_id: req.user,
+        type: "reservation",
+        related_id: reservation._id,
+        message: `Votre rendez-vous chez ${company?.companyName} a été ${statusFr}.`
+      });
+    }
 
     res.json({ message: `Réservation ${status}`, reservation });
   } catch (error) {

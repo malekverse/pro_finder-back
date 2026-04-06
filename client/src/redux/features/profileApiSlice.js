@@ -55,6 +55,14 @@ updateProfile: builder.mutation({
       }),
       invalidatesTags: ['Dashboard', 'PendingCompanies'],
     }),
+    contactCompany: builder.mutation({
+      query: ({ companyId, message, type }) => ({
+        url: `/admin/contact/${companyId}`,
+        method: 'POST',
+        body: { message, type },
+      }),
+      invalidatesTags: ['Dashboard', 'PendingCompanies'],
+    }),
   }),
 });
 
@@ -67,5 +75,6 @@ export const {
   useGetAdminActivitiesQuery,
   useGetPendingCompaniesQuery,
   useVerifyCompanyMutation,
-  useRejectCompanyMutation
+  useRejectCompanyMutation,
+  useContactCompanyMutation
 } = profileApiSlice;

@@ -10,7 +10,7 @@ router.post(
   "/create",
   verifyJWT,
   authorizeRoles("company", "admin", "owner"),
-  upload.fields([{ name: "images", maxCount: 5 }]),
+  upload.any(),
   companyServiceController.createService
 );
 
@@ -20,7 +20,7 @@ router.put(
   "/update/:id",
   verifyJWT,
   authorizeRoles("company", "admin", "owner"),
-  upload.fields([{ name: "images", maxCount: 5 }]),
+  upload.any(),
   companyServiceController.updateService
 );
 
@@ -32,5 +32,6 @@ router.delete(
 );
 
 router.get("/all", companyServiceController.getAllServices);
+router.get("/followed", verifyJWT, companyServiceController.getFollowedServices);
 
 module.exports = router;

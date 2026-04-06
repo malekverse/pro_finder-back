@@ -18,6 +18,7 @@ router.put("/verify/:companyId",verifyJWT,authorizeRoles("admin"),adminControlle
 router.get("/users",verifyJWT,authorizeRoles("admin"),adminController.getAllUsers);
 router.delete("/reject/:companyId", verifyJWT, authorizeRoles("admin"), adminController.rejectCompany);
 router.put("/resolve/:companyId", verifyJWT, authorizeRoles("admin"), adminController.resolveCompany);
+router.post("/contact/:companyId", verifyJWT, authorizeRoles("admin"), adminController.contactCompany);
 
 module.exports = router;
 

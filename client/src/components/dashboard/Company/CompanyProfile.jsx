@@ -10,6 +10,7 @@ import {
 
 import { useGetCompanyProfileQuery, useUpdateCompanyProfileMutation } from '../../../redux/features/company/companyApiSlice';
 import Autocomplete from "../../auth/Autocomplete";
+import { toImageUrl } from "../../../utils/imageUtils";
 
 // ❌ fileToBase64 supprimée — on n'envoie plus en base64
 const SERVER_URL = 'http://localhost:5000';
@@ -53,16 +54,10 @@ const CompanyProfile = () => {
         coverFile:   null,
       }));
 
-    const toImageUrl = (url) => {
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url; // Cloudinary → on garde tel quel
-    return `${SERVER_URL}/${url}`; // chemin local → on préfixe
-    };
-
-    setPreviews({
-      logo:  toImageUrl(profileData.logoUrl),
-      cover: toImageUrl(profileData.coverUrl),
-    });
+      setPreviews({
+        logo:  toImageUrl(profileData.logoUrl),
+        cover: toImageUrl(profileData.coverUrl),
+      });
     }
   }, [profileData]);
 

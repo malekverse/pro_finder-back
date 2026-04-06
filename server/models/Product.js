@@ -25,7 +25,7 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-    images: [{
+    imagesProduct: [{
       type: String, // URLs (Cloudinary or local)
     }],
     companyId: {

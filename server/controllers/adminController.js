@@ -6,6 +6,7 @@ const Service = require("../models/Service");
 const City = require("../models/city");
 const Report = require("../models/Report");
 const bcrypt = require("bcrypt");
+const { sendStatusEmail } = require("../utils/emailService");
 
 const getDashboard = async (req, res) => {
   try {
@@ -151,6 +152,13 @@ const verifyCompany = async (req, res) => {
     company.Status = "active";
     await company.save();
 
+    // Envoyer l'email de bienvenue
+    try {
+      await sendStatusEmail(company.email, company.companyName, "active");
+    } catch (emailErr) {
+      console.error("Email notification failed:", emailErr);
+    }
+
     await Activity.create({
       adminId: req.user,
       action: "Vérification d'entreprise",
@@ -190,6 +198,13 @@ const rejectCompany = async (req, res) => {
         company.rejectionReason = reason || "Motif non spécifié";
         await company.save();
 
+        // Envoyer l'email de refus
+        try {
+          await sendStatusEmail(company.email, name, "rejected", reason);
+        } catch (emailErr) {
+          console.error("Email notification failed:", emailErr);
+        }
+
         await Activity.create({
           adminId: req.user,
           action: "Refus d'entreprise",
@@ -225,6 +240,52 @@ const resolveCompany = async (req, res) => {
         res.status(500).json({ message: "Erreur lors du résolution de l'entreprise." });
     }
 };
+
+const contactCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const { message, type } = req.body;
+
+    console.log(`[contactCompany] Tentative d'envoi d'email à l'entreprise ID: ${companyId}`);
+
+    const company = await Company.findById(companyId);
+    if (!company) {
+      console.log(`[contactCompany] Entreprise non trouvée avec l'ID: ${companyId}`);
+      return res.status(404).json({ message: "Entreprise non trouvée" });
+    }
+
+    if (!company.email) {
+      console.log(`[contactCompany] Email manquant pour l'entreprise: ${company.companyName}`);
+      return res.status(400).json({ message: "L'entreprise n'a pas d'adresse email enregistrée." });
+    }
+
+    console.log(`[contactCompany] Envoi d'un email de type '${type}' à ${company.email}`);
+
+    try {
+      await sendStatusEmail(company.email, company.companyName, type || "manual", message);
+    } catch (emailError) {
+      console.error("[contactCompany] Erreur Nodemailer détaillée:", emailError.message);
+      return res.status(500).json({ 
+        message: "Erreur Nodemailer", 
+        error: emailError.message,
+        details: "Vérifiez vos identifiants EMAIL_USER et EMAIL_PASS. Si vous utilisez Gmail, avez-vous créé un 'Mot de passe d'application' ?" 
+      });
+    }
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Envoi d'email à l'entreprise",
+      target: company.companyName,
+      status: "success"
+    });
+
+    res.json({ message: "Email envoyé avec succès" });
+  } catch (err) {
+    console.error("[contactCompany] Erreur générale:", err);
+    res.status(500).json({ message: "Erreur serveur lors de l'envoi de l'email", error: err.message });
+  }
+};
+
 module.exports = {
   getDashboard,
   getActivities,
@@ -234,5 +295,6 @@ module.exports = {
   getPendingCompanies,
   rejectCompany,
   changePassword,
-  resolveCompany
+  resolveCompany,
+  contactCompany
 };

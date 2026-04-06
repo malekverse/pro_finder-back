@@ -8,9 +8,10 @@ const SERVER_URL = process.env.SERVER_URL || "http://localhost:5000";
 const getModels = () => {
   const mongoose = require("mongoose");
   return {
-    Post:    mongoose.model("Post"),
-    User:    mongoose.model("User"),
-    Company: mongoose.model("Company"),
+    Post:         mongoose.model("Post"),
+    User:         mongoose.model("User"),
+    Company:      mongoose.model("Company"),
+    Notification: mongoose.model("Notification"),
   };
 };
 
@@ -31,18 +32,14 @@ const createPost = async (req, res) => {
     const authorType  = getAuthorType(req.roles);
     const authorId    = (authorType === "Company") ? (req.companyId || req.user) : req.user;
 
-    // Local storage: f.path est le chemin relatif sur le disque
-    // On convertit les antislashs en slashs pour les URLs
-    const images = req.files ? req.files.map((f) => {
-      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
-      return relativePath.replace(/\\/g, '/');
-    }) : [];
+    // Stockage local : f.path est le chemin relatif (ex: uploads/posts/...)
+    const imagesPost = req.files ? req.files.filter(f => f.fieldname === 'imagesPost').map((f) => f.path.replace(/\\/g, "/")) : [];
 
-    if (!content && images.length === 0) {
+    if (!content && imagesPost.length === 0) {
       return res.status(400).json({ message: "Le post doit contenir du texte ou une image" });
     }
 
-    const post = await Post.create({ author_id: authorId, authorType, content: content || "", images });
+    const post = await Post.create({ author_id: authorId, authorType, content: content || "", imagesPost });
     const populated = await populatePost(post._id);
     res.status(201).json(populated);
   } catch (err) {
@@ -132,15 +129,15 @@ const updatePost = async (req, res) => {
     }
 
     const { content } = req.body;
-    const newImages = req.files ? req.files.map((f) => f.path) : [];
+    const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesPost').map((f) => f.path.replace(/\\/g, "/")) : [];
     const imagesToDelete = req.body.imagesToDelete ? JSON.parse(req.body.imagesToDelete) : [];
 
     imagesToDelete.forEach((imgPath) => {
-      const fullPath = imgPath.replace(/\//g, path.sep);
+      const fullPath = path.join(__dirname, "..", imgPath.replace(/\//g, path.sep));
       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
     });
 
-    post.images  = [...post.images.filter((img) => !imagesToDelete.includes(img)), ...newImages];
+    post.imagesPost = [...post.imagesPost.filter((img) => !imagesToDelete.includes(img)), ...newImages];
     post.content = content ?? post.content;
     await post.save();
 
@@ -163,8 +160,8 @@ const deletePost = async (req, res) => {
       return res.status(403).json({ message: "Non autorisé" });
     }
 
-    post.images.forEach((imgPath) => {
-      const fullPath = imgPath.replace(/\//g, path.sep);
+    post.imagesPost.forEach((imgPath) => {
+      const fullPath = path.join(__dirname, "..", imgPath.replace(/\//g, path.sep));
       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
     });
 
@@ -223,6 +220,20 @@ const addComment = async (req, res) => {
       companyId:  authorType === "Company" ? (req.companyId || null) : null,
     });
     await post.save();
+
+    // Notification si le post appartient à une entreprise (et que ce n'est pas le manager qui commente son propre post)
+    if (post.authorType === "Company" && req.companyId?.toString() !== post.author_id.toString()) {
+      const { Notification, User } = getModels();
+      const sender = await User.findById(req.user).select("fullName");
+      await Notification.create({
+        recipient_id: post.author_id,
+        recipient_type: "Company",
+        sender_id: req.user,
+        type: "comment",
+        related_id: post._id,
+        message: `${sender?.fullName || "Quelqu'un"} a commenté votre publication.`
+      });
+    }
 
     // Retourner le commentaire avec l'auteur populé
     const { User, Company } = getModels();
@@ -393,7 +404,7 @@ const populateAuthor = async (post) => {
     ...post,
     author,
     comments: populatedComments,
-    images: post.images.map((img) => {
+    imagesPost: (post.imagesPost || []).map((img) => {
       // Si c'est déjà une URL Cloudinary ou http, la retourner telle quelle
       if (img.startsWith("http")) return img;
       // Sinon construire l'URL locale (anciens posts)
