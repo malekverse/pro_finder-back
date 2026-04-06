@@ -356,9 +356,52 @@ const logout = async (req, res) => {
 };
 
 
+const switchCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const userId = req.user;
+
+    // Vérifier si l'utilisateur a accès à cette entreprise
+    const follow = await Follow.findOne({ 
+      user_id: userId, 
+      company_id: companyId,
+      role_id: { $ne: null },
+      is_blocked: { $ne: true }
+    }).populate("role_id");
+
+    if (!follow) {
+      return res.status(403).json({ message: "Accès refusé à cette entreprise" });
+    }
+
+    // Récupérer les permissions du rôle
+    const permissions = follow.role_id?.permissions || [];
+
+    // Générer un nouveau token avec le nouveau companyId
+    const accessToken = jwt.sign(
+      {
+        UserInfo: {
+          id: userId,
+          email: req.email, // On a besoin de l'email ici, verifyJWT devrait le mettre dans req
+          roles: req.roles,
+          permissions: permissions,
+          companyId: companyId,
+          accountType: "user"
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ accessToken });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors du changement d'entreprise" });
+  }
+};
+
 module.exports = {
   register,
   login,
   refresh,
-  logout
+  logout,
+  switchCompany
 };

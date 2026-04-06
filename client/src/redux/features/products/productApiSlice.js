@@ -10,6 +10,10 @@ export const productApiSlice = apiSlice.injectEndpoints({
       query: () => "products/all",
       providesTags: ["Product"],
     }),
+    getFollowedProducts: builder.query({
+      query: () => "products/followed",
+      providesTags: ["Product"],
+    }),
     createProduct: builder.mutation({
       query: (formData) => ({
         url: "products/create",
@@ -41,6 +45,7 @@ export const productApiSlice = apiSlice.injectEndpoints({
 export const {
   useGetCompanyProductsQuery,
   useGetAllProductsQuery,
+  useGetFollowedProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

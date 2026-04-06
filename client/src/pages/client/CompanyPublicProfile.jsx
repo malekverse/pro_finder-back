@@ -6,11 +6,11 @@ import {
   useCheckFollowStatusQuery,
 } from "../../redux/features/company/companyApiSlice";
 import { useGetPostsByCompanyQuery } from "../../redux/features/posts/postApiSlice";
-import PostCard from "../../components/posts/PostCard";
+import PostCard from "../../components/Posts/PostCard";
 import {
   ArrowLeft, Building2, Globe, Mail, Phone,
   MapPin, Newspaper, Loader, UserCheck, UserPlus, Flag, X, Send,
-  Package, Wrench, Calendar, ShoppingCart, Info, Clock, CreditCard, Ban, Star, MessageSquare
+  Package, Wrench, Calendar, Info, Clock, CreditCard, Ban, Star, MessageSquare
 } from "lucide-react";
 import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
@@ -24,17 +24,7 @@ import {
 } from "../../redux/features/reviewApiSlice";
 import { useSelector } from "react-redux";
 
-const SERVER_URL = "http://localhost:5000";
-
-const toImageUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  if (url.startsWith("data:")) return url;
-  if (!url.includes("/") && !url.includes("\\") && url.length > 100)
-    return `data:image/jpeg;base64,${url}`;
-  const clean = url.startsWith("/") ? url.slice(1) : url;
-  return `${SERVER_URL}/${clean}`;
-};
+import { toImageUrl } from "../../utils/imageUtils";
 
 const CompanyPublicProfile = () => {
   const navigate = useNavigate();
@@ -321,7 +311,7 @@ const CompanyPublicProfile = () => {
                   </div>
                 )}
               </div>
-              {fullAddress ? (
+              {!isBlocked && fullAddress ? (
                 <p style={s.meta}>
                   <MapPin size={14} /> {fullAddress}
                 </p>
@@ -360,25 +350,27 @@ const CompanyPublicProfile = () => {
             </div>
           </div>
 
-          {company.description ? <p style={s.description}>{company.description}</p> : null}
+          {!isBlocked && company.description ? <p style={s.description}>{company.description}</p> : null}
 
-          <div style={s.links}>
-            {company.website ? (
-              <a href={company.website} target="_blank" rel="noreferrer" style={s.linkChip}>
-                <Globe size={14} /> Site web
-              </a>
-            ) : null}
-            {company.email ? (
-              <a href={`mailto:${company.email}`} style={s.linkChip}>
-                <Mail size={14} /> {company.email}
-              </a>
-            ) : null}
-            {company.phone ? (
-              <a href={`tel:${company.phone}`} style={s.linkChip}>
-                <Phone size={14} /> {company.phone}
-              </a>
-            ) : null}
-          </div>
+          {!isBlocked && (
+            <div style={s.links}>
+              {company.website ? (
+                <a href={company.website} target="_blank" rel="noreferrer" style={s.linkChip}>
+                  <Globe size={14} /> Site web
+                </a>
+              ) : null}
+              {company.email ? (
+                <a href={`mailto:${company.email}`} style={s.linkChip}>
+                  <Mail size={14} /> {company.email}
+                </a>
+              ) : null}
+              {company.phone ? (
+                <a href={`tel:${company.phone}`} style={s.linkChip}>
+                  <Phone size={14} /> {company.phone}
+                </a>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* TABS */}
@@ -470,14 +462,14 @@ const CompanyPublicProfile = () => {
                   <div style={s.grid}>
                     {companyServices.map((service) => (
                       <div key={service._id} style={s.itemCard}>
-                        {service.images?.[0] && (
-                          <img src={toImageUrl(service.images[0])} alt={service.name} style={s.itemImg} />
+                        {service.imagesServices?.[0] && (
+                          <img src={toImageUrl(service.imagesServices[0])} alt={service.name} style={s.itemImg} />
                         )}
                         <div style={s.itemContent}>
                           <h3 style={s.itemName}>{service.name}</h3>
                           <p style={s.itemDesc}>{service.description}</p>
                           <div style={s.itemFooter}>
-                            <span style={s.itemPrice}>{service.price} €</span>
+                            <span style={s.itemPrice}>{service.price} TND</span>
                             <span style={s.itemDuration}><Clock size={14} /> {service.duration} min</span>
                           </div>
                           <button 
@@ -504,14 +496,14 @@ const CompanyPublicProfile = () => {
                   <div style={s.grid}>
                     {products.map((product) => (
                       <div key={product._id} style={s.itemCard}>
-                        {product.images?.[0] && (
-                          <img src={toImageUrl(product.images[0])} alt={product.name} style={s.itemImg} />
+                        {product.imagesProduct?.[0] && (
+                          <img src={toImageUrl(product.imagesProduct[0])} alt={product.name} style={s.itemImg} />
                         )}
                         <div style={s.itemContent}>
                           <h3 style={s.itemName}>{product.name}</h3>
                           <p style={s.itemDesc}>{product.description}</p>
                           <div style={s.itemFooter}>
-                            <span style={s.itemPrice}>{product.price} €</span>
+                            <span style={s.itemPrice}>{product.price} TND</span>
                             <span style={s.itemStock}>{product.stock > 0 ? `${product.stock} en stock` : 'Rupture'}</span>
                           </div>
                           <button 
@@ -707,10 +699,10 @@ const CompanyPublicProfile = () => {
             ) : (
               <form onSubmit={handlePlaceOrder}>
                 <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', alignItems: 'center', background: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
-                  {selectedProduct.images?.[0] && <img src={toImageUrl(selectedProduct.images[0])} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />}
+                  {selectedProduct.imagesProduct?.[0] && <img src={toImageUrl(selectedProduct.imagesProduct[0])} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: '700' }}>{selectedProduct.name}</div>
-                    <div style={{ color: '#16a34a', fontWeight: '800' }}>{selectedProduct.price} €</div>
+                    <div style={{ color: '#16a34a', fontWeight: '800' }}>{selectedProduct.price} TND</div>
                   </div>
                   <div style={{ width: '80px' }}>
                     <label style={s.label}>Qté</label>
@@ -758,11 +750,11 @@ const CompanyPublicProfile = () => {
                 <div style={{ padding: '15px', background: '#f1f5f9', borderRadius: '12px', marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                     <span>Sous-total :</span>
-                    <span>{selectedProduct.price * orderQuantity} €</span>
+                    <span>{selectedProduct.price * orderQuantity} TND</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '16px', color: '#1e293b' }}>
                     <span>Total à payer :</span>
-                    <span>{selectedProduct.price * orderQuantity} €</span>
+                    <span>{selectedProduct.price * orderQuantity} TND</span>
                   </div>
                 </div>
 

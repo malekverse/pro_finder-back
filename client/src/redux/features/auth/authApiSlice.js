@@ -22,7 +22,13 @@ export const authApiSlice = apiSlice.injectEndpoints({
         method: 'POST',
       }),
     }),
+    switchCompany: builder.mutation({
+      query: (companyId) => ({
+        url: `auth/switch-company/${companyId}`,
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
-export const { useRegisterMutation, useLoginMutation, useSendLogoutMutation } = authApiSlice;
+export const { useRegisterMutation, useLoginMutation, useSendLogoutMutation, useSwitchCompanyMutation } = authApiSlice;

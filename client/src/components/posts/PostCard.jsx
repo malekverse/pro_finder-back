@@ -16,29 +16,29 @@ import {
 } from "lucide-react";
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────
-const Lightbox = ({ images, startIndex, onClose }) => {
+const Lightbox = ({ imagePost, startIndex, onClose }) => {
   const [idx, setIdx] = useState(startIndex);
-  const prev = (e) => { e.stopPropagation(); setIdx((i) => (i - 1 + images.length) % images.length); };
-  const next = (e) => { e.stopPropagation(); setIdx((i) => (i + 1) % images.length); };
+  const prev = (e) => { e.stopPropagation(); setIdx((i) => (i - 1 + imagePost.length) % imagePost.length); };
+  const next = (e) => { e.stopPropagation(); setIdx((i) => (i + 1) % imagePost.length); };
 
   return (
     <div style={lb.overlay} onClick={onClose}>
       <button style={lb.closeBtn} onClick={onClose}><X size={22} /></button>
-      {images.length > 1 && (
+      {imagePost.length > 1 && (
         <button style={{ ...lb.navBtn, left: 16 }} onClick={prev}><ChevronLeft size={24} /></button>
       )}
       <img
-        src={images[idx]}
+        src={imagePost[idx]}
         alt=""
         style={lb.img}
         onClick={(e) => e.stopPropagation()}
       />
-      {images.length > 1 && (
+      {imagePost.length > 1 && (
         <button style={{ ...lb.navBtn, right: 16 }} onClick={next}><ChevronRight size={24} /></button>
       )}
-      {images.length > 1 && (
+      {imagePost.length > 1 && (
         <div style={lb.dots}>
-          {images.map((_, i) => (
+          {imagePost.map((_, i) => (
             <span key={i} style={{ ...lb.dot, background: i === idx ? "#fff" : "rgba(255,255,255,0.4)" }} />
           ))}
         </div>
@@ -83,7 +83,7 @@ const lb = {
 const EditModal = ({ post, onClose, onSaved }) => {
   const [updatePost, { isLoading }] = useUpdatePostMutation();
   const [content, setContent]         = useState(post.content || "");
-  const [existingImages, setExisting] = useState(post.images || []);
+  const [existingImages, setExisting] = useState(post.imagesPost || []);
   const [newPreviews, setNewPreviews] = useState([]);
   const [imagesToDelete, setToDelete] = useState([]);
   const [error, setError]             = useState("");
@@ -116,7 +116,7 @@ const EditModal = ({ post, onClose, onSaved }) => {
     const formData = new FormData();
     formData.append("content", content);
     if (imagesToDelete.length > 0) formData.append("imagesToDelete", JSON.stringify(imagesToDelete));
-    newPreviews.forEach(({ file }) => formData.append("images", file));
+    newPreviews.forEach(({ file }) => formData.append("imagesPost", file));
     try {
       await updatePost({ id: post._id, formData }).unwrap();
       onSaved();
@@ -182,6 +182,8 @@ const EditModal = ({ post, onClose, onSaved }) => {
 };
 
 // ─── PostCard ─────────────────────────────────────────────────────────────
+import { toImageUrl } from "../../utils/imageUtils";
+
 const PostCard = ({ post, onDeleted }) => {
   const navigate = useNavigate();
   // Récupérer l'ID depuis state.auth.user (pas account)
@@ -226,20 +228,12 @@ const PostCard = ({ post, onDeleted }) => {
     return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   };
 
-  const resolveImageUrl = (url) => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    if (url.startsWith("data:")) return url;
-    const clean = url.startsWith("/") ? url.slice(1) : url;
-    return `http://localhost:5000/${clean}`;
-  };
-
   const authorId = post.author_id?.toString?.() || "";
   const authorName = post.author?.name || "Utilisateur";
   const authorImage =
-    resolveImageUrl(post.author?.avatarUrl) ||
-    resolveImageUrl(post.author?.logoUrl) ||
-    resolveImageUrl(post.author?.companyLogo);
+    toImageUrl(post.author?.avatarUrl) ||
+    toImageUrl(post.author?.logoUrl) ||
+    toImageUrl(post.author?.companyLogo);
 
   const openCompanyProfile = () => {
     if (!authorId) return;
@@ -278,7 +272,7 @@ const PostCard = ({ post, onDeleted }) => {
   };
 
   // Grille d'images selon le nombre
-  const imgs = post.images || [];
+  const imgs = post.imagesPost || [];
   const gridStyle = () => {
     if (imgs.length === 1) return { gridTemplateColumns: "1fr", gridTemplateRows: "auto" };
     if (imgs.length === 2) return { gridTemplateColumns: "1fr 1fr" };
@@ -378,7 +372,7 @@ const PostCard = ({ post, onDeleted }) => {
                 }}
                 onClick={() => setLightboxIdx(i)}
               >
-                <img src={resolveImageUrl(img)} alt="" style={s.postImg} />
+                <img src={toImageUrl(img)} alt="" style={s.postImg} />
                 {i === 3 && imgs.length > 4 && (
                   <div style={s.moreOverlay}>+{imgs.length - 4}</div>
                 )}
@@ -430,18 +424,14 @@ const PostCard = ({ post, onDeleted }) => {
                 {post.comments.map((c) => {
                   const cAuthor = c.commentAuthor;
                   const cName   = cAuthor?.name || "Utilisateur";
-                  const cAvatar = resolveImageUrl(cAuthor?.avatarUrl);
-                  
-                  // Permissions de suppression : 
-                  // 1. L'auteur du commentaire (isMyComment)
-                  // 2. L'owner/auteur du post (isAuthor) - SEULEMENT s'il a accès à l'entreprise
-                  const isMyComment = c.author_id?.toString() === currentId;
-                  const canDelete = isMyComment || (isAuthor && currentCompany === post.author_id?.toString());
-
+                  const cAvatar = cAuthor?.avatarUrl || null;
+                  const isMe    = c.author_id?.toString() === currentId ||
+                                  c.author_id?.toString() === currentCompany ||
+                                  isAuthor; // owner/auteur du post peut supprimer tous les commentaires
                   return (
                     <div key={c._id} style={s.comment}>
                       {cAvatar ? (
-                        <img src={cAvatar} alt="" style={s.commentAvatarImg} />
+                        <img src={toImageUrl(cAvatar)} alt="" style={s.commentAvatarImg} />
                       ) : (
                         <div style={s.commentAvatar}>{getInitials(cName)}</div>
                       )}
@@ -449,8 +439,8 @@ const PostCard = ({ post, onDeleted }) => {
                         <span style={s.commentAuthor}>{cName}</span>
                         <span style={s.commentText}> {c.text}</span>
                       </div>
-                      {canDelete && (
-                        <button onClick={() => handleDeleteComment(c._id)} style={s.delCommentBtn} title="Supprimer le commentaire"><X size={11} /></button>
+                      {isMe && (
+                        <button onClick={() => handleDeleteComment(c._id)} style={s.delCommentBtn}><X size={11} /></button>
                       )}
                     </div>
                   );

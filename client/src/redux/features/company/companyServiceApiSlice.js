@@ -10,6 +10,10 @@ export const companyServiceApiSlice = apiSlice.injectEndpoints({
       query: () => "company-services/all",
       providesTags: ["CompanyService"],
     }),
+    getFollowedServices: builder.query({
+      query: () => "company-services/followed",
+      providesTags: ["CompanyService"],
+    }),
     createService: builder.mutation({
       query: (formData) => ({
         url: "company-services/create",
@@ -41,6 +45,7 @@ export const companyServiceApiSlice = apiSlice.injectEndpoints({
 export const {
   useGetCompanyServicesQuery,
   useGetAllServicesQuery,
+  useGetFollowedServicesQuery,
   useCreateServiceMutation,
   useUpdateServiceMutation,
   useDeleteServiceMutation,

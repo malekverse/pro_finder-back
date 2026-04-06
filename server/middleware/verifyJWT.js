@@ -17,12 +17,14 @@ const verifyJWT = (req, res, next) => {
         }
         if (decoded.UserInfo) {
             req.user = decoded.UserInfo.id;
+            req.email = decoded.UserInfo.email;
             req.roles = decoded.UserInfo.roles;
             req.permissions = decoded.UserInfo.permissions || [];
             req.companyId = decoded.UserInfo.companyId;
         } 
         else if (decoded.AccountInfo) {
             req.user = decoded.AccountInfo.id;
+            req.email = decoded.AccountInfo.email;
             req.roles = decoded.AccountInfo.roles;
             req.permissions = decoded.AccountInfo.permissions || [];
             req.companyId = decoded.AccountInfo.companyId;

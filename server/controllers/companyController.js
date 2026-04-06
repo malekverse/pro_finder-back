@@ -181,17 +181,23 @@ const updateCompanyProfile = async (req, res) => {
   company.city         = city         || company.city;
 
   // Gestion logo
-  if (req.files?.logo) {
-    const file = req.files.logo[0];
-    const relativePath = path.relative(path.join(__dirname, '..'), file.path);
-    company.logoUrl = relativePath.replace(/\\/g, '/');
+  const logoFile = req.files?.find(f => f.fieldname === 'logo');
+  if (logoFile) {
+    if (company.logoUrl) {
+      const oldLogoPath = path.join(__dirname, "..", company.logoUrl.replace(/\//g, path.sep));
+      if (fs.existsSync(oldLogoPath)) fs.unlinkSync(oldLogoPath);
+    }
+    company.logoUrl = logoFile.path.replace(/\\/g, "/"); // Chemin relatif
   }
 
   // Gestion cover
-  if (req.files?.cover) {
-    const file = req.files.cover[0];
-    const relativePath = path.relative(path.join(__dirname, '..'), file.path);
-    company.coverUrl = relativePath.replace(/\\/g, '/');
+  const coverFile = req.files?.find(f => f.fieldname === 'cover');
+  if (coverFile) {
+    if (company.coverUrl) {
+      const oldCoverPath = path.join(__dirname, "..", company.coverUrl.replace(/\//g, path.sep));
+      if (fs.existsSync(oldCoverPath)) fs.unlinkSync(oldCoverPath);
+    }
+    company.coverUrl = coverFile.path.replace(/\\/g, "/"); // Chemin relatif
   }
 
   const updatedCompany = await company.save();

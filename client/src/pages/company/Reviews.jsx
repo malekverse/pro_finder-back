@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useGetCompanyReviewsQuery, useGetAverageRatingQuery } from "../../redux/features/reviewApiSlice";
 import { Star, MessageSquare, Loader2, User } from "lucide-react";
 import styles from "../../styles/Dashboard.module.css";
+import { toImageUrl } from "../../utils/imageUtils";
 
 const Reviews = () => {
   const authUser = useSelector((state) => state.auth.user);
@@ -108,7 +109,7 @@ const Reviews = () => {
                   }}>
                     {review.user_id?.avatarUrl ? (
                       <img 
-                        src={review.user_id.avatarUrl.startsWith('http') ? review.user_id.avatarUrl : `http://localhost:5000/${review.user_id.avatarUrl}`}
+                        src={toImageUrl(review.user_id.avatarUrl)}
                         alt="" 
                         style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
                       />

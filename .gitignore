@@ -11,7 +11,8 @@ node_modules
 .vite
 client/node_modules
 server/node_modules
-.env
+client/.env
+server/.env
 dist
 dist-ssr
 *.local

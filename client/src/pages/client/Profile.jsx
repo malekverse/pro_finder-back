@@ -3,6 +3,10 @@ import {
   useUpdateProfileMutation, 
   useChangePasswordMutation 
 } from "../../redux/features/profileApiSlice";
+import { useGetMyFollowsQuery, useGetMyManagedCompaniesQuery } from "../../redux/features/company/companyApiSlice";
+import { useSwitchCompanyMutation } from "../../redux/features/auth/authApiSlice";
+import { setCredentials } from "../../redux/features/auth/authSlice";
+import Cookies from 'js-cookie';
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logOut } from "../../redux/features/auth/authSlice";
@@ -11,8 +15,10 @@ import { apiSlice } from "../../redux/app/api/apiSlice";
 import {
   LayoutDashboard, LogOut, Camera, User, Phone, Mail,
   Lock, CheckCircle, AlertCircle, ChevronRight, Shield,
-  Pencil, X, Save, Building2, ShoppingBag, Key, Loader2
+  Pencil, X, Save, Building2, ShoppingBag, Key, Loader2, Info, MapPin, ArrowLeft, Bell
 } from "lucide-react";
+import NotificationBell from "../../components/dashboard/company/NotificationBell";
+import { toImageUrl } from "../../utils/imageUtils";
 
 const SERVER_URL = "http://localhost:5000";
 
@@ -34,11 +40,16 @@ const Profile = () => {
     refetchOnMountOrArgChange: true,
   });
 
+  const { data: followedCompanies = [] } = useGetMyFollowsQuery(undefined, { skip: !token });
+  const { data: managedCompanies = [] } = useGetMyManagedCompaniesQuery(undefined, { skip: !token });
+
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
+  const [switchCompany, { isLoading: isSwitching }] = useSwitchCompanyMutation();
 
-  const [activeTab, setActiveTab] = useState("profile"); // "profile" or "security"
+  const [activeTab, setActiveTab] = useState("profile"); // "profile", "follows", "security"
   const [editMode, setEditMode] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", avatarUrl: null });
   
   const [securityForm, setSecurityForm] = useState({
@@ -62,7 +73,7 @@ const Profile = () => {
       });
       const rawAvatar = source.avatarUrl || source.logoUrl || null;
       if (rawAvatar) {
-        setPreviewUrl(rawAvatar.startsWith("data:image") ? rawAvatar : `${SERVER_URL}/${rawAvatar}`);
+        setPreviewUrl(toImageUrl(rawAvatar));
       } else {
         setPreviewUrl(null);
       }
@@ -123,7 +134,6 @@ const Profile = () => {
       return;
     }
 
-    // Validation mot de passe (8+ chars, 1 lettre, 1 chiffre, 1 spécial)
     const pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
     if (!pwdRegex.test(securityForm.newPassword)) {
       setFeedback({ 
@@ -150,10 +160,38 @@ const Profile = () => {
     }
   };
 
+  const handleSwitchCompany = async (companyId) => {
+    try {
+      const response = await switchCompany(companyId).unwrap();
+      const newToken = response.accessToken;
+      
+      // Mettre à jour le stockage pour la persistance
+      localStorage.setItem("accessToken", newToken);
+      Cookies.set('accessToken', newToken, { expires: 7 });
+
+      // Reset cache pour charger les données de la nouvelle entreprise
+      dispatch(apiSlice.util.resetApiState());
+
+      // Décoder le token pour obtenir les infos utilisateur
+      const base64Url = newToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      dispatch(setCredentials({ 
+        account: payload.UserInfo, 
+        accessToken: newToken 
+      }));
+
+      setShowCompanyModal(false);
+      navigate("/company/stats");
+    } catch (err) {
+      setFeedback({ type: "error", message: "Erreur lors du changement d'entreprise." });
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditMode(false);
     setFeedback({ type: null, message: "" });
-    // Restore original data
     const source = profile || authUser;
     if (source) {
       setForm({
@@ -189,325 +227,290 @@ const Profile = () => {
     <div style={s.fullPage}>
       <style>{css}</style>
 
-      <div style={s.pageGrid}>
-        {/* ── Left sidebar ── */}
-        <aside style={s.sidebar}>
-          <div 
-            style={{ ...s.sidebarLogo, cursor: 'pointer' }} 
-            onClick={() => navigate("/user/dashboard")}
+      {/* Top Navigation Bar */}
+      <div style={{
+        background: "#fff",
+        borderBottom: "1px solid #e4e6eb",
+        padding: "8px 16px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        position: "sticky",
+        top: 0,
+        zIndex: 1000
+      }}>
+        <button style={s.backBtn} onClick={() => navigate("/user/dashboard")}>
+          <ArrowLeft size={18} /> Retour au fil d'actualité
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <NotificationBell />
+          {canAccessDashboard && (
+            <button 
+              style={{ ...s.fbEditBtn, background: "#1877f2", color: "#fff", padding: "8px 16px", fontSize: "14px" }} 
+              onClick={() => setShowCompanyModal(true)}
+            >
+              <LayoutDashboard size={16} /> Espace Pro
+            </button>
+          )}
+          <button 
+            style={{ ...s.fbEditBtn, background: "#f0f2f5" }} 
+            onClick={handleLogout}
+            title="Déconnexion"
           >
-            <span style={s.logoMark}>◆</span>
-            <span style={s.logoText}>Pro Finder</span>
-          </div>
-
-          <div style={s.sidebarContent}>
-            <p style={s.sidebarLabel}>Navigation</p>
-
-            <button style={s.sideNavItem} onClick={() => navigate("/user/dashboard")}>
-              <LayoutDashboard size={17} color="#64748b" />
-              <span>Fil d'actualité</span>
-            </button>
-
-            <button 
-              style={{ ...s.sideNavItem, background: activeTab === 'profile' ? '#fff' : 'transparent' }} 
-              onClick={() => { setActiveTab('profile'); setEditMode(false); }}
-            >
-              <User size={17} color={activeTab === 'profile' ? "#1E3A5F" : "#64748b"} />
-              <span style={{ color: activeTab === 'profile' ? "#1E3A5F" : "#334155", fontWeight: activeTab === 'profile' ? 700 : 500 }}>Mon Profil</span>
-            </button>
-
-            <button 
-              style={{ ...s.sideNavItem, background: activeTab === 'security' ? '#fff' : 'transparent' }} 
-              onClick={() => { setActiveTab('security'); setEditMode(false); }}
-            >
-              <Shield size={17} color={activeTab === 'security' ? "#1E3A5F" : "#64748b"} />
-              <span style={{ color: activeTab === 'security' ? "#1E3A5F" : "#334155", fontWeight: activeTab === 'security' ? 700 : 500 }}>Sécurité</span>
-              <ChevronRight size={14} color="#cbd5e1" style={{ marginLeft: "auto" }} />
-            </button>
-
-            {canAccessDashboard && (
-              <button style={s.sideNavItem} onClick={() => navigate("/company/stats")}>
-                <LayoutDashboard size={17} color="#64748b" />
-                <span>Dashboard entreprise</span>
-                <ChevronRight size={14} color="#cbd5e1" style={{ marginLeft: "auto" }} />
-              </button>
-            )}
-          </div>
-
-          <button style={s.logoutBtn} onClick={handleLogout}>
-            <LogOut size={16} />
-            <span>Déconnexion</span>
+            <LogOut size={18} />
           </button>
-        </aside>
+        </div>
+      </div>
 
-        {/* ── Main content ── */}
-        <main style={s.main}>
-
-          {/* Page title bar */}
-          <div style={s.titleBar}>
-            <div>
-              <h1 style={s.pageTitle}>{activeTab === 'profile' ? "Mon profil" : "Sécurité du compte"}</h1>
-              <p style={s.pageSubtitle}>
-                {activeTab === 'profile' 
-                  ? "Gérez vos informations personnelles" 
-                  : "Mettez à jour votre mot de passe pour protéger votre compte"
-                }
-              </p>
+      <div style={s.fbHeader}>
+        <div style={s.coverWrap}>
+          <div style={s.coverImage}>
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E3A5F 0%, #3b82f6 100%)' }} />
+          </div>
+          <div style={s.profileHeaderContent}>
+            <div style={s.avatarContainer}>
+              <div style={s.avatarCircle}>
+                {previewUrl ? (
+                  <img src={previewUrl} alt="" style={s.avatarImg} />
+                ) : (
+                  <div style={s.avatarFallbackLarge}>{initials}</div>
+                )}
+                {editMode && (
+                  <button style={s.avatarEditIcon} onClick={() => fileInputRef.current.click()}>
+                    <Camera size={20} color="white" />
+                  </button>
+                )}
+              </div>
+              <div style={s.nameArea}>
+                <h1 style={s.fbName}>{form.fullName || "Utilisateur"}</h1>
+                <p style={s.fbSub}>{followedCompanies.length} abonnements • {roles.length} rôles</p>
+                <div style={s.rolesList}>
+                  {roles.map((r) => (
+                    <span key={r} style={s.fbRoleChip}>{r}</span>
+                  ))}
+                </div>
+              </div>
             </div>
-            {activeTab === 'profile' && (
-              !editMode ? (
-                <button style={s.editBtn} onClick={() => setEditMode(true)}>
-                  <Pencil size={15} />
-                  Modifier
+            <div style={s.headerActions}>
+              {!editMode ? (
+                <button style={s.fbEditBtn} onClick={() => setEditMode(true)}>
+                  <Pencil size={16} /> Modifier le profil
                 </button>
               ) : (
-                <button style={s.cancelBtn} onClick={handleCancelEdit}>
-                  <X size={15} />
-                  Annuler
-                </button>
-              )
-            )}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button style={s.fbCancelBtn} onClick={handleCancelEdit}>Annuler</button>
+                  <button style={s.fbSaveBtn} onClick={handleSubmit} disabled={isUpdating}>
+                    {isUpdating ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Enregistrer</>}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+        
+        <div style={s.fbNav}>
+          <div style={s.fbNavContent}>
+            <button 
+              style={{ ...s.fbTab, borderBottom: activeTab === 'profile' ? '3px solid #1E3A5F' : 'none', color: activeTab === 'profile' ? '#1E3A5F' : '#64748b' }}
+              onClick={() => setActiveTab('profile')}
+            >
+              À propos
+            </button>
+            <button 
+              style={{ ...s.fbTab, borderBottom: activeTab === 'follows' ? '3px solid #1E3A5F' : 'none', color: activeTab === 'follows' ? '#1E3A5F' : '#64748b' }}
+              onClick={() => setActiveTab('follows')}
+            >
+              Abonnements
+            </button>
+            <button 
+              style={{ ...s.fbTab, borderBottom: activeTab === 'security' ? '3px solid #1E3A5F' : 'none', color: activeTab === 'security' ? '#1E3A5F' : '#64748b' }}
+              onClick={() => setActiveTab('security')}
+            >
+              Sécurité
+            </button>
+          </div>
+        </div>
+      </div>
 
-          {/* Feedback toast */}
-          {feedback.type && (
-            <div style={{ ...s.feedback, ...(feedback.type === "success" ? s.feedbackSuccess : s.feedbackError) }}>
-              {feedback.type === "success"
-                ? <CheckCircle size={16} />
-                : <AlertCircle size={16} />
-              }
+      <div style={s.pageGridFacebook}>
+        <aside style={s.leftCol}>
+          <div style={s.introCard}>
+            <h3 style={s.introTitle}>Intro</h3>
+            <div style={s.introList}>
+              <div style={s.introItem}><Mail size={18} color="#64748b" /> <span>{form.email}</span></div>
+              {form.phone && <div style={s.introItem}><Phone size={18} color="#64748b" /> <span>{form.phone}</span></div>}
+            </div>
+            
+            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button style={s.fbSidebarBtn} onClick={() => navigate("/purchases")}>
+                <ShoppingBag size={18} /> Mes Achats
+              </button>
+              {canAccessDashboard && (
+                <button style={{ ...s.fbSidebarBtn, background: '#eff6ff', color: '#1E3A5F' }} onClick={() => setShowCompanyModal(true)}>
+                  <Building2 size={18} /> Dashboard Pro
+                </button>
+              )}
+              <button style={{ ...s.fbSidebarBtn, color: '#ef4444' }} onClick={handleLogout}>
+                <LogOut size={18} /> Déconnexion
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <main style={s.mainCol}>
+          <input type="file" ref={fileInputRef} hidden onChange={handleAvatarChange} accept="image/*" />
+          
+          {feedback.message && (
+            <div style={{ ...s.feedback, ...(feedback.type === 'success' ? s.feedbackSuccess : s.feedbackError) }}>
+              {feedback.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
               {feedback.message}
             </div>
           )}
 
           {activeTab === 'profile' ? (
-            <>
-              {/* ── Avatar card ── */}
-              <div style={s.avatarCard}>
-                <div style={s.avatarSection}>
-                  <div style={s.avatarWrap}>
-                    {previewUrl
-                      ? <img src={previewUrl} alt="avatar" style={s.avatar} />
-                      : <div style={s.avatarInitials}>{initials}</div>
-                    }
-                    {editMode && (
-                      <button
-                        style={s.avatarEditBtn}
-                        onClick={() => fileInputRef.current?.click()}
-                        title="Changer la photo"
-                      >
-                        <Camera size={14} color="#fff" />
-                      </button>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp"
-                      onChange={handleAvatarChange}
-                      style={{ display: "none" }}
-                    />
-                  </div>
-
-                  <div style={s.avatarInfo}>
-                    <span style={s.avatarName}>{form.fullName || "Utilisateur"}</span>
-                    <span style={s.avatarEmail}>{form.email}</span>
-                    {roles.length > 0 && (
-                      <div style={s.rolesRow}>
-                        {roles.map((role) => (
-                          <span key={role} style={s.roleChip}>{role}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+            <div style={s.formCardFb}>
+              <h2 style={s.sectionTitleFb}>Informations personnelles</h2>
+              <form onSubmit={handleSubmit} style={s.fbFormGrid}>
+                <div style={s.fbField}>
+                  <label style={s.fbLabel}>Nom Complet</label>
+                  <input
+                    type="text"
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    disabled={!editMode}
+                    style={editMode ? s.fbInputActive : s.fbInputDisabled}
+                  />
                 </div>
-                {editMode && (
-                  <p style={s.avatarHint}>
-                    <Camera size={12} /> Cliquez sur l'avatar pour changer votre photo
-                  </p>
+                <div style={s.fbField}>
+                  <label style={s.fbLabel}>Email (non modifiable)</label>
+                  <input type="email" value={form.email} disabled style={s.fbInputDisabled} />
+                </div>
+                <div style={s.fbField}>
+                  <label style={s.fbLabel}>Téléphone</label>
+                  <input
+                    type="text"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    disabled={!editMode}
+                    style={editMode ? s.fbInputActive : s.fbInputDisabled}
+                    placeholder="Ex: +216 12 345 678"
+                  />
+                </div>
+              </form>
+            </div>
+          ) : activeTab === 'follows' ? (
+            <div style={s.formCardFb}>
+              <h2 style={s.sectionTitleFb}>Entreprises suivies ({followedCompanies.length})</h2>
+              <div style={s.followsGridFb}>
+                {followedCompanies.length === 0 ? (
+                  <div style={s.fbEmpty}>
+                    <Building2 size={40} color="#cbd5e1" />
+                    <p>Aucun abonnement trouvé.</p>
+                  </div>
+                ) : (
+                  followedCompanies.map((company) => (
+                    <div key={company._id} style={s.fbFollowCard} onClick={() => navigate(`/user/company/${company._id}`)}>
+                      <div style={s.fbFollowLogo}>
+                        {company.logoUrl ? (
+                          <img src={toImageUrl(company.logoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Building2 size={24} color="#94a3b8" />
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h4 style={s.fbFollowName}>{company.companyName}</h4>
+                        <p style={s.fbFollowMeta}>{company.city || "Tunisie"}</p>
+                      </div>
+                      <ChevronRight size={18} color="#cbd5e1" />
+                    </div>
+                  ))
                 )}
               </div>
-
-              {/* ── Form card ── */}
-              <form onSubmit={handleSubmit} style={s.formCard}>
-                <h2 style={s.formTitle}>Informations personnelles</h2>
-
-                <div style={s.formGrid}>
-                  {/* Full name */}
-                  <div style={s.fieldGroup}>
-                    <label style={s.label}>
-                      <User size={13} /> Nom complet
-                    </label>
-                    {editMode ? (
-                      <input
-                        type="text"
-                        value={form.fullName}
-                        onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                        placeholder="Ex: Jean Dupont"
-                        style={s.input}
-                      />
-                    ) : (
-                      <div style={s.readonlyValue}>{form.fullName || <span style={s.empty}>Non renseigné</span>}</div>
-                    )}
-                  </div>
-
-                  {/* Email — always readonly */}
-                  <div style={s.fieldGroup}>
-                    <label style={s.label}>
-                      <Mail size={13} /> Email
-                      <span style={s.lockedBadge}><Lock size={10} /> Non modifiable</span>
-                    </label>
-                    <div style={{ ...s.readonlyValue, ...s.readonlyLocked }}>{form.email}</div>
-                  </div>
-
-                  {/* Phone */}
-                  <div style={s.fieldGroup}>
-                    <label style={s.label}>
-                      <Phone size={13} /> Téléphone
-                    </label>
-                    {editMode ? (
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+216 00 000 000"
-                        style={s.input}
-                      />
-                    ) : (
-                      <div style={s.readonlyValue}>{form.phone || <span style={s.empty}>Non renseigné</span>}</div>
-                    )}
-                  </div>
-                </div>
-
-                {editMode && (
-                  <div style={s.formActions}>
-                    <button type="submit" style={s.saveBtn} disabled={isUpdating}>
-                      {isUpdating ? (
-                        <><div style={s.btnSpinner} /> Enregistrement...</>
-                      ) : (
-                        <><Save size={15} /> Enregistrer les modifications</>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </form>
-            </>
+            </div>
           ) : (
-            /* ── Security Tab Content ── */
-            <div style={s.formCard}>
-              <h2 style={s.formTitle}>Changer le mot de passe</h2>
-              <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-                Assurez-vous d'utiliser un mot de passe fort pour protéger votre compte.
-              </p>
-
+            <div style={s.formCardFb}>
+              <h2 style={s.sectionTitleFb}>Sécurité</h2>
               <form onSubmit={handleSecuritySubmit}>
-                <div style={{ ...s.fieldGroup, marginBottom: '1.5rem' }}>
-                  <label style={s.label}>Mot de passe actuel</label>
+                <div style={s.fbField}>
+                  <label style={s.fbLabel}>Ancien mot de passe</label>
                   <input
                     type="password"
                     value={securityForm.oldPassword}
                     onChange={(e) => setSecurityForm({ ...securityForm, oldPassword: e.target.value })}
                     required
-                    style={s.input}
-                    placeholder="Entrez votre mot de passe actuel"
+                    style={s.fbInputActive}
                   />
                 </div>
-
-                <div style={{ ...s.fieldGroup, marginBottom: '1.5rem' }}>
-                  <label style={s.label}>Nouveau mot de passe</label>
+                <div style={s.fbField}>
+                  <label style={s.fbLabel}>Nouveau mot de passe</label>
                   <input
                     type="password"
                     value={securityForm.newPassword}
                     onChange={(e) => setSecurityForm({ ...securityForm, newPassword: e.target.value })}
                     required
-                    style={s.input}
-                    placeholder="8 caractères minimum"
+                    style={s.fbInputActive}
                   />
-                  <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', lineHeight: '1.4' }}>
-                    Condition : 8 caractères minimum, incluant au moins une lettre, un chiffre et un symbole spécial (@$!%*#?&).
-                  </p>
                 </div>
-
-                <div style={{ ...s.fieldGroup, marginBottom: '2rem' }}>
-                  <label style={s.label}>Confirmer le nouveau mot de passe</label>
+                <div style={s.fbField}>
+                  <label style={s.fbLabel}>Confirmer le mot de passe</label>
                   <input
                     type="password"
                     value={securityForm.confirmPassword}
                     onChange={(e) => setSecurityForm({ ...securityForm, confirmPassword: e.target.value })}
                     required
-                    style={s.input}
-                    placeholder="Répétez le nouveau mot de passe"
+                    style={s.fbInputActive}
                   />
                 </div>
-
-                <button 
-                  type="submit" 
-                  style={{ ...s.saveBtn, width: '100%', justifyContent: 'center' }} 
-                  disabled={isChangingPassword}
-                >
-                  {isChangingPassword ? (
-                    <><Loader2 className="animate-spin" size={18} /> Mise à jour...</>
-                  ) : (
-                    <><Key size={16} /> Mettre à jour le mot de passe</>
-                  )}
+                <button type="submit" style={s.fbPrimaryBtn} disabled={isChangingPassword}>
+                  {isChangingPassword ? <Loader2 className="animate-spin" size={18} /> : "Mettre à jour le mot de passe"}
                 </button>
               </form>
             </div>
           )}
-
-          {/* ── Purchases & Company Dashboard buttons (Only visible on Profile tab for better UX) ── */}
-          {activeTab === 'profile' && (
-            <div style={s.dangerZone}>
-              <div style={s.dangerRow}>
-                <div>
-                  <p style={s.dangerTitle}>Accès rapides</p>
-                  <p style={s.dangerDesc}>Gérez vos transactions ou votre entreprise.</p>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
-                    onClick={() => navigate("/purchases")}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: '1px solid #1E3A5F',
-                      backgroundColor: 'white',
-                      color: '#1E3A5F',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <ShoppingBag size={16} /> Mes Achats
-                  </button>
-
-                  {canAccessDashboard && (
-                    <button 
-                      onClick={() => navigate("/company/stats")}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        backgroundColor: '#1E3A5F',
-                        color: 'white',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <Building2 size={16} /> Dashboard Pro
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
         </main>
       </div>
+
+      {/* ── Multi-Company Selection Modal ── */}
+      {showCompanyModal && (
+        <div style={s.modalOverlay}>
+          <div style={s.modalContent}>
+            <div style={s.modalHeader}>
+              <h2 style={s.modalTitle}>Choisir une entreprise</h2>
+              <button style={s.closeBtn} onClick={() => setShowCompanyModal(false)}><X size={24} /></button>
+            </div>
+            <div style={s.modalBody}>
+              <p style={s.modalDesc}>Sélectionnez l'entreprise pour laquelle vous souhaitez accéder au tableau de bord.</p>
+              <div style={s.companyListModal}>
+                {managedCompanies.length === 0 ? (
+                  <p style={{ textAlign: 'center', color: '#64748b' }}>Aucune entreprise gérée.</p>
+                ) : (
+                  managedCompanies.map((comp) => (
+                    <button 
+                      key={comp._id} 
+                      style={s.companyItemBtn} 
+                      onClick={() => handleSwitchCompany(comp._id)}
+                      disabled={isSwitching}
+                    >
+                      <div style={s.compLogoSm}>
+                        {comp.logoUrl ? (
+                          <img src={toImageUrl(comp.logoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Building2 size={20} color="#94a3b8" />
+                        )}
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <p style={s.compNameSm}>{comp.companyName}</p>
+                        <p style={s.compCitySm}>{comp.city || "Tunisie"}</p>
+                      </div>
+                      <ChevronRight size={18} color="#cbd5e1" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -523,11 +526,349 @@ const css = `
 const s = {
   fullPage: {
     minHeight: "100vh",
-    background: "#f1f5f9",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    background: "#f0f2f5",
+    fontFamily: "inherit",
     display: "flex",
     flexDirection: "column",
   },
+  topBar: {
+    maxWidth: '1095px',
+    margin: '10px auto 0',
+    padding: '0 16px',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#65676b',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    padding: '8px 0',
+  },
+  fbHeader: {
+    background: '#fff',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+    marginBottom: '20px',
+  },
+  coverWrap: {
+    maxWidth: '1095px',
+    margin: '0 auto',
+    position: 'relative',
+    height: '350px',
+    background: '#f0f2f5',
+    borderBottomLeftRadius: '8px',
+    borderBottomRightRadius: '8px',
+    overflow: 'hidden',
+  },
+  coverImage: {
+    width: '100%',
+    height: '250px',
+    overflow: 'hidden',
+  },
+  profileHeaderContent: {
+    position: 'absolute',
+    bottom: '0',
+    left: '0',
+    right: '0',
+    padding: '0 32px 16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    background: 'linear-gradient(to top, rgba(255,255,255,1) 40%, rgba(255,255,255,0) 100%)',
+    height: '150px',
+  },
+  avatarContainer: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '16px',
+  },
+  avatarCircle: {
+    position: 'relative',
+    width: '168px',
+    height: '168px',
+    borderRadius: '50%',
+    border: '4px solid #fff',
+    background: '#fff',
+    overflow: 'visible',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  },
+  avatarFallbackLarge: {
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: '#1E3A5F',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '64px',
+    fontWeight: '800',
+  },
+  avatarEditIcon: {
+    position: 'absolute',
+    bottom: '12px',
+    right: '12px',
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    background: '#e4e6eb',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#050505',
+  },
+  nameArea: {
+    paddingBottom: '8px',
+  },
+  fbName: {
+    fontSize: '32px',
+    fontWeight: '800',
+    color: '#050505',
+    margin: '0 0 4px',
+  },
+  fbSub: {
+    fontSize: '16px',
+    color: '#65676b',
+    fontWeight: '600',
+    margin: 0,
+  },
+  rolesList: {
+    display: 'flex',
+    gap: '6px',
+    marginTop: '8px',
+  },
+  fbRoleChip: {
+    background: '#e4e6eb',
+    color: '#050505',
+    padding: '4px 12px',
+    borderRadius: '16px',
+    fontSize: '13px',
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  headerActions: {
+    paddingBottom: '12px',
+  },
+  fbEditBtn: {
+    background: '#e4e6eb',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    fontWeight: '700',
+    fontSize: '15px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    cursor: 'pointer',
+    color: '#050505',
+  },
+  fbSaveBtn: {
+    background: '#1877f2',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontWeight: '700',
+    cursor: 'pointer',
+  },
+  fbCancelBtn: {
+    background: '#e4e6eb',
+    color: '#050505',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontWeight: '700',
+    cursor: 'pointer',
+  },
+  fbNav: {
+    maxWidth: '1095px',
+    margin: '0 auto',
+    borderTop: '1px solid #e4e6eb',
+  },
+  fbNavContent: {
+    padding: '0 16px',
+    display: 'flex',
+    gap: '4px',
+  },
+  fbTab: {
+    padding: '16px 12px',
+    background: 'none',
+    border: 'none',
+    fontSize: '15px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    color: '#65676b',
+  },
+  pageGridFacebook: {
+    maxWidth: '1095px',
+    margin: '0 auto',
+    width: '100%',
+    display: 'flex',
+    gap: '16px',
+    padding: '0 16px',
+  },
+  leftCol: {
+    width: '360px',
+    flexShrink: 0,
+  },
+  introCard: {
+    background: '#fff',
+    borderRadius: '8px',
+    padding: '16px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+  },
+  introTitle: {
+    fontSize: '20px',
+    fontWeight: '800',
+    margin: '0 0 16px',
+    color: '#050505',
+  },
+  introList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  introItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    fontSize: '15px',
+    color: '#050505',
+  },
+  fbSidebarBtn: {
+    width: '100%',
+    padding: '10px 12px',
+    background: '#f2f3f5',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '15px',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    cursor: 'pointer',
+    color: '#050505',
+    textAlign: 'left',
+  },
+  mainCol: {
+    flex: 1,
+  },
+  formCardFb: {
+    background: '#fff',
+    borderRadius: '8px',
+    padding: '16px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+    marginBottom: '16px',
+  },
+  sectionTitleFb: {
+    fontSize: '20px',
+    fontWeight: '800',
+    margin: '0 0 20px',
+    color: '#050505',
+  },
+  fbFormGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  fbField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  fbLabel: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#65676b',
+  },
+  fbInputActive: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '6px',
+    border: '1px solid #ced4da',
+    fontSize: '15px',
+    boxSizing: 'border-box',
+  },
+  fbInputDisabled: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '6px',
+    border: '1px solid #e4e6eb',
+    background: '#f8f9fa',
+    color: '#65676b',
+    fontSize: '15px',
+    boxSizing: 'border-box',
+  },
+  fbPrimaryBtn: {
+    marginTop: '16px',
+    width: '100%',
+    padding: '12px',
+    background: '#1877f2',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    fontWeight: '700',
+    fontSize: '16px',
+    cursor: 'pointer',
+  },
+  followsGridFb: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  fbFollowCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #f0f2f5',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+  },
+  fbFollowLogo: {
+    width: '60px',
+    height: '60px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    background: '#f0f2f5',
+  },
+  fbFollowName: {
+    fontSize: '16px',
+    fontWeight: '700',
+    margin: 0,
+    color: '#050505',
+  },
+  fbFollowMeta: {
+    fontSize: '13px',
+    color: '#65676b',
+    margin: 0,
+  },
+  fbEmpty: {
+    textAlign: 'center',
+    padding: '40px 0',
+    color: '#65676b',
+  },
+  feedback: {
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "12px 16px", borderRadius: 8, marginBottom: 16,
+    fontSize: 14, fontWeight: 600, animation: "slideDown 0.25s ease",
+  },
+  feedbackSuccess: { background: "#e7f3ff", color: "#1877f2", border: "1px solid #1877f2" },
+  feedbackError: { background: "#ffebe8", color: "#f02849", border: "1px solid #f02849" },
   loadingBox: {
     display: "flex", flexDirection: "column", alignItems: "center",
     justifyContent: "center", minHeight: "100vh", gap: 16,
@@ -537,207 +878,36 @@ const s = {
     border: "3px solid #e2e8f0", borderTopColor: "#1E3A5F",
     animation: "spin 0.8s linear infinite",
   },
-  pageGrid: {
-    display: "flex",
-    minHeight: "100vh",
-    maxWidth: 1100,
-    margin: "0 auto",
-    width: "100%",
-    padding: "0 16px",
-    gap: 28,
-    boxSizing: "border-box",
+  modalOverlay: {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    background: 'rgba(244, 244, 244, 0.8)', backdropFilter: 'blur(4px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
   },
-
-  // ── Sidebar ──
-  sidebar: {
-    width: 240,
-    flexShrink: 0,
-    display: "flex",
-    flexDirection: "column",
-    padding: "32px 0",
+  modalContent: {
+    background: '#fff', width: '100%', maxWidth: '500px', borderRadius: '12px',
+    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+    overflow: 'hidden', animation: 'slideDown 0.3s ease-out',
   },
-  sidebarLogo: {
-    display: "flex", alignItems: "center", gap: 8,
-    marginBottom: 36, paddingLeft: 4,
+  modalHeader: {
+    padding: '20px', borderBottom: '1px solid #f1f5f9', display: 'flex',
+    justifyContent: 'space-between', alignItems: 'center', background: '#fff',
   },
-  logoMark: { fontSize: 20, color: "#2563eb" },
-  logoText: { fontSize: 18, fontWeight: 800, color: "#0f172a" },
-  sidebarContent: { flex: 1 },
-  sidebarLabel: {
-    fontSize: 11, fontWeight: 700, color: "#94a3b8",
-    textTransform: "uppercase", letterSpacing: "0.08em",
-    marginBottom: 8, paddingLeft: 4,
+  modalTitle: { fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 },
+  closeBtn: { background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' },
+  modalBody: { padding: '20px' },
+  modalDesc: { color: '#64748b', fontSize: '14px', marginBottom: '20px' },
+  companyListModal: { display: 'flex', flexDirection: 'column', gap: '10px' },
+  companyItemBtn: {
+    width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+    background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px',
+    cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left',
   },
-  sideNavItem: {
-    display: "flex", alignItems: "center", gap: 10,
-    width: "100%", padding: "10px 12px",
-    background: "none", border: "none", borderRadius: 10,
-    cursor: "pointer", fontSize: 14, fontWeight: 500, color: "#334155",
-    textAlign: "left", transition: "background 0.15s",
-    marginBottom: 2,
+  compLogoSm: {
+    width: '40px', height: '40px', borderRadius: '8px', background: '#fff',
+    border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
-  logoutBtn: {
-    display: "flex", alignItems: "center", gap: 8,
-    padding: "10px 12px",
-    background: "none", border: "none", borderRadius: 10,
-    cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#ef4444",
-    textAlign: "left", marginTop: "auto",
-  },
-
-  // ── Main ──
-  main: {
-    flex: 1,
-    padding: "32px 0 64px",
-    maxWidth: 680,
-  },
-  titleBar: {
-    display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  pageTitle: { margin: 0, fontSize: 26, fontWeight: 800, color: "#0f172a" },
-  pageSubtitle: { margin: "4px 0 0", fontSize: 14, color: "#64748b" },
-  editBtn: {
-    display: "inline-flex", alignItems: "center", gap: 7,
-    padding: "9px 18px",
-    background: "#1E3A5F", color: "#fff",
-    border: "none", borderRadius: 10,
-    cursor: "pointer", fontSize: 13, fontWeight: 700,
-    boxShadow: "0 2px 8px rgba(30,58,95,0.25)",
-    transition: "all 0.15s",
-  },
-  cancelBtn: {
-    display: "inline-flex", alignItems: "center", gap: 7,
-    padding: "9px 18px",
-    background: "#fff", color: "#64748b",
-    border: "1.5px solid #e2e8f0", borderRadius: 10,
-    cursor: "pointer", fontSize: 13, fontWeight: 700,
-  },
-
-  feedback: {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "12px 16px", borderRadius: 12, marginBottom: 20,
-    fontSize: 13, fontWeight: 600, animation: "slideDown 0.25s ease",
-  },
-  feedbackSuccess: { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" },
-  feedbackError: { background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" },
-
-  // ── Avatar card ──
-  avatarCard: {
-    background: "#fff",
-    border: "1px solid #e5ebf2",
-    borderRadius: 16,
-    padding: "24px",
-    marginBottom: 20,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  avatarSection: { display: "flex", alignItems: "center", gap: 20 },
-  avatarWrap: { position: "relative", flexShrink: 0 },
-  avatar: {
-    width: 84, height: 84, borderRadius: 20,
-    objectFit: "cover", border: "3px solid #e2e8f0",
-  },
-  avatarInitials: {
-    width: 84, height: 84, borderRadius: 20,
-    background: "linear-gradient(135deg, #1E3A5F, #2563eb)",
-    color: "#fff", fontSize: 28, fontWeight: 800,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    border: "3px solid #e2e8f0",
-  },
-  avatarEditBtn: {
-    position: "absolute", bottom: -4, right: -4,
-    width: 28, height: 28, borderRadius: "50%",
-    background: "#2563eb", border: "2.5px solid #fff",
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-  },
-  avatarInfo: { display: "flex", flexDirection: "column", gap: 3 },
-  avatarName: { fontSize: 18, fontWeight: 800, color: "#0f172a" },
-  avatarEmail: { fontSize: 13, color: "#64748b" },
-  rolesRow: { display: "flex", gap: 6, marginTop: 4 },
-  roleChip: {
-    fontSize: 11, fontWeight: 700, color: "#2563eb",
-    background: "#eff6ff", border: "1px solid #bfdbfe",
-    borderRadius: 20, padding: "2px 10px",
-    textTransform: "capitalize",
-  },
-  avatarHint: {
-    display: "flex", alignItems: "center", gap: 5,
-    margin: "14px 0 0", fontSize: 12, color: "#94a3b8",
-  },
-
-  // ── Form card ──
-  formCard: {
-    background: "#fff",
-    border: "1px solid #e5ebf2",
-    borderRadius: 16,
-    padding: "24px",
-    marginBottom: 20,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  formTitle: { margin: "0 0 20px", fontSize: 16, fontWeight: 700, color: "#0f172a" },
-  formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 24px" },
-  fieldGroup: { display: "flex", flexDirection: "column", gap: 6 },
-  label: {
-    display: "flex", alignItems: "center", gap: 5,
-    fontSize: 11, fontWeight: 700, color: "#64748b",
-    textTransform: "uppercase", letterSpacing: "0.06em",
-  },
-  lockedBadge: {
-    marginLeft: "auto", display: "flex", alignItems: "center", gap: 3,
-    fontSize: 10, fontWeight: 600, color: "#94a3b8",
-    background: "#f8fafc", border: "1px solid #e2e8f0",
-    borderRadius: 20, padding: "2px 8px",
-  },
-  input: {
-    padding: "10px 14px",
-    background: "#f8fafc",
-    border: "1.5px solid #e2e8f0",
-    borderRadius: 10, fontSize: 14, color: "#0f172a",
-    outline: "none", transition: "border-color 0.15s",
-    fontFamily: "inherit",
-  },
-  readonlyValue: {
-    padding: "10px 14px",
-    fontSize: 14, color: "#0f172a", fontWeight: 500,
-  },
-  readonlyLocked: { color: "#94a3b8" },
-  empty: { color: "#cbd5e1", fontStyle: "italic" },
-  formActions: { marginTop: 24 },
-  saveBtn: {
-    display: "inline-flex", alignItems: "center", gap: 8,
-    padding: "11px 26px",
-    background: "linear-gradient(135deg, #1E3A5F, #2563eb)",
-    color: "#fff", border: "none", borderRadius: 12,
-    cursor: "pointer", fontSize: 14, fontWeight: 700,
-    boxShadow: "0 4px 14px rgba(37,99,235,0.3)",
-    transition: "opacity 0.15s",
-  },
-  btnSpinner: {
-    width: 14, height: 14, borderRadius: "50%",
-    border: "2px solid rgba(255,255,255,0.4)",
-    borderTopColor: "#fff",
-    animation: "spin 0.7s linear infinite",
-  },
-
-  // ── Danger zone ──
-  dangerZone: {
-    background: "#fff",
-    border: "1px solid #fee2e2",
-    borderRadius: 16,
-    padding: "20px 24px",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-  },
-  dangerRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 },
-  dangerTitle: { margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" },
-  dangerDesc: { margin: "3px 0 0", fontSize: 13, color: "#64748b" },
-  dangerBtn: {
-    display: "inline-flex", alignItems: "center", gap: 7,
-    padding: "9px 18px",
-    background: "#fef2f2", color: "#dc2626",
-    border: "1.5px solid #fecaca", borderRadius: 10,
-    cursor: "pointer", fontSize: 13, fontWeight: 700,
-    whiteSpace: "nowrap", flexShrink: 0,
-  },
+  compNameSm: { fontWeight: '700', color: '#0f172a', margin: 0, fontSize: '15px' },
+  compCitySm: { fontSize: '12px', color: '#64748b', margin: 0 },
 };
 
 export default Profile;

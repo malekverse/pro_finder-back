@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const Product = require("../models/Product");
 
@@ -11,10 +12,7 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: "Nom, catégorie et prix sont obligatoires" });
     }
 
-    const images = req.files && req.files.images ? req.files.images.map((f) => {
-      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
-      return relativePath.replace(/\\/g, '/');
-    }) : [];
+    const imagesProduct = req.files ? req.files.filter(f => f.fieldname === 'imagesProduct').map((f) => f.path.replace(/\\/g, '/')) : [];
 
     const product = await Product.create({
       name,
@@ -22,7 +20,7 @@ const createProduct = async (req, res) => {
       price,
       description,
       stock: stock || 0,
-      images,
+      imagesProduct,
       companyId,
     });
 
@@ -57,11 +55,7 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Produit non trouvé ou non autorisé" });
     }
 
-    // New images
-    const newImages = req.files && req.files.images ? req.files.images.map((f) => {
-      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
-      return relativePath.replace(/\\/g, '/');
-    }) : [];
+    const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesProduct').map((f) => f.path.replace(/\\/g, '/')) : [];
     
     let finalImages = [];
     if (existingImages) {
@@ -77,7 +71,7 @@ const updateProduct = async (req, res) => {
     product.price = price || product.price;
     product.description = description || product.description;
     product.stock = stock !== undefined ? stock : product.stock;
-    product.images = [...finalImages, ...newImages];
+    product.imagesProduct = [...finalImages, ...newImages];
 
     await product.save();
     res.json(product);
@@ -93,10 +87,20 @@ const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const companyId = req.companyId || req.user;
 
-    const product = await Product.findOneAndDelete({ _id: id, companyId });
+    const product = await Product.findOne({ _id: id, companyId });
     if (!product) {
       return res.status(404).json({ message: "Produit non trouvé ou non autorisé" });
     }
+
+    // Supprimer les images locales
+    if (product.imagesProduct && product.imagesProduct.length > 0) {
+      product.imagesProduct.forEach((img) => {
+        const fullPath = path.join(__dirname, "..", img.replace(/\//g, path.sep));
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      });
+    }
+
+    await Product.findByIdAndDelete(id);
 
     res.json({ message: "Produit supprimé avec succès" });
   } catch (err) {
@@ -116,10 +120,32 @@ const getAllProducts = async (req, res) => {
   }
 };
 
+// GET FOLLOWED COMPANIES PRODUCTS
+const getFollowedProducts = async (req, res) => {
+  try {
+    const Follow = require("../models/follow");
+    const userId = req.user;
+
+    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } }).select("company_id");
+    const companyIds = follows.map(f => f.company_id);
+
+    const products = await Product.find({ companyId: { $in: companyIds } })
+      .populate("companyId", "companyName logoUrl")
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.json(products);
+  } catch (err) {
+    console.error("[getFollowedProducts]", err);
+    res.status(500).json({ message: "Erreur lors de la récupération des produits suivis" });
+  }
+};
+
 module.exports = {
   createProduct,
   getCompanyProducts,
   updateProduct,
   deleteProduct,
-  getAllProducts
+  getAllProducts,
+  getFollowedProducts
 };

@@ -12,7 +12,7 @@ router.use(verifyJWT);
 // Créer un post (plusieurs images sans limite)
 router.post("/",
   checkPermission("create_post"),
-  upload.array("images"),
+  upload.array("imagesPost"),
   postController.createPost
 );
 
@@ -31,7 +31,7 @@ router.get("/:id", postController.getPost);
 // Modifier un post
 router.put("/:id",
   checkPermission("update_post"),
-  upload.array("images"),
+  upload.any(),
   postController.updatePost
 );
 

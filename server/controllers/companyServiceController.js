@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const CompanyService = require("../models/CompanyService");
 
@@ -11,17 +12,14 @@ const createService = async (req, res) => {
       return res.status(400).json({ message: "Nom, prix et durée sont obligatoires" });
     }
 
-    const images = req.files && req.files.images ? req.files.images.map((f) => {
-      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
-      return relativePath.replace(/\\/g, '/');
-    }) : [];
+    const imagesServices = req.files ? req.files.filter(f => f.fieldname === 'imagesServices').map((f) => f.path.replace(/\\/g, '/')) : [];
 
     const service = await CompanyService.create({
       name,
       description,
       price,
       duration,
-      images,
+      imagesServices,
       companyId,
     });
 
@@ -56,11 +54,7 @@ const updateService = async (req, res) => {
       return res.status(404).json({ message: "Service non trouvé ou non autorisé" });
     }
 
-    // New images
-    const newImages = req.files && req.files.images ? req.files.images.map((f) => {
-      const relativePath = path.relative(path.join(__dirname, '..'), f.path);
-      return relativePath.replace(/\\/g, '/');
-    }) : [];
+    const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesServices').map((f) => f.path.replace(/\\/g, '/')) : [];
     
     let finalImages = [];
     if (existingImages) {
@@ -75,7 +69,7 @@ const updateService = async (req, res) => {
     service.description = description || service.description;
     service.price = price || service.price;
     service.duration = duration || service.duration;
-    service.images = [...finalImages, ...newImages];
+    service.imagesServices = [...finalImages, ...newImages];
 
     await service.save();
     res.json(service);
@@ -91,10 +85,20 @@ const deleteService = async (req, res) => {
     const { id } = req.params;
     const companyId = req.companyId || req.user;
 
-    const service = await CompanyService.findOneAndDelete({ _id: id, companyId });
+    const service = await CompanyService.findOne({ _id: id, companyId });
     if (!service) {
       return res.status(404).json({ message: "Service non trouvé ou non autorisé" });
     }
+
+    // Supprimer les images locales
+    if (service.imagesServices && service.imagesServices.length > 0) {
+      service.imagesServices.forEach((img) => {
+        const fullPath = path.join(__dirname, "..", img.replace(/\//g, path.sep));
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      });
+    }
+
+    await CompanyService.findByIdAndDelete(id);
 
     res.json({ message: "Service supprimé avec succès" });
   } catch (err) {
@@ -114,10 +118,32 @@ const getAllServices = async (req, res) => {
   }
 };
 
+// GET FOLLOWED COMPANIES SERVICES
+const getFollowedServices = async (req, res) => {
+  try {
+    const Follow = require("../models/follow");
+    const userId = req.user;
+
+    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } }).select("company_id");
+    const companyIds = follows.map(f => f.company_id);
+
+    const services = await CompanyService.find({ companyId: { $in: companyIds } })
+      .populate("companyId", "companyName logoUrl")
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.json(services);
+  } catch (err) {
+    console.error("[getFollowedServices]", err);
+    res.status(500).json({ message: "Erreur lors de la récupération des services suivis" });
+  }
+};
+
 module.exports = {
   createService,
   getCompanyServices,
   updateService,
   deleteService,
-  getAllServices
+  getAllServices,
+  getFollowedServices
 };

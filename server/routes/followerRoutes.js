@@ -10,6 +10,8 @@ router.use(verifyJWT);
 router.post("/follow", followerController.followCompany);
 router.delete("/unfollow", followerController.unfollowCompany);
 router.get("/check/:companyId", followerController.checkFollowStatus);
+router.get("/my-follows", followerController.getUserFollowedCompanies);
+router.get("/my-managed", followerController.getUserManagedCompanies);
 router.get("/count", followerController.getFollowerCount);
 router.get("/feed", followerController.getFollowedFeed);
 router.get("/followers-stats", authorizeRoles("company", "admin", "owner"), followerController.getFollowersStats);

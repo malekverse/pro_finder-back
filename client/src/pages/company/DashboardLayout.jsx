@@ -11,9 +11,12 @@ import {
   Users,
   LogOut,
   ShoppingBag,
-  Star
+  Star,
+  Bell
 } from "lucide-react";
 import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
+import NotificationBell from "../../components/dashboard/company/NotificationBell";
+import { toImageUrl } from "../../utils/imageUtils";
 
 import styles from "../../styles/Dashboard.module.css";
 
@@ -68,13 +71,7 @@ const DashboardLayout = () => {
           style={{cursor:"pointer"}}
         >
           <img
-            src={
-              company?.logoUrl
-              ? company.logoUrl.startsWith('http') 
-              ? company.logoUrl                          // ✅ Cloudinary → tel quel
-              : `http://localhost:5000/${company.logoUrl}` // chemin local → préfixe
-              : "https://via.placeholder.com/60"
-            }
+            src={toImageUrl(company?.logoUrl) || "https://via.placeholder.com/60"}
             alt="logo"
             className={styles.companyLogo}
           />
@@ -139,7 +136,12 @@ const DashboardLayout = () => {
 
       <main className={styles.content}>
         <div className={styles.topBar}>
-          <span>Dashboard Fournisseur</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontWeight: '700', color: '#1e293b' }}>Dashboard Fournisseur</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <NotificationBell />
+            </div>
+          </div>
         </div>
 
         <Outlet />

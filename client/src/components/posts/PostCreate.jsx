@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useCreatePostMutation } from "../../redux/features/posts/postApiSlice";
 import { ImagePlus, X, Send, Loader, Image } from "lucide-react";
 import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
+import { toImageUrl } from "../../utils/imageUtils";
 
 const PostCreate = ({ onSuccess }) => {
   const [createPost, { isLoading }] = useCreatePostMutation();
@@ -37,7 +38,7 @@ const PostCreate = ({ onSuccess }) => {
     }
     const formData = new FormData();
     formData.append("content", content);
-    previews.forEach(({ file }) => formData.append("images", file));
+    previews.forEach(({ file }) => formData.append("imagesPost", file));
     try {
       await createPost(formData).unwrap();
       setContent("");
@@ -55,7 +56,7 @@ const PostCreate = ({ onSuccess }) => {
   };
 
   const authorName = company?.companyName || account?.fullName || "";
-  const avatarUrl  = company?.logoUrl ? `http://localhost:5000/${company.logoUrl}` : null;
+  const avatarUrl  = toImageUrl(company?.logoUrl);
 
   return (
     <div style={cs.card}>

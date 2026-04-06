@@ -41,9 +41,14 @@ const updateProfile = async (req, res) => {
     
     user.phone = phone ?? user.phone;
 
-    if (req.file) {
-      const relativePath = path.relative(path.join(__dirname, '..'), req.file.path);
-      user.avatarUrl = relativePath.replace(/\\/g, '/');
+    const avatarFile = req.files?.find(f => f.fieldname === 'avatar');
+    if (avatarFile) {
+      // Supprimer l'ancien avatar s'il existe localement
+      if (user.avatarUrl) {
+        const oldAvatarPath = path.join(__dirname, "..", user.avatarUrl.replace(/\//g, path.sep));
+        if (fs.existsSync(oldAvatarPath)) fs.unlinkSync(oldAvatarPath);
+      }
+      user.avatarUrl = avatarFile.path.replace(/\\/g, "/"); // Chemin relatif
     }
 
     const updatedUser = await user.save();
