@@ -60,22 +60,22 @@ const ItemsCarousel = ({ title, items, type, onSeeMore, onAction }) => {
 };
 
 const c = {
-  container: { marginBottom: 32, background: "#fff", padding: "24px", borderRadius: "20px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)", border: "1px solid #f1f5f9" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  title: { fontSize: 20, fontWeight: 800, color: "#1e293b", margin: 0, letterSpacing: "-0.5px" },
-  seeMore: { background: "none", border: "none", color: "#3b82f6", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, transition: 'all 0.2s' },
+  container: { marginBottom: 36, padding: "0" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  title: { fontSize: 18, fontWeight: 800, color: "#1e293b", margin: 0, letterSpacing: "-0.5px", display: 'flex', alignItems: 'center', gap: 8 },
+  seeMore: { background: "none", border: "none", color: "#3b82f6", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, transition: 'all 0.2s', padding: '6px 12px', borderRadius: '8px' },
   wrapper: { position: "relative", display: "flex", alignItems: "center" },
-  scrollArea: { display: "flex", gap: 20, overflowX: "hidden", padding: "4px 0" },
-  card: { minWidth: 160, width: 160, cursor: "pointer", transition: 'transform 0.2s', position: 'relative' },
-  imgContainer: { width: "100%", height: 160, borderRadius: "16px", overflow: "hidden", marginBottom: 12, background: "#f8fafc", position: 'relative' },
+  scrollArea: { display: "flex", gap: 16, overflowX: "hidden", padding: "4px 0" },
+  card: { minWidth: 150, width: 150, cursor: "pointer", transition: 'transform 0.2s', position: 'relative' },
+  imgContainer: { width: "100%", height: 150, borderRadius: "20px", overflow: "hidden", marginBottom: 10, background: "#fff", position: 'relative', boxShadow: "0 4px 12px rgba(0,0,0,0.05)" },
   img: { width: "100%", height: "100%", objectFit: "cover", transition: 'scale 0.3s' },
-  actionOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(30, 58, 95, 0.8)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: 0, transition: 'opacity 0.2s', fontWeight: 700, fontSize: '14px' },
-  info: { display: "flex", flexDirection: "column", gap: 4 },
-  itemName: { fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  actionOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(30, 58, 95, 0.8)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: 0, transition: 'opacity 0.2s', fontWeight: 700, fontSize: '13px' },
+  info: { display: "flex", flexDirection: "column", gap: 2 },
+  itemName: { fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  itemPrice: { fontSize: 14, fontWeight: 800, color: "#1E3A5F", margin: 0 },
-  companyName: { fontSize: 11, color: "#94a3b8", margin: 0, fontWeight: 600 },
-  navBtn: { position: "absolute", zIndex: 10, width: 36, height: 36, borderRadius: "50%", background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", color: '#1e293b' }
+  itemPrice: { fontSize: 13, fontWeight: 800, color: "#1E3A5F", margin: 0 },
+  companyName: { fontSize: 10, color: "#94a3b8", margin: 0, fontWeight: 600 },
+  navBtn: { position: "absolute", zIndex: 10, width: 32, height: 32, borderRadius: "50%", background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", color: '#1e293b' }
 };
 
 export default ItemsCarousel;

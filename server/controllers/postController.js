@@ -229,6 +229,7 @@ const addComment = async (req, res) => {
         recipient_id: post.author_id,
         recipient_type: "Company",
         sender_id: req.user,
+        sender_type: "User",
         type: "comment",
         related_id: post._id,
         message: `${sender?.fullName || "Quelqu'un"} a commenté votre publication.`

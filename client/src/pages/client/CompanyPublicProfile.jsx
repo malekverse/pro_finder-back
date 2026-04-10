@@ -21,8 +21,11 @@ import {
   useGetCompanyReviewsQuery,
   useGetAverageRatingQuery,
   useCreateReviewMutation,
+  useDeleteReviewMutation,
+  useUpdateReviewMutation,
 } from "../../redux/features/reviewApiSlice";
 import { useSelector } from "react-redux";
+import { Edit, Trash2 } from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
 
@@ -78,7 +81,11 @@ const CompanyPublicProfile = () => {
   // Review Logic
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [createReview, { isLoading: submittingReview }] = useCreateReviewMutation();
+  const [updateReview, { isLoading: updatingReview }] = useUpdateReviewMutation();
+  const [deleteReview] = useDeleteReviewMutation();
+  
   const { data: reviews = [], isLoading: loadingReviews } = useGetCompanyReviewsQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
   const { data: ratingStats } = useGetAverageRatingQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
 
@@ -177,17 +184,49 @@ const CompanyPublicProfile = () => {
     }
     if (!reviewComment.trim()) return;
     try {
-      await createReview({
-        company_id: companyId,
-        rating: reviewRating,
-        comment: reviewComment,
-      }).unwrap();
+      if (editingReviewId) {
+        await updateReview({
+          id: editingReviewId,
+          company_id: companyId,
+          rating: reviewRating,
+          comment: reviewComment,
+        }).unwrap();
+        setEditingReviewId(null);
+        alert("Avis modifié avec succès !");
+      } else {
+        await createReview({
+          company_id: companyId,
+          rating: reviewRating,
+          comment: reviewComment,
+        }).unwrap();
+        alert("Merci pour votre avis !");
+      }
       setReviewComment("");
       setReviewRating(5);
-      alert("Merci pour votre avis !");
     } catch (err) {
       console.error("Review error", err);
       alert(err.data?.message || "Erreur lors de l'envoi de l'avis");
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReviewId(review._id);
+    setReviewRating(review.rating);
+    setReviewComment(review.comment);
+    // Scroll to review form
+    const formElement = document.getElementById("review-form");
+    if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleDeleteReview = async (id) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) {
+      try {
+        await deleteReview(id).unwrap();
+        alert("Avis supprimé.");
+      } catch (err) {
+        console.error("Delete review error", err);
+        alert("Erreur lors de la suppression de l'avis");
+      }
     }
   };
 
@@ -524,8 +563,20 @@ const CompanyPublicProfile = () => {
             {activeTab === "reviews" && (
               <section style={s.feedSection}>
                 {/* Formulaire d'avis */}
-                <div style={s.reviewFormCard}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '15px' }}>Laissez un avis</h3>
+                <div id="review-form" style={s.reviewFormCard}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                      {editingReviewId ? "Modifier votre avis" : "Laissez un avis"}
+                    </h3>
+                    {editingReviewId && (
+                      <button 
+                        onClick={() => { setEditingReviewId(null); setReviewComment(""); setReviewRating(5); }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
+                      >
+                        Annuler la modification
+                      </button>
+                    )}
+                  </div>
                   <form onSubmit={handleReviewSubmit}>
                     <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -548,10 +599,10 @@ const CompanyPublicProfile = () => {
                     />
                     <button 
                       type="submit" 
-                      disabled={submittingReview} 
+                      disabled={submittingReview || updatingReview} 
                       style={{ ...s.submitBtn, marginTop: '10px', background: '#1E3A5F', width: 'auto', padding: '10px 25px' }}
                     >
-                      {submittingReview ? <Loader size={18} className="animate-spin" /> : "Publier l'avis"}
+                      {submittingReview || updatingReview ? <Loader size={18} className="animate-spin" /> : (editingReviewId ? "Enregistrer les modifications" : "Publier l'avis")}
                     </button>
                   </form>
                 </div>
@@ -581,15 +632,35 @@ const CompanyPublicProfile = () => {
                                 <p style={{ fontSize: '12px', color: '#64748b' }}>{new Date(review.createdAt).toLocaleDateString()}</p>
                               </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '2px' }}>
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  size={14}
-                                  fill={star <= review.rating ? "#fbbf24" : "none"}
-                                  color={star <= review.rating ? "#fbbf24" : "#cbd5e1"}
-                                />
-                              ))}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                              <div style={{ display: 'flex', gap: '2px' }}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    size={14}
+                                    fill={star <= review.rating ? "#fbbf24" : "none"}
+                                    color={star <= review.rating ? "#fbbf24" : "#cbd5e1"}
+                                  />
+                                ))}
+                              </div>
+                              {user && review.user_id?._id === user.id && (
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                  <button 
+                                    onClick={() => handleEditReview(review)}
+                                    style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600' }}
+                                    title="Modifier mon avis"
+                                  >
+                                    <Edit size={14} /> Modifier
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteReview(review._id)}
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600' }}
+                                    title="Supprimer mon avis"
+                                  >
+                                    <Trash2 size={14} /> Supprimer
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <p style={{ marginTop: '12px', color: '#475569', lineHeight: '1.5' }}>{review.comment}</p>

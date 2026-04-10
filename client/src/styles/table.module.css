@@ -1,83 +1,106 @@
 .tableContainer {
     width: 100%;
     overflow-x: auto;
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 15px rgba(30, 58, 95, 0.1); /* Ombre bleutée légère */
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+.tableContainer:hover {
+    box-shadow: var(--shadow-lg);
 }
 
 .customTable {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     text-align: left;
 }
 
-/* EN-TÊTE : On utilise le bleu en fond pour le rendre très visible */
+/* EN-TÊTE : Design plus moderne, moins "bloc" */
 .customTable th {
-    background-color: #1E3A5F; /* Fond bleu profond */
-    color: #ffffff; /* Texte blanc pour le contraste */
-    font-weight: 600;
-    font-size: 0.85rem;
+    background-color: #f8fafc;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    padding: 18px;
-    border-bottom: none;
+    letter-spacing: 0.05em;
+    padding: 20px 24px;
+    border-bottom: 2px solid var(--border-light);
 }
 
 /* CELLULES */
 .customTable td {
-    padding: 16px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: var(--transition);
 }
 
-/* SURVOL : Un bleu très clair pour rappeler la couleur dominante */
-.customTable tr:hover {
-    background-color: #f0f7ff; 
+/* SURVOL : Effet de ligne élégant */
+.customTable tr:hover td {
+    background-color: #f1f5f9;
+    color: var(--primary);
 }
 
-/* BADGE : On utilise une version plus saturée du bleu */
+/* BADGE : Modern Soft UI style */
 .badge {
-    display: inline-block;
-    padding: 5px 14px;
-    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 8px;
     font-size: 0.75rem;
     font-weight: 700;
-    background-color: #e0eaff; /* Fond bleu clair */
-    color: #1E3A5F; /* Texte bleu profond */
-    border: 1px solid #1E3A5F; /* Bordure pour marquer la couleur */
+    background-color: #eff6ff;
+    color: var(--primary);
+    border: 1px solid #dbeafe;
+    box-shadow: var(--shadow-sm);
 }
 
 /* TEXTE SECONDAIRE */
 .subText {
     display: block;
     font-size: 0.8rem;
-    color: #1E3A5F; /* Email également en bleu (plus clair ou opacité) */
-    opacity: 0.7;
-    margin-top: 2px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 400;
 }
 .actionGroup {
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .editIconBtn, .deleteIconBtn {
-  background: none;
-  border: none;
+  background: white;
+  border: 1px solid var(--border-light);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  padding: 8px;
+  border-radius: 10px;
+  transition: var(--transition);
   display: flex;
   align-items: center;
+  box-shadow: var(--shadow-sm);
 }
 
-.editIconBtn { color: #2563eb; } /* Bleu action */
-.editIconBtn:hover { background-color: #eff6ff; }
+.editIconBtn { color: var(--accent); }
+.editIconBtn:hover { 
+    background-color: #eff6ff; 
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
 
-.deleteIconBtn { color: #ef4444; } /* Rouge alerte */
-.deleteIconBtn:hover { background-color: #fef2f2; transform: scale(1.1); }
+.deleteIconBtn { color: var(--danger); }
+.deleteIconBtn:hover { 
+    background-color: #fef2f2; 
+    border-color: var(--danger);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
 
 .permissionsCell {
   color: #64748b;
@@ -90,14 +113,19 @@
 
 .infoMsg { padding: 20px; color: #64748b; }
 .errorMsg { padding: 20px; color: #ef4444; font-weight: 600; }
-.userCell { display: flex; align-items: center; gap: 12px; }
+.userCell { display: flex; align-items: center; gap: 14px; }
 .avatarSmall {
-  width: 32px; height: 32px;
-  background-color: #1E3A5F; /* Votre bleu Pro Finder */
+  width: 36px; 
+  height: 36px;
+  background-color: var(--primary);
   color: white;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: bold; font-size: 0.8rem;
+  border-radius: 10px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-weight: 800; 
+  font-size: 0.85rem;
+  box-shadow: 0 4px 10px rgba(36, 65, 107, 0.2);
 }
 .spin { animation: rotate 1s linear infinite; }
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

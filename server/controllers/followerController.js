@@ -36,6 +36,7 @@ const followCompany = async (req, res) => {
         recipient_id: company_id,
         recipient_type: "Company",
         sender_id: req.user,
+        sender_type: "User",
         type: "follow",
         related_id: follow._id,
         message: `${user.fullName} a commencé à vous suivre.`

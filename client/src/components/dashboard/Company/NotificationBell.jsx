@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Check, Trash2, Clock, User, MessageCircle, Star, UserPlus } from "lucide-react";
+import { Bell, Check, Trash2, Clock, User, MessageCircle, Star, UserPlus, ShoppingBag } from "lucide-react";
 import { 
   useGetNotificationsQuery, 
   useMarkAsReadMutation, 
@@ -25,11 +25,11 @@ const formatRelativeTime = (dateString) => {
   return date.toLocaleDateString("fr-FR");
 };
 
-const NotificationBell = () => {
+const NotificationBell = ({ type }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   
-  const { data: notifications = [], isLoading } = useGetNotificationsQuery(undefined, {
+  const { data: notifications = [], isLoading } = useGetNotificationsQuery(type, {
     pollingInterval: 10000 // Poll every 10 seconds
   });
   
@@ -53,6 +53,8 @@ const NotificationBell = () => {
       case "follow": return <UserPlus size={16} color="#3b82f6" />;
       case "review": return <Star size={16} color="#f59e0b" />;
       case "comment": return <MessageCircle size={16} color="#10b981" />;
+      case "order": return <ShoppingBag size={16} color="#10b981" />;
+      case "reservation": return <Clock size={16} color="#8b5cf6" />;
       default: return <Bell size={16} color="#64748b" />;
     }
   };
@@ -136,7 +138,7 @@ const NotificationBell = () => {
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#1e293b" }}>Notifications</h3>
             {unreadCount > 0 && (
               <button 
-                onClick={() => markAllAsRead()}
+                onClick={() => markAllAsRead(type)}
                 style={{
                   background: "none",
                   border: "none",

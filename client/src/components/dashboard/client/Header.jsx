@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, User, ShoppingBag, Building2, LogOut, Home } from "lucide-react";
+import { ChevronDown, User, ShoppingBag, Building2, LogOut, Home, FileText, ShoppingCart } from "lucide-react";
 import NotificationBell from "../company/NotificationBell";
 import CompanySearchBar from "./CompanySearchBar";
 import { toImageUrl } from "../../../utils/imageUtils";
 
-const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick }) => {
+const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, onCartClick, cartItemsCount = 0 }) => {
   const navigate = useNavigate();
   // État pour gérer l'ouverture/fermeture du menu déroulant du profil
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,63 +36,102 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick })
           >
             <Home size={18} /><span style={h.navLabel}>Accueil</span>
           </button>
+
+          {/* Bouton Documents (Accès direct) */}
+          <button 
+            style={h.navBtn}
+            onClick={() => navigate("/documents")}
+          >
+            <FileText size={18} /><span style={h.navLabel}>Documents</span>
+          </button>
+
+          {/* Bouton Mes Achats (Accès direct) */}
+          <button 
+            style={h.navBtn}
+            onClick={() => navigate("/purchases")}
+          >
+            <ShoppingBag size={18} /><span style={h.navLabel}>Achats</span>
+          </button>
+
+          {/* Bouton Espace Fournisseur (Accès direct) */}
+          {onCompanyClick && (
+            <button 
+              style={h.navBtn}
+              onClick={onCompanyClick}
+            >
+              <Building2 size={18} /><span style={h.navLabel}>Entreprise</span>
+            </button>
+          )}
+
+          {/* Bouton Panier */}
+          <button 
+            onClick={onCartClick}
+            style={{ 
+              background: 'none', border: 'none', cursor: 'pointer', position: 'relative',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1E3A5F',
+              padding: '8px'
+            }}
+          >
+            <ShoppingCart size={22} />
+            {cartItemsCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '0px', right: '0px', background: '#ef4444',
+                color: '#fff', fontSize: '9px', fontWeight: '800', width: '16px', height: '16px',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '2px solid #fff'
+              }}>
+                {cartItemsCount}
+              </span>
+            )}
+          </button>
+
           {/* Composant de cloche de notifications */}
-          <NotificationBell />
+          <NotificationBell type="User" />
         </div>
       </div>
 
       {/* Section Profil et Menu Déroulant */}
-      <div style={{ position: "relative" }}>
-        {/* Bouton déclencheur du menu profil */}
-        <button style={h.profileBtn} onClick={() => setMenuOpen((v) => !v)}>
-          {/* Affichage de l'image via toImageUrl ou des initiales par défaut */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Accès direct profil (au clic sur l'image/nom) */}
+        <div 
+          style={{ ...h.profileBtn, padding: '6px 4px' }} 
+          onClick={onProfileClick}
+        >
           {user?.avatarUrl
             ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
             : <div style={h.avatarFallback}>{initials}</div>}
           
           <div style={h.profileInfo}>
             <span style={h.profileName}>{user?.fullName || "Mon profil"}</span>
-            <span style={h.profileSub}>Mon compte</span>
+            <span style={h.profileSub}>Voir mon profil</span>
           </div>
-          {/* Icône flèche avec rotation animée selon l'état du menu */}
-          <ChevronDown size={14} color="#94a3b8"
-            style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-        </button>
+        </div>
 
-        {/* Menu Déroulant (Dropdown) */}
-        {menuOpen && (
-          <>
-            {/* Overlay invisible pour fermer le menu en cliquant n'importe où ailleurs */}
-            <div style={h.overlay} onClick={() => setMenuOpen(false)} />
-            
-            <div style={h.dropdown}>
-              {/* Lien vers le profil personnel */}
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); onProfileClick(); }}>
-                <User size={15} color="#1E3A5F" /> Mon profil
-              </button>
+        {/* Bouton pour le menu déroulant (actions secondaires) */}
+        <div style={{ position: "relative" }}>
+          <button 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 5px' }} 
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            <ChevronDown size={16} color="#94a3b8"
+              style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+          </button>
+
+          {/* Menu Déroulant (Dropdown) */}
+          {menuOpen && (
+            <>
+              {/* Overlay invisible pour fermer le menu en cliquant n'importe où ailleurs */}
+              <div style={h.overlay} onClick={() => setMenuOpen(false)} />
               
-              {/* Lien vers l'historique des achats */}
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/purchases"); }}>
-                <ShoppingBag size={15} color="#1E3A5F" /> Mes Achats
-              </button>
-              
-              {/* Espace Fournisseur (affiché conditionnellement) */}
-              {onCompanyClick && (
-                <button style={h.dropItem} onClick={() => { setMenuOpen(false); onCompanyClick(); }}>
-                  <Building2 size={15} color="#1E3A5F" /> Espace Fournisseur
+              <div style={h.dropdown}>
+                {/* Bouton de déconnexion avec style d'alerte (rouge) */}
+                <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
+                  <LogOut size={15} color="#dc2626" /> Déconnexion
                 </button>
-              )}
-
-              {/* Ligne de séparation */}
-              <div style={h.dropDivider} />
-              
-              {/* Bouton de déconnexion avec style d'alerte (rouge) */}
-              <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
-                <LogOut size={15} color="#dc2626" /> Déconnexion
-              </button>
-            </div>
-          </>
-        )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

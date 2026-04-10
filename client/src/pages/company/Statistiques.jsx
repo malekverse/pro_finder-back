@@ -1,19 +1,30 @@
 import React, { useState } from "react";
 import { useGetFollowersStatsQuery } from "../../redux/features/company/companyApiSlice";
+import { useGetNotificationsQuery } from "../../redux/features/notificationApiSlice";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, 
   LineChart, Line, CartesianGrid, AreaChart, Area 
 } from "recharts";
-import { Users, UserPlus, TrendingUp, UsersRound, Loader2, MessageSquare, ThumbsUp, Calendar } from "lucide-react";
+import { 
+  Users, UserPlus, TrendingUp, UsersRound, Loader2, MessageSquare, 
+  ThumbsUp, Calendar, Bell, ChevronRight, PlusCircle, FileText, 
+  ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, ShoppingBag, 
+  MessageCircle, DollarSign, Plus
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import styles from "../../styles/Dashboard.module.css";
 
 const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 
 const Statistiques = () => {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState("annual");
-  const { data: stats, isLoading } = useGetFollowersStatsQuery(period, { pollingInterval: 3000 });
+  const { data: stats, isLoading: statsLoading } = useGetFollowersStatsQuery(period, { pollingInterval: 3000 });
+  const { data: notificationsData } = useGetNotificationsQuery("Company", { pollingInterval: 10000 });
 
-  if (isLoading) {
+  const notifications = Array.isArray(notificationsData) ? notificationsData : [];
+
+  if (statsLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '400px' }}>
         <Loader2 className="animate-spin" size={40} color="#24416b" />
@@ -229,7 +240,7 @@ const Statistiques = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Graphique d'Engagement (Likes + Comments) */}
+        {/* Section Notifications Récentes (Remplace le graphique d'engagement) */}
         <div style={{ 
           background: "#fff", 
           padding: "30px", 
@@ -237,30 +248,72 @@ const Statistiques = () => {
           boxShadow: "0 10px 15px -3px rgba(0,0,0,0.05)",
           border: "1px solid #e2e8f0"
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
             <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#1e293b", margin: 0 }}>
-              Engagement du Contenu ({isMonthly ? 'Ce mois' : 'Cette année'})
+              Notifications récentes
             </h3>
-            <div style={{ display: 'flex', gap: '15px' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ec4899' }}></div>
-                 <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Interactions</span>
-               </div>
-            </div>
+            <button style={{ background: 'none', border: 'none', color: '#24416b', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+              Tout voir
+            </button>
           </div>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} />
-              <Tooltip 
-                labelFormatter={(value) => isMonthly ? `Jour ${value}` : value}
-                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '15px' }}
-                cursor={{ fill: '#f8fafc' }}
-              />
-              <Bar dataKey="engagement" fill="#ec4899" radius={[6, 6, 0, 0]} barSize={35} />
-            </BarChart>
-          </ResponsiveContainer>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {notifications.length > 0 ? (
+              notifications.slice(0, 4).map((notif, i) => {
+                const getNotifTitle = (type) => {
+                  switch(type) {
+                    case 'follow': return "Nouveau follower";
+                    case 'review': return "Nouvel avis";
+                    case 'comment': return "Nouveau commentaire";
+                    case 'order': return "Nouvelle commande";
+                    case 'reservation': return "Nouvelle réservation";
+                    default: return "Notification";
+                  }
+                };
+
+                return (
+                  <div key={notif._id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '15px', 
+                    padding: '15px 0', 
+                    borderBottom: i === 3 || i === notifications.length - 1 ? 'none' : '1px solid #f1f5f9'
+                  }}>
+                    <div style={{ 
+                      width: '40px', 
+                      height: '40px', 
+                      borderRadius: '10px', 
+                      background: '#eff6ff', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      color: '#24416b',
+                      flexShrink: 0
+                    }}>
+                      <Bell size={18} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>{getNotifTitle(notif.type)}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>{notif.message}</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                       <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                         {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                       </span>
+                       {!notif.is_read && (
+                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6' }}></div>
+                       )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
+                 <Bell size={40} style={{ marginBottom: '15px', opacity: 0.3 }} />
+                 <p style={{ margin: 0, fontSize: '14px' }}>Aucune notification récente</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

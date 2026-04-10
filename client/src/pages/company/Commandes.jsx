@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   useGetCompanyOrdersQuery, 
   useUpdateOrderStatusMutation 
@@ -18,11 +19,13 @@ import {
   Truck, 
   Package,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css";
 
 const Commandes = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("orders"); // orders or reservations
 
   const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery(undefined, { pollingInterval: 3000 });
@@ -45,6 +48,25 @@ const Commandes = () => {
     } catch (err) {
       console.error("Failed to update reservation:", err);
     }
+  };
+
+  const handleCreateQuote = (reservation) => {
+    // Rediriger vers la page des documents avec l'onglet devis actif et les données pré-remplies
+    navigate("/company/documents", { 
+      state: { 
+        tab: "quotes",
+        openModal: true,
+        prefill: {
+          reservationId: reservation._id,
+          userId: reservation.userId?._id,
+          userName: reservation.userId?.fullName,
+          serviceId: reservation.serviceId?._id,
+          serviceName: reservation.serviceId?.name,
+          price: reservation.serviceId?.price,
+          notes: `Détails de la réservation #${reservation._id.slice(-6).toUpperCase()} du ${new Date(reservation.date).toLocaleDateString()}.`
+        }
+      } 
+    });
   };
 
   const getStatusBadge = (status) => {
@@ -209,12 +231,71 @@ const Commandes = () => {
                         <p>{res.notes}</p>
                       </div>
                     )}
+
+                    {res.quote && (
+                      <div 
+                        onClick={() => navigate("/company/documents", { state: { tab: "quotes" } })}
+                        style={{
+                          marginTop: '15px',
+                          padding: '12px',
+                          backgroundColor: res.quote.status === 'accepted' ? '#dcfce7' : res.quote.status === 'rejected' ? '#fee2e2' : '#eff6ff',
+                          borderRadius: '12px',
+                          border: `1px solid ${res.quote.status === 'accepted' ? '#86efac' : res.quote.status === 'rejected' ? '#fecaca' : '#bfdbfe'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#24416b',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white'
+                        }}>
+                          <FileSpreadsheet size={18} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ 
+                            fontSize: '13px', 
+                            fontWeight: '700', 
+                            color: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#1e3a8a' 
+                          }}>
+                            Devis {res.quote.status === 'accepted' ? 'Accepté' : res.quote.status === 'rejected' ? 'Refusé' : 'Envoyé'}
+                          </div>
+                          <div style={{ 
+                            fontSize: '11px', 
+                            color: res.quote.status === 'accepted' ? '#15803d' : res.quote.status === 'rejected' ? '#b91c1c' : '#1e40af' 
+                          }}>
+                            N° {res.quote.quoteNumber} • {res.quote.totalAmount.toFixed(2)} TND
+                          </div>
+                        </div>
+                        {res.quote.status === 'accepted' && (
+                          <div style={{ color: '#166534' }}>
+                            <CheckCircle size={18} />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles.cardFooter}>
                     {res.status === "pending" && (
                       <>
-                        <button onClick={() => handleUpdateReservation(res._id, "confirmed")} className={styles.btnConfirm}>Accepter</button>
+                        <button 
+                          onClick={() => handleCreateQuote(res)} 
+                          className={styles.btnConfirm}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        >
+                          <FileSpreadsheet size={16} /> Établir un Devis
+                        </button>
                         <button onClick={() => handleUpdateReservation(res._id, "cancelled")} className={styles.btnCancel}>Décliner</button>
                       </>
                     )}

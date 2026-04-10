@@ -28,6 +28,7 @@ exports.createReservation = async (req, res) => {
         recipient_id: companyId,
         recipient_type: "Company",
         sender_id: userId,
+        sender_type: "User",
         type: "reservation",
         related_id: newReservation._id,
         message: `${user?.fullName || "Un client"} a pris un nouveau rendez-vous.`
@@ -48,9 +49,21 @@ exports.getMyReservations = async (req, res) => {
     const reservations = await Reservation.find({ userId })
       .populate("companyId", "companyName logoUrl")
       .populate("serviceId", "name price duration")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Use lean() for better performance and to modify the object
 
-    res.json(reservations);
+    // Fetch quotes for these reservations
+    const Quote = require("../models/Quote");
+    const reservationIds = reservations.map(r => r._id);
+    const quotes = await Quote.find({ reservationId: { $in: reservationIds } });
+
+    // Attach quotes to reservations
+    const reservationsWithQuotes = reservations.map(res => {
+      const quote = quotes.find(q => q.reservationId?.toString() === res._id.toString());
+      return { ...res, quote };
+    });
+
+    res.json(reservationsWithQuotes);
   } catch (error) {
     console.error("Error fetching my reservations:", error);
     res.status(500).json({ message: "Erreur serveur" });
@@ -64,9 +77,21 @@ exports.getCompanyReservations = async (req, res) => {
     const reservations = await Reservation.find({ companyId })
       .populate("userId", "fullName email avatarUrl phone")
       .populate("serviceId", "name price duration")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    res.json(reservations);
+    // Fetch quotes for these reservations
+    const Quote = require("../models/Quote");
+    const reservationIds = reservations.map(r => r._id);
+    const quotes = await Quote.find({ reservationId: { $in: reservationIds } });
+
+    // Attach quotes to reservations
+    const reservationsWithQuotes = reservations.map(res => {
+      const quote = quotes.find(q => q.reservationId?.toString() === res._id.toString());
+      return { ...res, quote };
+    });
+
+    res.json(reservationsWithQuotes);
   } catch (error) {
     console.error("Error fetching company reservations:", error);
     res.status(500).json({ message: "Erreur serveur" });
@@ -101,7 +126,8 @@ exports.updateReservationStatus = async (req, res) => {
       await Notification.create({
         recipient_id: reservation.userId,
         recipient_type: "User",
-        sender_id: req.user,
+        sender_id: companyId,
+        sender_type: "Company",
         type: "reservation",
         related_id: reservation._id,
         message: `Votre rendez-vous chez ${company?.companyName} a été ${statusFr}.`
