@@ -36,6 +36,7 @@ exports.createReview = async (req, res) => {
         recipient_id: company_id,
         recipient_type: "Company",
         sender_id: user_id,
+        sender_type: "User",
         type: "review",
         related_id: review._id,
         message: `${user.fullName} a laissé un avis de ${rating} étoiles.`
@@ -77,6 +78,30 @@ exports.deleteReview = async (req, res) => {
     res.json({ message: "Avis supprimé avec succès" });
   } catch (err) {
     res.status(500).json({ message: "Erreur lors de la suppression de l'avis" });
+  }
+};
+
+// Modifier un avis
+exports.updateReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const user_id = req.user;
+
+    const review = await Review.findOneAndUpdate(
+      { _id: id, user_id },
+      { rating, comment },
+      { new: true, runValidators: true }
+    );
+
+    if (!review) {
+      return res.status(404).json({ message: "Avis non trouvé ou non autorisé" });
+    }
+
+    res.json(review);
+  } catch (err) {
+    console.error("Update review error:", err);
+    res.status(500).json({ message: "Erreur lors de la modification de l'avis" });
   }
 };
 

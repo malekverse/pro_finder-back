@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetMyOrdersQuery } from "../../redux/features/orderApiSlice";
 import { useGetMyReservationsQuery } from "../../redux/features/reservationApiSlice";
 import { 
@@ -9,11 +10,13 @@ import {
   Package,
   Loader2,
   AlertCircle,
-  Building2
+  Building2,
+  FileText
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css"; // Reuse same styles for consistency
 
 const ClientPurchases = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("orders");
 
   const { data: orders = [], isLoading: loadingOrders } = useGetMyOrdersQuery(undefined, { pollingInterval: 3000 });
@@ -149,6 +152,43 @@ const ClientPurchases = () => {
                         <Clock size={14} /> {res.timeSlot}
                       </div>
                     </div>
+
+                    {res.quote && (
+                      <div 
+                        onClick={() => navigate("/documents", { state: { tab: "quotes" } })}
+                        style={{
+                          marginTop: '15px',
+                          padding: '12px',
+                          backgroundColor: '#eff6ff',
+                          borderRadius: '12px',
+                          border: '1px solid #bfdbfe',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#dbeafe'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#24416b',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white'
+                        }}>
+                          <FileText size={18} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e3a8a' }}>Devis reçu</div>
+                          <div style={{ fontSize: '11px', color: '#1e40af' }}>Cliquez pour voir les détails</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

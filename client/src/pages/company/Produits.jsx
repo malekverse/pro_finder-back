@@ -172,6 +172,18 @@ const Produits = () => {
               <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '800' }}>{filteredProducts.length}</h3>
             </div>
           </div>
+          
+          {filteredProducts.some(p => p.stock === 0) && (
+            <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '20px', border: '2px solid #fee2e2' }}>
+              <div style={{ background: '#fee2e2', color: '#ef4444', padding: '12px', borderRadius: '12px' }}><AlertCircle size={24} /></div>
+              <div>
+                <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>En Rupture</p>
+                <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#ef4444' }}>
+                  {filteredProducts.filter(p => p.stock === 0).length}
+                </h3>
+              </div>
+            </div>
+          )}
       </div>
 
       {/* Search and Filters */}

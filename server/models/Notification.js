@@ -15,12 +15,18 @@ const notificationSchema = new mongoose.Schema(
     sender_id: { 
       type: mongoose.Schema.Types.ObjectId, 
       required: true, 
-      ref: "User" 
+      refPath: 'sender_type'
+    },
+    sender_type: {
+      type: String,
+      required: true,
+      enum: ["User", "Company"],
+      default: "User"
     },
     type: { 
       type: String, 
       required: true, 
-      enum: ["follow", "review", "comment", "order", "reservation"] 
+      enum: ["follow", "review", "comment", "order", "reservation", "quote", "contract", "stock_alert"] 
     },
     related_id: { 
       type: mongoose.Schema.Types.ObjectId, 

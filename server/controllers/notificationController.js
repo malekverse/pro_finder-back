@@ -2,15 +2,31 @@ const Notification = require("../models/Notification");
 
 exports.getNotifications = async (req, res) => {
   try {
-    const isCompany = !!req.companyId;
-    const recipientId = isCompany ? req.companyId : req.user;
-    const recipientType = isCompany ? "Company" : "User";
+    const { type } = req.query; // "User" ou "Company"
     
+    let recipientId;
+    let recipientType;
+
+    if (type === "Company") {
+      recipientId = req.companyId;
+      recipientType = "Company";
+    } else if (type === "User") {
+      recipientId = req.user;
+      recipientType = "User";
+    } else {
+      // Fallback: si on a un companyId et pas de type, on assume Company, sinon User
+      const isCompany = !!req.companyId;
+      recipientId = isCompany ? req.companyId : req.user;
+      recipientType = isCompany ? "Company" : "User";
+    }
+    
+    if (!recipientId) return res.json([]);
+
     const notifications = await Notification.find({ 
       recipient_id: recipientId,
       recipient_type: recipientType
     })
-    .populate("sender_id", "fullName email avatar")
+    .populate("sender_id", "fullName email avatarUrl companyName logoUrl")
     .sort({ createdAt: -1 })
     .limit(50);
 
@@ -34,9 +50,22 @@ exports.markAsRead = async (req, res) => {
 
 exports.markAllAsRead = async (req, res) => {
   try {
-    const isCompany = !!req.companyId;
-    const recipientId = isCompany ? req.companyId : req.user;
-    const recipientType = isCompany ? "Company" : "User";
+    const { type } = req.query;
+    
+    let recipientId;
+    let recipientType;
+
+    if (type === "Company") {
+      recipientId = req.companyId;
+      recipientType = "Company";
+    } else if (type === "User") {
+      recipientId = req.user;
+      recipientType = "User";
+    } else {
+      const isCompany = !!req.companyId;
+      recipientId = isCompany ? req.companyId : req.user;
+      recipientType = isCompany ? "Company" : "User";
+    }
 
     await Notification.updateMany(
       { recipient_id: recipientId, recipient_type: recipientType, is_read: false },

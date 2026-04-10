@@ -2,6 +2,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Notification = require("../models/Notification");
 const Company = require("../models/company");
+const User = require("../models/User");
 
 // Client: Create an order
 exports.createOrder = async (req, res) => {
@@ -20,14 +21,36 @@ exports.createOrder = async (req, res) => {
 
     await newOrder.save();
 
+    // Update stock and notify if out of stock
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        product.stock = Math.max(0, (product.stock || 0) - item.quantity);
+        await product.save();
+
+        if (product.stock === 0) {
+          // Notify Company about stock rupture
+          await Notification.create({
+            recipient_id: companyId,
+            recipient_type: "Company",
+            sender_id: userId,
+            sender_type: "User",
+            type: "stock_alert",
+            related_id: product._id,
+            message: `Alerte : Le produit "${product.name}" est désormais en rupture de stock.`
+          });
+        }
+      }
+    }
+
     // Notify Company (seulement si ce n'est pas le manager qui commande chez lui-même)
     if (req.companyId?.toString() !== companyId.toString()) {
-      const User = require("../models/User");
       const user = await User.findById(userId).select("fullName");
       await Notification.create({
         recipient_id: companyId,
         recipient_type: "Company",
         sender_id: userId,
+        sender_type: "User",
         type: "order",
         related_id: newOrder._id,
         message: `${user?.fullName || "Un client"} a passé une nouvelle commande.`
@@ -102,7 +125,8 @@ exports.updateOrderStatus = async (req, res) => {
       await Notification.create({
         recipient_id: order.userId,
         recipient_type: "User",
-        sender_id: req.user, // The admin/manager who updated it
+        sender_id: companyId, // The company that updated it
+        sender_type: "Company",
         type: "order",
         related_id: order._id,
         message: `Votre commande chez ${company?.companyName} a été ${statusFr}.`

@@ -43,11 +43,34 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
           {type === 'product' ? (
             <>
               <div style={m.field}>
-                <label style={m.label}>Quantité</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={m.label}>Quantité</label>
+                  {quantity > (item.stock || 0) && (
+                    <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: '700' }}>
+                      Rupture de stock (Max: {item.stock || 0})
+                    </span>
+                  )}
+                </div>
                 <div style={m.qtyBox}>
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={m.qtyBtn}><Minus size={14} /></button>
+                  <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+                    style={m.qtyBtn}
+                  >
+                    <Minus size={14} />
+                  </button>
                   <span style={m.qtyVal}>{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} style={m.qtyBtn}><Plus size={14} /></button>
+                  <button 
+                    onClick={() => {
+                      if (quantity < (item.stock || 0)) {
+                        setQuantity(quantity + 1);
+                      } else {
+                        alert("Stock maximum atteint !");
+                      }
+                    }} 
+                    style={m.qtyBtn}
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
               </div>
 
@@ -114,10 +137,14 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
           <button onClick={onClose} style={m.cancelBtn}>Annuler</button>
           <button 
             onClick={() => onSubmit({ quantity, date, time, note, address })} 
-            style={m.confirmBtn}
-            disabled={isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city))}
+            style={{
+              ...m.confirmBtn,
+              opacity: (isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))) ? 0.6 : 1,
+              cursor: (isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))) ? 'not-allowed' : 'pointer'
+            }}
+            disabled={isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))}
           >
-            {isLoading ? <Loader size={18} className="animate-spin" /> : (type === 'product' ? 'Confirmer la commande' : 'Confirmer la réservation')}
+            {isLoading ? <Loader size={18} className="spin" /> : (type === 'product' ? 'Confirmer la commande' : 'Confirmer la réservation')}
           </button>
         </div>
       </div>

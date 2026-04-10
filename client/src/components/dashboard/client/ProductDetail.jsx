@@ -1,13 +1,41 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Package, CheckCircle2, Heart, Star, Building2 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../../redux/features/cart/cartSlice";
+import { X, Package, CheckCircle2, Heart, Star, Building2, ShoppingCart } from "lucide-react";
 import { toImageUrl } from "../../../utils/imageUtils";
 
 const ProductDetail = ({ product, onClose, onOrder }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [selectedImg, setSelectedImg] = useState(product?.imagesProduct?.[0] || null);
+  const [quantity, setQuantity] = useState(1);
 
   if (!product) return null;
+
+  const handleAddToCart = () => {
+    if (quantity > (product.stock || 0)) {
+      alert("Quantité demandée supérieure au stock disponible !");
+      return;
+    }
+    dispatch(addToCart({
+      product,
+      companyId: product.companyId?._id,
+      companyName: product.companyId?.companyName,
+      logoUrl: product.companyId?.logoUrl,
+      quantity
+    }));
+    alert("Produit ajouté au panier !");
+  };
+
+  const incrementQty = () => {
+    if (quantity < (product.stock || 0)) {
+      setQuantity(prev => prev + 1);
+    } else {
+      alert("Stock maximum atteint !");
+    }
+  };
+  const decrementQty = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
   return (
     <div style={pd.overlay} onClick={onClose}>
@@ -54,14 +82,17 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
             <div style={pd.qtySection}>
               <span style={pd.qtyLabel}>QTÉ</span>
               <div style={pd.qtyBox}>
-                <button style={pd.qtyBtn}>-</button>
-                <input type="text" value="1" readOnly style={pd.qtyInput} />
-                <button style={pd.qtyBtn}>+</button>
+                <button style={pd.qtyBtn} onClick={decrementQty}>-</button>
+                <input type="text" value={quantity} readOnly style={pd.qtyInput} />
+                <button style={pd.qtyBtn} onClick={incrementQty}>+</button>
               </div>
             </div>
 
             <div style={pd.actionRow}>
-              <button style={pd.buyBtn} onClick={() => onOrder(product)}>ACHETER</button>
+              <button style={pd.buyBtn} onClick={() => onOrder({...product, quantity})}>ACHETER MAINTENANT</button>
+              <button style={pd.cartBtn} onClick={handleAddToCart}>
+                <ShoppingCart size={18} /> AJOUTER AU PANIER
+              </button>
               <button style={pd.wishBtn}><Heart size={20} /></button>
             </div>
 
@@ -123,7 +154,7 @@ const pd = {
   midCol: { display: 'flex', flexDirection: 'column', gap: '15px' },
   title: { fontSize: '24px', fontWeight: '800', color: '#1e293b', margin: 0, lineHeight: 1.3 },
   priceRow: { display: 'flex', alignItems: 'baseline', gap: '15px' },
-  currentPrice: { fontSize: '28px', fontWeight: '800', color: '#ff6b00' },
+  currentPrice: { fontSize: '28px', fontWeight: '800', color: '#1e293b' },
   statusRow: { display: 'flex', gap: '20px', alignItems: 'center' },
   status: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#10b981' },
   sku: { fontSize: '13px', color: '#64748b', fontWeight: '500' },
@@ -133,10 +164,10 @@ const pd = {
   qtyBox: { display: 'flex', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden' },
   qtyBtn: { width: '32px', height: '32px', background: '#fff', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#64748b' },
   qtyInput: { width: '40px', border: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', textAlign: 'center', fontWeight: '700', background: '#fff' },
-  actionRow: { display: 'flex', gap: '15px', marginTop: '10px' },
-  buyBtn: { flex: 1, padding: '14px', background: '#ff6b00', color: '#fff', border: 'none', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase' },
-  cartBtn: { flex: 1, padding: '14px', background: '#fff', color: '#ff6b00', border: '1px solid #ff6b00', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase' },
-  wishBtn: { width: '48px', height: '48px', border: '1px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff6b00', cursor: 'pointer' },
+  actionRow: { display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' },
+  buyBtn: { flex: '1 1 100%', padding: '14px', background: '#24416b', color: '#fff', border: 'none', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase' },
+  cartBtn: { flex: 1, padding: '14px', background: '#fff', color: '#24416b', border: '1px solid #24416b', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+  wishBtn: { width: '48px', height: '48px', border: '1px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', cursor: 'pointer' },
   overview: { marginTop: '20px' },
   overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#1e293b', margin: '0 0 10px' },
   rightCol: { display: 'flex', flexDirection: 'column', gap: '20px' },

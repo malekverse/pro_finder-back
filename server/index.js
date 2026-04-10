@@ -60,6 +60,8 @@ app.use("/followers", require("./routes/followerRoutes"));
 app.use("/reports", require("./routes/reportRoutes"));
 app.use("/reviews", require("./routes/reviewRoutes"));
 app.use("/notifications", require("./routes/notificationRoutes"));
+app.use("/quotes", require("./routes/quoteRoutes"));
+app.use("/contracts", require("./routes/contractRoutes"));
 
 app.use("/categories", require("./routes/categoriesRoutes/subCategoryRoutes"));
 app.use("/categories", require("./routes/categoriesRoutes/serviceRoutes"));

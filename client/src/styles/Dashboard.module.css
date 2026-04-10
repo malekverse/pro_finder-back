@@ -1,9 +1,9 @@
-/* --- Palette Pro Finder : Bleu profond #1E3A5F --- */
+/* --- Palette Pro Finder : Bleu profond Amélioré --- */
 
 .dashboard {
   display: flex;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--bg-main);
   font-family: 'Inter', sans-serif;
   overflow: hidden;
 }
@@ -12,15 +12,16 @@
 
 .sidebar {
   width: 260px;
-  background: #ffffff;
+  background: var(--bg-card);
   padding: 24px 16px;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   position: fixed;
   height: 100vh;
   z-index: 100;
-  transition: width 0.3s ease;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 /* --- COMPANY PROFILE --- */
@@ -31,13 +32,16 @@
   gap: 12px;
   padding: 12px;
   margin-bottom: 25px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: var(--transition);
+  border: 1px solid transparent;
 }
 
 .companyProfile:hover {
   background-color: #f1f5f9;
+  border-color: var(--border-light);
+  transform: translateY(-1px);
 }
 
 .companyLogo {
@@ -45,6 +49,7 @@
   height: 45px;
   border-radius: 10px;
   object-fit: cover;
+  box-shadow: var(--shadow-sm);
 }
 
 .companyInfo {
@@ -55,13 +60,13 @@
 .companyName {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #1E3A5F;
+  color: var(--primary);
   margin: 0;
 }
 
 .viewProfile {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* --- LOGO APP --- */
@@ -75,17 +80,19 @@
 }
 
 .logoIcon {
-  width: 12px;
-  height: 12px;
-  background-color: #1E3A5F;
+  width: 14px;
+  height: 14px;
+  background-color: var(--primary);
   transform: rotate(45deg);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(36, 65, 107, 0.3);
 }
 
 .sidebarTitle {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: #1E3A5F;
-  letter-spacing: 1px;
+  color: var(--primary);
+  letter-spacing: -0.5px;
   margin: 0;
 }
 
@@ -94,10 +101,11 @@
 .menuLabel {
   font-size: 0.7rem;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 700;
-  margin: 20px 12px 10px;
-  letter-spacing: 0.05em;
+  margin: 24px 12px 12px;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
 }
 
 .menu {
@@ -110,41 +118,60 @@
 .activeLink {
   text-decoration: none;
   font-weight: 600;
-  padding: 12px 15px;
+  padding: 12px 16px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
-  margin-bottom: 4px;
+  transition: var(--transition);
+  margin-bottom: 6px;
+  position: relative;
 }
 
 .link {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .link:hover {
   background-color: #f1f5f9;
-  color: #1E3A5F;
+  color: var(--primary);
+  padding-left: 20px;
 }
 
 .activeLink {
-  background-color: #f0f7ff;
-  color: #1E3A5F;
-  border-right: 3px solid #1E3A5F;
+  background-color: #eff6ff;
+  color: var(--primary);
+  box-shadow: inset 0 0 0 1px rgba(36, 65, 107, 0.1);
+}
+
+.activeLink::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 4px;
+  background: var(--primary);
+  border-radius: 4px 0 0 4px;
 }
 
 .icon {
   margin-right: 12px;
   display: flex;
   align-items: center;
+  transition: var(--transition);
+}
+
+.link:hover .icon {
+  transform: scale(1.1);
 }
 
 /* --- FOOTER --- */
 
 .sidebarFooter {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border-light);
   padding-top: 15px;
+  margin-top: auto;
 }
 
 .logoutBtn {
@@ -152,17 +179,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  padding: 12px 16px;
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: var(--danger);
   font-weight: 600;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
+  transition: var(--transition);
 }
 
 .logoutBtn:hover {
   background-color: #fef2f2;
+  padding-left: 20px;
 }
 
 /* --- ZONE DE CONTENU --- */
@@ -170,34 +199,47 @@
 .content {
   flex: 1;
   margin-left: 260px;
-  padding: 30px 40px;
-  background-color: #f8fafc;
-
+  padding: 32px 48px;
+  background-color: var(--bg-main);
   height: 100vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
 }
 
 .topBar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  color: #64748b;
-  font-weight: 500;
+  margin-bottom: 32px;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
 }
 
 .userProfile {
-  width: 35px;
-  height: 35px;
-  background: #1E3A5F;
+  width: 38px;
+  height: 38px;
+  background: var(--primary);
   color: white;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  box-shadow: 0 4px 12px rgba(36, 65, 107, 0.2);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.userProfile:hover {
+  transform: scale(1.05) rotate(5deg);
 }
 
 /* --- RESPONSIVE TABLETTE --- */

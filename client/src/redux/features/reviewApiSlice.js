@@ -34,6 +34,17 @@ export const reviewApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: [{ type: "Review", id: "LIST" }],
     }),
+    updateReview: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `reviews/update/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (result, error, { company_id }) => [
+        { type: "Review", id: "LIST" },
+        { type: "Review", id: `AVG-${company_id}` },
+      ],
+    }),
   }),
 });
 
@@ -42,4 +53,5 @@ export const {
   useGetAverageRatingQuery,
   useCreateReviewMutation,
   useDeleteReviewMutation,
+  useUpdateReviewMutation,
 } = reviewApiSlice;

@@ -12,7 +12,9 @@ import {
   LogOut,
   ShoppingBag,
   Star,
-  Bell
+  Bell,
+  FileSpreadsheet,
+  FileSignature
 } from "lucide-react";
 import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
 import NotificationBell from "../../components/dashboard/company/NotificationBell";
@@ -37,10 +39,10 @@ const DashboardLayout = () => {
 
   const mainMenu = [
     { path: "/company/stats", label: "Dashboard", icon: <BarChart3 size={20} />, show: true },
+    { path: "/company/documents", label: "Documents", icon: <FileText size={20} />, show: true },
     { path: "/company/commandes", label: "Commandes & Réservations", icon: <ShoppingBag size={20} />, show: true },
     { path: "/company/reviews", label: "Avis clients", icon: <Star size={20} />, show: true },
     { path: "/company/posts", label: "Publications", icon: <LayoutDashboard size={20} />, show: hasPermission("create_post") },
-    { path: "/company/documents", label: "Documents", icon: <FileText size={20} />, show: true },
   ];
 
   const managementMenu = [
@@ -139,7 +141,7 @@ const DashboardLayout = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <span style={{ fontWeight: '700', color: '#1e293b' }}>Dashboard Fournisseur</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <NotificationBell />
+              <NotificationBell type="Company" />
             </div>
           </div>
         </div>

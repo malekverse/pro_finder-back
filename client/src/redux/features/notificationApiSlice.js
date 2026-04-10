@@ -3,7 +3,7 @@ import { apiSlice } from '../app/api/apiSlice';
 export const notificationApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getNotifications: builder.query({
-      query: () => '/notifications',
+      query: (type) => `/notifications${type ? `?type=${type}` : ''}`,
       providesTags: ['Notifications'],
     }),
     markAsRead: builder.mutation({
@@ -14,8 +14,8 @@ export const notificationApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: ['Notifications'],
     }),
     markAllAsRead: builder.mutation({
-      query: () => ({
-        url: '/notifications/read-all',
+      query: (type) => ({
+        url: `/notifications/read-all${type ? `?type=${type}` : ''}`,
         method: 'PUT',
       }),
       invalidatesTags: ['Notifications'],

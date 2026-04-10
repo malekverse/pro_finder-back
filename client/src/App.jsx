@@ -14,8 +14,9 @@ import Signup from './pages/auth/Signup';
 import Home from './pages/client/Home';
 import Profile from './pages/client/Profile';
 import UserDashboard from './pages/client/UserDashboard';
-import CompanyPublicProfile from './pages/client/CompanyPublicProfile';
 import ClientPurchases from './pages/client/ClientPurchases';
+import ClientDocuments from './pages/client/ClientDocuments';
+import CompanyPublicProfile from './pages/client/CompanyPublicProfile';
 
 // Pages Company
 import UserManagement from './pages/company/UserManagement';
@@ -23,6 +24,9 @@ import DashboardLayout from './pages/company/DashboardLayout';
 import Statistiques from './pages/company/Statistiques';
 import Produits from './pages/company/Produits';
 import MesServices from './pages/company/MesServices';
+import Quotes from './pages/company/Quotes';
+import Contracts from './pages/company/Contracts';
+import CompanyDocuments from './pages/company/CompanyDocuments';
 import CompanyProfile from './components/dashboard/Company/CompanyProfile';
 import Publication from './pages/company/Publication';
 import Commandes from './pages/company/Commandes';
@@ -66,6 +70,16 @@ function App() {
             <RequireAuth>
               <RequireRole allowedRoles={[ROLES.USER]}>
                 <ClientPurchases />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="documents"
+          element={
+            <RequireAuth>
+              <RequireRole allowedRoles={[ROLES.USER]}>
+                <ClientDocuments />
               </RequireRole>
             </RequireAuth>
           }
@@ -121,6 +135,9 @@ function App() {
         >
           <Route index element={<Statistiques />} />
           <Route path="stats"     element={<Statistiques />} />
+          <Route path="quotes"    element={<Quotes />} />
+          <Route path="contracts" element={<Contracts />} />
+          <Route path="documents" element={<CompanyDocuments />} />
           <Route path="commandes" element={<Commandes />} />
           <Route path="reviews"   element={<Reviews />} />
           <Route path="produits"  element={<Produits />} />

@@ -76,7 +76,7 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
         onAction={(item) => onAction(item, 'service')}
       />
     {/* Section Fil d'actualité Principal */}
-      <div style={{ marginTop: '40px', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+      <div style={{ marginTop: '24px', paddingTop: '0' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Newspaper size={20} color="#1E3A5F" /> Fil d'actualité
         </h3>
