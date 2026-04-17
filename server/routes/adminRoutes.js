@@ -20,5 +20,10 @@ router.delete("/reject/:companyId", verifyJWT, authorizeRoles("admin"), adminCon
 router.put("/resolve/:companyId", verifyJWT, authorizeRoles("admin"), adminController.resolveCompany);
 router.post("/contact/:companyId", verifyJWT, authorizeRoles("admin"), adminController.contactCompany);
 
+// Professional moderation
+router.get("/pending-professionals", verifyJWT, authorizeRoles("admin"), adminController.getPendingProfessionals);
+router.put("/verify-professional/:professionalId", verifyJWT, authorizeRoles("admin"), adminController.verifyProfessional);
+router.delete("/reject-professional/:professionalId", verifyJWT, authorizeRoles("admin"), adminController.rejectProfessional);
+
 module.exports = router;
 

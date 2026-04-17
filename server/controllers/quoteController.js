@@ -4,7 +4,7 @@ const Notification = require("../models/Notification");
 const Company = require("../models/company");
 
 // CREATE QUOTE
-exports.createQuote = async (req, res) => {
+const createQuote = async (req, res) => {
   try {
     const { userId, reservationId, items, taxRate, validUntil, notes } = req.body;
     const companyId = req.companyId;
@@ -53,7 +53,7 @@ exports.createQuote = async (req, res) => {
 };
 
 // GET ALL QUOTES FOR COMPANY
-exports.getCompanyQuotes = async (req, res) => {
+const getCompanyQuotes = async (req, res) => {
   try {
     const companyId = req.companyId;
     console.log("[getCompanyQuotes] Fetching for companyId:", companyId);
@@ -75,7 +75,7 @@ exports.getCompanyQuotes = async (req, res) => {
 };
 
 // GET ALL QUOTES FOR USER (CLIENT)
-exports.getUserQuotes = async (req, res) => {
+const getUserQuotes = async (req, res) => {
   try {
     const userId = req.user;
     console.log("[getUserQuotes] Fetching for userId:", userId);
@@ -109,7 +109,7 @@ exports.getUserQuotes = async (req, res) => {
 };
 
 // UPDATE QUOTE STATUS
-exports.updateQuoteStatus = async (req, res) => {
+const updateQuoteStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -199,4 +199,11 @@ exports.updateQuoteStatus = async (req, res) => {
     console.error("[updateQuoteStatus]", error);
     res.status(500).json({ message: "Erreur lors de la mise à jour du statut" });
   }
+};
+
+module.exports = {
+  createQuote,
+  getCompanyQuotes,
+  getUserQuotes,
+  updateQuoteStatus
 };

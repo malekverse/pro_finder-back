@@ -44,6 +44,8 @@ const LoginForm = () => {
                 navigate("/admin/dashboard");
             } else if (roles.includes("company")) {
                 navigate("/company/stats");
+            } else if (roles.includes("professional")) {
+                navigate("/professional/stats");
             } else {
                 // Les users et les owners vont sur leur profil par défaut
                 navigate("/user/dashboard");

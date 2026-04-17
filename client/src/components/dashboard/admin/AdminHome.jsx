@@ -15,7 +15,10 @@ const AdminHome = () => {
     villes: 0, 
     categories: 0, 
     services: 0,
-    pendingCompanies: 0
+    pendingCompanies: 0,
+    professionals: 0,
+    pendingProfessionals: 0,
+    ...dashboardData?.stats,
   };
 
   // Données réelles pour la courbe (envoyées par le backend)
@@ -32,6 +35,7 @@ const AdminHome = () => {
     { title: "Utilisateurs", value: stats.users, icon: <Users size={22}/>, color: "#6366f1", bg: "#eef2ff", trend: "+8%", path: "/admin/users" },
     { title: "Villes", value: stats.villes, icon: <Globe size={22}/>, color: "#a855f7", bg: "#faf5ff", trend: "Stable", path: "/admin/geography" },
     { title: "Catégories", value: stats.categories, icon: <Tags size={22}/>, color: "#22c55e", bg: "#f0fdf4", trend: "+2", path: "/admin/taxonomy" },
+    { title: "Professionnels", value: stats.professionals || 0, icon: <Wrench size={22}/>, color: "#3b82f6", bg: "#eff6ff", trend: stats.pendingProfessionals > 0 ? `${stats.pendingProfessionals} en attente` : "OK", path: "/admin/moderation" },
     { title: "Signalements", value: stats.reports || 0, icon: <AlertCircle size={22}/>, color: "#ef4444", bg: "#fef2f2", trend: stats.reports > 0 ? "Urgent" : "OK", path: "/admin/moderation" },
   ];
 

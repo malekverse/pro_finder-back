@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, User, ShoppingBag, Building2, LogOut, Home, FileText, ShoppingCart } from "lucide-react";
 import NotificationBell from "../company/NotificationBell";
-import CompanySearchBar from "./CompanySearchBar";
+import GlobalSearchBar from "./CompanySearchBar";
 import { toImageUrl } from "../../../utils/imageUtils";
 
 const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, onCartClick, cartItemsCount = 0 }) => {
@@ -18,7 +18,7 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
   return (
     <div style={h.bar}>
       {/* Section Logo*/}
-      <div style={{ ...h.brand, cursor: 'pointer' }} onClick={() => navigate("/user/dashboard")}>
+      <div className="brand-logo" style={{ ...h.brand, cursor: 'pointer' }} onClick={() => navigate("/user/dashboard")}>
         <div style={h.brandDot} />
         <span style={h.brandName}>ProFinder</span>
       </div>
@@ -26,11 +26,12 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
       {/* Zone Centrale : Barre de recherche */}
       <div style={h.centerArea}>
         <div style={h.searchWrapper}>
-          <CompanySearchBar />
+          <GlobalSearchBar />
         </div>
         <div style={h.nav}>
           {/* Bouton Accueil */}
-          <button 
+          <button
+            className="nav-btn"
             style={{ ...h.navBtn, color: "#1E3A5F", borderBottom: "2px solid #1E3A5F" }}
             onClick={onHomeClick}
           >
@@ -38,7 +39,8 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
           </button>
 
           {/* Bouton Documents (Accès direct) */}
-          <button 
+          <button
+            className="nav-btn"
             style={h.navBtn}
             onClick={() => navigate("/documents")}
           >
@@ -46,7 +48,8 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
           </button>
 
           {/* Bouton Mes Achats (Accès direct) */}
-          <button 
+          <button
+            className="nav-btn"
             style={h.navBtn}
             onClick={() => navigate("/purchases")}
           >
@@ -55,7 +58,8 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
 
           {/* Bouton Espace Fournisseur (Accès direct) */}
           {onCompanyClick && (
-            <button 
+            <button
+              className="nav-btn"
               style={h.navBtn}
               onClick={onCompanyClick}
             >
@@ -64,9 +68,9 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
           )}
 
           {/* Bouton Panier */}
-          <button 
+          <button
             onClick={onCartClick}
-            style={{ 
+            style={{
               background: 'none', border: 'none', cursor: 'pointer', position: 'relative',
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1E3A5F',
               padding: '8px'
@@ -93,14 +97,15 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
       {/* Section Profil et Menu Déroulant */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Accès direct profil (au clic sur l'image/nom) */}
-        <div 
-          style={{ ...h.profileBtn, padding: '6px 4px' }} 
+        <div
+          className="profile-btn"
+          style={{ ...h.profileBtn, padding: '6px 4px' }}
           onClick={onProfileClick}
         >
           {user?.avatarUrl
             ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
             : <div style={h.avatarFallback}>{initials}</div>}
-          
+
           <div style={h.profileInfo}>
             <span style={h.profileName}>{user?.fullName || "Mon profil"}</span>
             <span style={h.profileSub}>Voir mon profil</span>
@@ -109,8 +114,8 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
 
         {/* Bouton pour le menu déroulant (actions secondaires) */}
         <div style={{ position: "relative" }}>
-          <button 
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 5px' }} 
+          <button
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 5px' }}
             onClick={() => setMenuOpen((v) => !v)}
           >
             <ChevronDown size={16} color="#94a3b8"
@@ -122,7 +127,7 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
             <>
               {/* Overlay invisible pour fermer le menu en cliquant n'importe où ailleurs */}
               <div style={h.overlay} onClick={() => setMenuOpen(false)} />
-              
+
               <div style={h.dropdown}>
                 {/* Bouton de déconnexion avec style d'alerte (rouge) */}
                 <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
@@ -133,73 +138,83 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
           )}
         </div>
       </div>
+      <style>{`
+        .nav-btn:hover { background: rgba(241, 245, 249, 0.8) !important; color: #1E3A5F !important; transform: translateY(-2px); }
+        .brand-logo:hover { transform: scale(1.02); }
+        .profile-btn:hover { background: rgba(241, 245, 249, 0.8) !important; border-color: #cbd5e1 !important; }
+      `}</style>
     </div>
   );
 };
 
-// Styles CSS-in-JS
+// Styles CSS-in-JS avec une esthétique premium
 const h = {
   bar: {
     position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-    height: 60, background: "#fff",
-    borderBottom: "1px solid #e9eef5",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+    height: 70, background: "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(12px)",
+    borderBottom: "1px solid rgba(226, 232, 240, 0.8)",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
     display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "0 24px",
+    padding: "0 40px",
   },
-  brand: { display: "flex", alignItems: "center", gap: 8 },
-  brandDot: { width: 10, height: 10, borderRadius: "50%", background: "#1E3A5F" },
-  brandName: { fontWeight: 800, fontSize: 18, color: "#1E3A5F", letterSpacing: "-0.5px" },
+  brand: { display: "flex", alignItems: "center", gap: 10, transition: "transform 0.2s ease" },
+  brandDot: { width: 12, height: 12, borderRadius: "50%", background: "linear-gradient(135deg, #1E3A5F 0%, #3b82f6 100%)", boxShadow: "0 0 10px rgba(59, 130, 246, 0.5)" },
+  brandName: { fontWeight: 900, fontSize: 22, color: "#1E3A5F", letterSpacing: "-0.8px" },
   centerArea: {
     display: "flex",
     alignItems: "center",
-    gap: 32,
+    gap: 40,
     flex: 1,
     justifyContent: "center",
-    marginLeft: 40,
-    marginRight: 40,
+    marginLeft: 20,
+    marginRight: 20,
   },
   searchWrapper: {
     width: "100%",
-    maxWidth: 400,
+    maxWidth: 450,
   },
-  nav: { display: "flex", gap: 4 },
+  nav: { display: "flex", gap: 8 },
   navBtn: {
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
     background: "none", border: "none", cursor: "pointer",
-    color: "#64748b", padding: "8px 16px", borderBottom: "2px solid transparent",
-    transition: "all 0.15s",
+    color: "#64748b", padding: "10px 20px", borderRadius: "12px",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    position: "relative",
   },
-  navLabel: { fontSize: 11, fontWeight: 500 },
+  navLabel: { fontSize: 12, fontWeight: "600" },
   profileBtn: {
-    display: "flex", alignItems: "center", gap: 10,
-    background: "none", border: "none", cursor: "pointer",
-    padding: "6px 10px", borderRadius: 10,
+    display: "flex", alignItems: "center", gap: 12,
+    background: "rgba(241, 245, 249, 0.5)", border: "1px solid #f1f5f9", cursor: "pointer",
+    padding: "6px 14px", borderRadius: 14,
+    transition: "all 0.2s ease",
   },
-  avatar: { width: 36, height: 36, borderRadius: "50%", objectFit: "cover" },
+  avatar: { width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" },
   avatarFallback: {
-    width: 36, height: 36, borderRadius: "50%",
-    background: "#1E3A5F", color: "#fff",
+    width: 38, height: 38, borderRadius: "50%",
+    background: "linear-gradient(135deg, #1E3A5F 0%, #0f172a 100%)", color: "#fff",
     display: "flex", alignItems: "center", justifyContent: "center",
-    fontWeight: 700, fontSize: 13,
+    fontWeight: 800, fontSize: 14, boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
   },
   profileInfo: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-  profileName: { fontSize: 13, fontWeight: 700, color: "#0f172a" },
-  profileSub: { fontSize: 11, color: "#94a3b8" },
+  profileName: { fontSize: 13, fontWeight: "800", color: "#0f172a" },
+  profileSub: { fontSize: 11, color: "#64748b", fontWeight: "500" },
   overlay: { position: "fixed", inset: 0, zIndex: 10 },
   dropdown: {
-    position: "absolute", right: 0, top: 50,
-    background: "#fff", border: "1px solid #e9eef5",
-    borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-    zIndex: 11, minWidth: 200, overflow: "hidden",
+    position: "absolute", right: 0, top: 55,
+    background: "#fff", border: "1px solid #f1f5f9",
+    borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+    zIndex: 11, minWidth: 220, overflow: "hidden",
+    padding: "8px",
   },
   dropItem: {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "11px 16px", width: "100%",
+    display: "flex", alignItems: "center", gap: 12,
+    padding: "12px 16px", width: "100%",
     background: "none", border: "none", cursor: "pointer",
-    color: "#334155", fontSize: 14, fontWeight: 500, textAlign: "left",
+    color: "#334155", fontSize: 14, fontWeight: "600", textAlign: "left",
+    borderRadius: "10px", transition: "all 0.2s",
   },
-  dropDivider: { height: 1, background: "#f1f5f9" },
+  dropDivider: { height: 1, background: "#f1f5f9", margin: "8px 0" },
 };
 
 export default Header;

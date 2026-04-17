@@ -50,6 +50,54 @@ const followCompany = async (req, res) => {
   }
 };
 
+// suivre un professionnel
+const followProfessional = async (req, res) => {
+  try {
+    const { professional_id } = req.body;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: "Vous devez être connecté pour suivre un professionnel." });
+    }
+
+    if (!mongoose.isValidObjectId(professional_id)) {
+      return res.status(400).json({ message: "ID de professionnel invalide." });
+    }
+    
+    const follows = await Follow.find({ user_id: req.user, professional_id });
+    
+    if (follows.length > 0) {
+      const isBlocked = follows.some(f => f.is_blocked);
+      if (isBlocked) {
+        return res.status(403).json({ message: "Vous avez été bloqué par ce professionnel." });
+      }
+      return res.status(400).json({ message: "Already following" });
+    }
+    
+    const follow = await Follow.create({ user_id: req.user, professional_id });
+
+    // Notification
+    if (req.user.toString() !== professional_id.toString()) {
+      const User = mongoose.model("User");
+      const user = await User.findById(req.user);
+      const Notification = mongoose.model("Notification");
+      await Notification.create({
+        recipient_id: professional_id,
+        recipient_type: "Professional",
+        sender_id: req.user,
+        sender_type: "User",
+        type: "follow",
+        related_id: follow._id,
+        message: `${user.fullName} a commencé à vous suivre.`
+      });
+    }
+
+    res.status(201).json(follow);
+  } catch (err) {
+    console.error("[followProfessional Error]:", err);
+    res.status(500).json({ message: "follow professional failed", error: err.message });
+  }
+};
+
 // unfollow
 const unfollowCompany = async (req, res) => {
   try {
@@ -75,6 +123,26 @@ const unfollowCompany = async (req, res) => {
     res.json({ message: "Unfollowed company" });
   } catch (err) {
     res.status(500).json({ message: "unfollow company failed" });
+  }
+};
+
+const unfollowProfessional = async (req, res) => {
+  try {
+    const { professional_id } = req.body;
+    if (!req.user) return res.status(401).json({ message: "Vous devez être connecté." });
+    if (!mongoose.isValidObjectId(professional_id)) return res.status(400).json({ message: "ID invalide." });
+    
+    const follow = await Follow.findOne({ user_id: req.user, professional_id: professional_id });
+    if (!follow) return res.status(404).json({ message: "Follow not found" });
+
+    if (follow.is_blocked) {
+      return res.status(403).json({ message: "Impossible de se désabonner d'un professionnel qui vous a bloqué." });
+    }
+
+    await Follow.deleteOne({ _id: follow._id });
+    res.json({ message: "Unfollowed professional" });
+  } catch (err) {
+    res.status(500).json({ message: "unfollow failed" });
   }
 };
 
@@ -188,6 +256,7 @@ const getFollowedFeed = async (req, res) => {
   try {
     const Post    = mongoose.model("Post");
     const Company = mongoose.model("Company");
+    const Professional = mongoose.model("Professional");
     const UserM   = mongoose.model("User");
 
     const page  = parseInt(req.query.page)  || 1;
@@ -198,32 +267,42 @@ const getFollowedFeed = async (req, res) => {
       return res.status(401).json({ message: "Utilisateur non identifié" });
     }
 
-    // 1. Companies suivies par l'user (uniquement celles où il n'est PAS bloqué)
+    // 1. Acteurs suivis par l'user (uniquement ceux où il n'est PAS bloqué)
     const userId = new mongoose.Types.ObjectId(req.user);
     const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } }).lean();
     
-    // On récupère aussi les IDs des compagnies dont l'utilisateur est membre (owner/manager)
-    // pour qu'il voie aussi les posts de sa propre entreprise dans son feed
-    const companyIds = follows.map((f) => f.company_id);
+    // On récupère les IDs des compagnies et des professionnels suivis
+    const companyIds = follows.filter(f => f.company_id).map((f) => f.company_id);
+    const professionalIds = follows.filter(f => f.professional_id).map((f) => f.professional_id);
     
+    // Si l'utilisateur est lui-même une entreprise ou un professionnel, il voit ses propres posts
     if (req.companyId) {
       const myCompanyId = new mongoose.Types.ObjectId(req.companyId);
       if (!companyIds.some(id => id.toString() === myCompanyId.toString())) {
         companyIds.push(myCompanyId);
       }
     }
+    
+    // Si l'utilisateur est un professionnel (req.user est l'ID pro ou on a un flag)
+    // NB: Pour un pro, req.user est son ID. On ajoute req.user à professionalIds
+    if (req.roles?.includes("professional")) {
+      const myProId = new mongoose.Types.ObjectId(req.user);
+      if (!professionalIds.some(id => id.toString() === myProId.toString())) {
+        professionalIds.push(myProId);
+      }
+    }
 
+    const allActorIds = [...companyIds, ...professionalIds];
 
-
-    if (companyIds.length === 0) {
+    if (allActorIds.length === 0) {
       return res.json({ posts: [], page, totalPages: 0 });
     }
 
-    // 2. Posts de ces companies
+    // 2. Posts de ces acteurs
     const query = {
-      author_id: { $in: companyIds }, 
-      authorType: "Company", 
-      isDeleted: false,
+      author_id:  { $in: allActorIds }, 
+      authorType: { $in: ["Company", "Professional"] }, 
+      isDeleted:  false,
     };
 
     const total = await Post.countDocuments(query);
@@ -239,8 +318,16 @@ const getFollowedFeed = async (req, res) => {
     const populated = await Promise.all(posts.map(async (post) => {
       let author = null;
       try {
-        const c = await Company.findById(post.author_id).select("companyName logoUrl").lean();
-        author = c ? { name: c.companyName, avatarUrl: c.logoUrl || null } : { name: "Entreprise inconnue", avatarUrl: null };
+        if (post.authorType === "Company") {
+          const c = await Company.findById(post.author_id).select("companyName logoUrl").lean();
+          author = c ? { name: c.companyName, avatarUrl: c.logoUrl || null } : { name: "Entreprise inconnue", avatarUrl: null };
+        } else if (post.authorType === "Professional") {
+          const p = await Professional.findById(post.author_id).select("fullName photoProfessional").lean();
+          author = p ? { name: p.fullName, avatarUrl: p.photoProfessional || null } : { name: "Professionnel inconnu", avatarUrl: null };
+        } else {
+          const u = await UserM.findById(post.author_id).select("fullName avatarUrl").lean();
+          author = u ? { name: u.fullName, avatarUrl: u.avatarUrl || null } : { name: "Utilisateur inconnu", avatarUrl: null };
+        }
       } catch (e) {
         author = { name: "Erreur chargement", avatarUrl: null };
       }
@@ -358,13 +445,29 @@ const checkFollowStatus = async (req, res) => {
   }
 };
 
+const checkFollowProStatus = async (req, res) => {
+  try {
+    const { professionalId } = req.params;
+    const follows = await Follow.find({ user_id: req.user, professional_id: professionalId });
+    if (follows.length === 0) return res.json({ isFollowing: false, isBlocked: false });
+    const blockedRelation = follows.find(f => f.is_blocked);
+    if (blockedRelation) return res.json({ isFollowing: false, isBlocked: true });
+    res.json({ isFollowing: true, isBlocked: false });
+  } catch (err) {
+    res.status(500).json({ message: "check follow status failed" });
+  }
+};
+
 module.exports = {
   followCompany,
   unfollowCompany,
+  followProfessional,
+  unfollowProfessional,
   getFollowerCount,
   getFollowersStats,
   getFollowedFeed,
   checkFollowStatus,
+  checkFollowProStatus,
   getUserFollowedCompanies,
   getUserManagedCompanies,
 };

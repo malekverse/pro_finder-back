@@ -63,6 +63,27 @@ updateProfile: builder.mutation({
       }),
       invalidatesTags: ['Dashboard', 'PendingCompanies'],
     }),
+
+    // ── Professional moderation ──
+    getPendingProfessionals: builder.query({
+      query: () => '/admin/pending-professionals',
+      providesTags: ['PendingProfessionals'],
+    }),
+    verifyProfessional: builder.mutation({
+      query: (professionalId) => ({
+        url: `/admin/verify-professional/${professionalId}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Dashboard', 'PendingProfessionals'],
+    }),
+    rejectProfessional: builder.mutation({
+      query: ({ professionalId, reason }) => ({
+        url: `/admin/reject-professional/${professionalId}`,
+        method: 'DELETE',
+        body: { reason },
+      }),
+      invalidatesTags: ['Dashboard', 'PendingProfessionals'],
+    }),
   }),
 });
 
@@ -76,5 +97,8 @@ export const {
   useGetPendingCompaniesQuery,
   useVerifyCompanyMutation,
   useRejectCompanyMutation,
-  useContactCompanyMutation
+  useContactCompanyMutation,
+  useGetPendingProfessionalsQuery,
+  useVerifyProfessionalMutation,
+  useRejectProfessionalMutation,
 } = profileApiSlice;

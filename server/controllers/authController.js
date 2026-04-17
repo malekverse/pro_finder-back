@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Company = require("../models/company");
+const Professional = require("../models/Professional");
 const Follow = require("../models/follow");
 const Role = require("../models/Role");
 
@@ -15,11 +16,11 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    if (!roles.includes("user") && !roles.includes("company")) {
+    if (!roles.includes("user") && !roles.includes("company") && !roles.includes("professional")) {
       return res.status(400).json({ message: "Invalid account type" });
     }
 
-    const Model = roles.includes("user") ? User : Company;
+    const Model = roles.includes("user") ? User : roles.includes("company") ? Company : Professional;
 
     const duplicate = await Model.findOne({ email }).lean();
     if (duplicate) {
@@ -79,9 +80,34 @@ const register = async (req, res) => {
       });
     }
 
-    if (roles.includes("company")) {
-      return res.status(201).json({ 
-        message: "Merci pour votre inscription , votre compte est en attente de validation par un administrateur." 
+    if (roles.includes("professional")) {
+      const { fullName, email, phone, description, website } = req.body;
+
+      if (!fullName || !email || !phone || !req.body.country || !req.body.region || !req.body.city) {
+        return res.status(400).json({
+          message: "Tous les champs obligatoires doivent être remplis (Nom, Email, Téléphone, Pays, Région, Ville)"
+        });
+      }
+
+      newAccount = await Professional.create({
+        email,
+        password: hashedPassword,
+        fullName,
+        phone,
+        website: req.body.website || '',
+        description: req.body.description || '',
+        photoProfessional: req.body.photoProfessional || null,
+        country: req.body.country,
+        region: req.body.region,
+        city: req.body.city,
+        services: req.body.services || [],
+        roles: ["professional"]
+      });
+    }
+
+    if (roles.includes("company") || roles.includes("professional")) {
+      return res.status(201).json({
+        message: "Merci pour votre inscription , votre compte est en attente de validation par un administrateur."
       });
     }
 
@@ -147,14 +173,19 @@ const login = async (req, res) => {
   }
 
   if (!account) {
+    account = await Professional.findOne({ email });
+    accountType = "professional";
+  }
+
+  if (!account) {
     return res.status(400).json({ message: "Identifiants invalides, veuillez vérifier votre email et mot de passe" });
   } 
-  if (accountType === "company" && account.Status === "pending") {
+  if ((accountType === "company" || accountType === "professional") && account.Status === "pending") {
     return res.status(403).json({ 
       message: "Votre compte est en attente de validation par un administrateur." 
     });
   } 
-  if (accountType === "company" && account.Status === "rejected") {
+  if ((accountType === "company" || accountType === "professional") && account.Status === "rejected") {
     return res.status(403).json({ 
       message: `Votre compte a été suspendu pour cette raison : ${account.rejectionReason || "Motif non spécifié"}. Veuillez nous contacter pour plus d'informations.` 
     });
@@ -196,8 +227,8 @@ const login = async (req, res) => {
         permissions = [...new Set([...permissions, ...rbacPermissions])];
       }
     }
-  } else if (accountType === "company") {
-    // Les entreprises ont par défaut toutes les permissions
+  } else if (accountType === "company" || accountType === "professional") {
+    // Les entreprises et professionnels ont par défaut toutes les permissions
     permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
   }
 
@@ -270,6 +301,11 @@ const refresh = async (req, res) => {
       accountType = "company";
     }
 
+    if (!account) {
+      account = await Professional.findById(decoded.id).exec();
+      accountType = "professional";
+    }
+
     if (!account) return res.status(401).json({ message: "Account not found" });
 
     // Initialisation des rôles et companyId
@@ -302,7 +338,7 @@ const refresh = async (req, res) => {
           permissions = [...new Set([...permissions, ...rbacPermissions])];
         }
       }
-    } else if (accountType === "company") {
+    } else if (accountType === "company" || accountType === "professional") {
       permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
     }
 

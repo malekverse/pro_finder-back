@@ -2,14 +2,20 @@ import { useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useCreatePostMutation } from "../../redux/features/posts/postApiSlice";
 import { ImagePlus, X, Send, Loader, Image } from "lucide-react";
-import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
 import { toImageUrl } from "../../utils/imageUtils";
+import { useGetProfessionalProfileQuery } from "../../redux/features/professional/professionalApiSlice";
+import { ROLES } from "../../constants/roles";
 
 const PostCreate = ({ onSuccess }) => {
   const [createPost, { isLoading }] = useCreatePostMutation();
   const account = useSelector((state) => state.auth.user);
-  const companyId = account?.companyId || account?.id;
-  const { data: company } = useGetCompanyProfileQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
+  const isCompany = account?.roles?.includes(ROLES.COMPANY) || account?.roles?.includes("owner") || account?.roles?.includes("manager");
+  const isProfessional = account?.roles?.includes(ROLES.PROFESSIONAL);
+
+  const companyId = (isCompany) ? (account?.companyId || account?.id) : null;
+  const { data: company } = useGetCompanyProfileQuery(companyId, { skip: !companyId, pollingInterval: 30000 });
+  
+  const { data: professional } = useGetProfessionalProfileQuery(undefined, { skip: !isProfessional, pollingInterval: 30000 });
 
   const [content,  setContent]  = useState("");
   const [previews, setPreviews] = useState([]);
@@ -55,8 +61,8 @@ const PostCreate = ({ onSuccess }) => {
     return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   };
 
-  const authorName = company?.companyName || account?.fullName || "";
-  const avatarUrl  = toImageUrl(company?.logoUrl);
+  const authorName = company?.companyName || professional?.fullName || account?.fullName || "";
+  const avatarUrl  = toImageUrl(company?.logoUrl || professional?.photoProfessional);
 
   return (
     <div style={cs.card}>

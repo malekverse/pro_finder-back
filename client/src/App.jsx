@@ -9,6 +9,7 @@ import { ROLES } from "./constants/roles";
 // Pages Auth
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
+import ClaimCompany from './pages/auth/ClaimCompany';
 
 // Pages Client
 import Home from './pages/client/Home';
@@ -17,6 +18,7 @@ import UserDashboard from './pages/client/UserDashboard';
 import ClientPurchases from './pages/client/ClientPurchases';
 import ClientDocuments from './pages/client/ClientDocuments';
 import CompanyPublicProfile from './pages/client/CompanyPublicProfile';
+import ProfessionalPublicProfile from './pages/client/ProfessionalPublicProfile';
 
 // Pages Company
 import UserManagement from './pages/company/UserManagement';
@@ -32,6 +34,11 @@ import Publication from './pages/company/Publication';
 import Commandes from './pages/company/Commandes';
 import Reviews from './pages/company/Reviews';
 
+// Pages Professional
+import ProfessionalDashboardLayout from './pages/professional/ProfessionalDashboardLayout';
+import ProfessionalProfile from './pages/professional/ProfessionalProfile';
+import ProfessionalStats from './pages/professional/ProfessionalStats';
+
 // Pages Admin
 import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
 import AdminHome from "./components/dashboard/admin/AdminHome";
@@ -40,6 +47,7 @@ import AdminTaxonomy from "./components/dashboard/admin/AdminTaxonomy";
 import AdminModeration from "./components/dashboard/admin/AdminModeration";
 import AdminUsers from "./components/dashboard/admin/AdminUsers";
 import AdminProfile from "./components/dashboard/admin/AdminProfile";
+import AiScraperTool from './components/AiScraperTool';
 
 function App() {
   return (
@@ -50,6 +58,7 @@ function App() {
         {/* PUBLIQUES */}
         <Route path="auth/login"  element={<Login />} />
         <Route path="auth/signup" element={<Signup />} />
+        <Route path="claim" element={<ClaimCompany />} />
 
         <Route path="unauthorized" element={<div>Accès non autorisé</div>} />
 
@@ -100,6 +109,10 @@ function App() {
           path="user/company/:companyId"
           element={<CompanyPublicProfile />}
         />
+        <Route
+          path="user/professional/:professionalId"
+          element={<ProfessionalPublicProfile />}
+        />
 
         {/* ADMIN */}
         <Route
@@ -120,6 +133,7 @@ function App() {
           <Route path="users"      element={<AdminUsers />} />
           <Route path="profile"    element={<AdminProfile />} />
           <Route path="roles"      element={<AdminRoles />} />
+          <Route path="scraper"    element={<AiScraperTool />} />
         </Route>
 
         {/* COMPANY & STAFF */}
@@ -145,6 +159,24 @@ function App() {
           <Route path="users"     element={<UserManagement />} />
           <Route path="profile"   element={<CompanyProfile />} />
           <Route path="posts"     element={<Publication />} />
+        </Route>
+
+        {/* PROFESSIONAL */}
+        <Route
+          path="professional"
+          element={
+            <RequireAuth>
+              <RequireRole allowedRoles={[ROLES.PROFESSIONAL]}>
+                <ProfessionalDashboardLayout />
+              </RequireRole>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<ProfessionalStats />} />
+          <Route path="stats"   element={<ProfessionalStats />} />
+          <Route path="posts"   element={<Publication />} />
+          <Route path="profile" element={<ProfessionalProfile />} />
+          <Route path="reviews" element={<div style={{ padding: '30px', color: '#64748b' }}>Avis clients — à venir</div>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

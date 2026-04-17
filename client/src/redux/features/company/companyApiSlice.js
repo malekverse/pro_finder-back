@@ -143,6 +143,13 @@ export const companyApiSlice = apiSlice.injectEndpoints({
       query: () => "company/recommended",
       providesTags: ["Company"],
     }),
+    
+    requestClaim: builder.mutation({
+      query: (companyId) => ({
+        url: `company/request-claim/${companyId}`,
+        method: "POST",
+      }),
+    }),
 
   })
 });
@@ -171,4 +178,5 @@ export const {
   useGetRecommendedCompaniesQuery,
   useGetMyFollowsQuery,
   useGetMyManagedCompaniesQuery,
+  useRequestClaimMutation,
 } = companyApiSlice;

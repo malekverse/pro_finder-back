@@ -11,10 +11,10 @@ const AllServices = ({ onAction }) => {
   return (
     <div style={g.grid}>
       {services.map(s => (
-        <div 
-          key={s._id} 
+        <div
+          key={s._id}
           className="grid-card"
-          style={g.card} 
+          style={g.card}
           onClick={() => onAction(s, 'service')}
         >
           <div style={g.imgWrapper}>

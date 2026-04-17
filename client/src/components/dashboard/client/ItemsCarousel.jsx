@@ -21,7 +21,7 @@ const ItemsCarousel = ({ title, items, type, onSeeMore, onAction }) => {
         <h2 style={c.title}>{title}</h2>
         <button onClick={onSeeMore} style={c.seeMore}>Voir plus <ChevronRight size={14} /></button>
       </div>
-      
+
       <div style={c.wrapper}>
         <button onClick={() => scroll('left')} style={{ ...c.navBtn, left: -15 }}><ChevronLeft size={20} /></button>
         <div ref={scrollRef} style={c.scrollArea}>

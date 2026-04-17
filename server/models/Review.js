@@ -10,7 +10,12 @@ const reviewSchema = new mongoose.Schema(
     company_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
+      default: null,
+    },
+    professional_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Professional",
+      default: null,
     },
     rating: {
       type: Number,
@@ -27,7 +32,9 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// S'assurer qu'un utilisateur ne peut laisser qu'un seul avis par entreprise
-reviewSchema.index({ user_id: 1, company_id: 1 }, { unique: true });
+// Un utilisateur ne peut laisser qu'un seul avis par entreprise
+reviewSchema.index({ user_id: 1, company_id: 1 }, { unique: true, sparse: true });
+// Un utilisateur ne peut laisser qu'un seul avis par professionnel
+reviewSchema.index({ user_id: 1, professional_id: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("Review", reviewSchema);

@@ -70,14 +70,24 @@ const CompanyProfile = () => {
   useEffect(() => {
     if (inputs.country) {
       fetch(`${SERVER_URL}/localisation/getRegionsByCountry/${inputs.country}`)
-        .then(res => res.json()).then(data => setRegions(data.regions || []));
+        .then(res => res.json())
+        .then(data => setRegions(Array.isArray(data.regions) ? data.regions : []))
+        .catch(err => {
+          console.error("Error fetching regions:", err);
+          setRegions([]);
+        });
     }
   }, [inputs.country]);
 
   useEffect(() => {
     if (inputs.region) {
       fetch(`${SERVER_URL}/localisation/getCitiesByRegion/${inputs.region}`)
-        .then(res => res.json()).then(setCities);
+        .then(res => res.json())
+        .then(data => setCities(Array.isArray(data) ? data : []))
+        .catch(err => {
+          console.error("Error fetching cities:", err);
+          setCities([]);
+        });
     }
   }, [inputs.region]);
 
@@ -191,8 +201,8 @@ const CompanyProfile = () => {
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Place fontSize="small" />
-                {inputs.city
-                  ? `${cities.find(c => c._id === inputs.city)?.name || ""}`
+                {inputs.city && Array.isArray(cities)
+                  ? `${cities.find(c => c._id === inputs.city)?.name || "Chargement..."}`
                   : "Localisation non définie"}
               </Typography>
             </Box>
@@ -297,7 +307,7 @@ const CompanyProfile = () => {
                 icon={<Place color="primary" />}
                 label="Adresse"
                 value={
-                  inputs.city
+                  inputs.city && Array.isArray(cities) && Array.isArray(regions) && Array.isArray(countries)
                     ? `${cities.find(c => c._id === inputs.city)?.name || ""}, ${regions.find(r => r._id === inputs.region)?.name || ""}, ${countries.find(c => c._id === inputs.country)?.name || ""}`
                     : "Localisation non définie"
                 }

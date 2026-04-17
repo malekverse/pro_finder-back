@@ -1,46 +1,18 @@
 import React, { useState } from "react";
+import { X, Heart, ShieldCheck, Star, Building2, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../../redux/features/cart/cartSlice";
-import { X, Package, CheckCircle2, Heart, Star, Building2, ShoppingCart } from "lucide-react";
-import { toImageUrl } from "../../../utils/imageUtils";
+import {toImageUrl } from "../../../utils/imageUtils";
 
 const ProductDetail = ({ product, onClose, onOrder }) => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [selectedImg, setSelectedImg] = useState(product?.imagesProduct?.[0] || null);
-  const [quantity, setQuantity] = useState(1);
 
   if (!product) return null;
-
-  const handleAddToCart = () => {
-    if (quantity > (product.stock || 0)) {
-      alert("Quantité demandée supérieure au stock disponible !");
-      return;
-    }
-    dispatch(addToCart({
-      product,
-      companyId: product.companyId?._id,
-      companyName: product.companyId?.companyName,
-      logoUrl: product.companyId?.logoUrl,
-      quantity
-    }));
-    alert("Produit ajouté au panier !");
-  };
-
-  const incrementQty = () => {
-    if (quantity < (product.stock || 0)) {
-      setQuantity(prev => prev + 1);
-    } else {
-      alert("Stock maximum atteint !");
-    }
-  };
-  const decrementQty = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
   return (
     <div style={pd.overlay} onClick={onClose}>
       <div style={pd.modal} onClick={e => e.stopPropagation()}>
-        <button style={pd.closeBtn} onClick={onClose}><X size={24} /></button>
+        <button type="button" style={pd.closeBtn} onClick={onClose}><X size={24} /></button>
         
         <div style={pd.container}>
           <div style={pd.leftCol}>
@@ -71,8 +43,8 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
             </div>
 
             <div style={pd.statusRow}>
-              <span style={{...pd.status, color: product.stock > 0 ? '#10b981' : '#ef4444'}}>
-                <CheckCircle2 size={16} /> {product.stock > 0 ? 'EN STOCK' : 'RUPTURE'}
+              <span style={pd.status}>
+                <ShieldCheck size={16} /> EN STOCK
               </span>
               <span style={pd.sku}>SKU: {product._id.slice(-8).toUpperCase()}</span>
             </div>
@@ -80,20 +52,17 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
             <div style={pd.divider} />
 
             <div style={pd.qtySection}>
-              <span style={pd.qtyLabel}>QTÉ</span>
+              <span style={pd.qtyLabel}>QUANTITÉ</span>
               <div style={pd.qtyBox}>
-                <button style={pd.qtyBtn} onClick={decrementQty}>-</button>
-                <input type="text" value={quantity} readOnly style={pd.qtyInput} />
-                <button style={pd.qtyBtn} onClick={incrementQty}>+</button>
+                <button type="button" style={pd.qtyBtn}>-</button>
+                <input type="text" value="1" readOnly style={pd.qtyInput} />
+                <button type="button" style={pd.qtyBtn}>+</button>
               </div>
             </div>
 
             <div style={pd.actionRow}>
-              <button style={pd.buyBtn} onClick={() => onOrder({...product, quantity})}>ACHETER MAINTENANT</button>
-              <button style={pd.cartBtn} onClick={handleAddToCart}>
-                <ShoppingCart size={18} /> AJOUTER AU PANIER
-              </button>
-              <button style={pd.wishBtn}><Heart size={20} /></button>
+              <button type="button" style={pd.buyBtn} onClick={() => onOrder(product)}>ACHETER MAINTENANT</button>
+              <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
             </div>
 
             <div style={pd.overview}>
@@ -117,21 +86,18 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
                 <div>
                   <h4 style={pd.sellerName}>{product.companyId?.companyName || 'Boutique'}</h4>
                   <div style={pd.sellerRating}>
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} color="#cbd5e1" />
+                    < Star size={12} fill="#fbbf24" color="#fbbf24" />
+                    < Star size={12} fill="#fbbf24" color="#fbbf24" />
+                    < Star size={12} fill="#fbbf24" color="#fbbf24" />
+                    < Star size={12} fill="#fbbf24" color="#fbbf24" />
+                    < Star size={12} color="#cbd5e1" />
                     <span style={pd.ratingCount}>5</span>
                   </div>
                 </div>
               </div>
-              <button style={pd.visitBtn} onClick={() => navigate(`/user/company/${product.companyId?._id}`)}>
-                VISITER LA BOUTIQUE
+              <button type="button" style={pd.visitBtn} onClick={() => navigate(`/user/company/${product.companyId?._id}`)}>
+                VISITER L'ENTREPRISE
               </button>
-            </div>
-
-            <div style={pd.shippingInfo}>
             </div>
           </div>
         </div>
@@ -141,45 +107,42 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
 };
 
 const pd = {
-  overlay: { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
-  modal: { background: '#fff', width: '100%', maxWidth: '1100px', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' },
-  closeBtn: { position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', zIndex: 10 },
-  container: { display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: '30px', padding: '40px', maxHeight: '90vh', overflowY: 'auto' },
-  leftCol: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  mainImgBox: { width: '100%', height: '400px', background: '#f8fafc', borderRadius: '8px', overflow: 'hidden', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  mainImg: { width: '100%', height: '100%', objectFit: 'contain' },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
+  modal: { background: '#fff', width: '100%', maxWidth: '1100px', borderRadius: '16px', position: 'relative', overflow: 'hidden', maxHeight: '95vh', display: 'flex', flexDirection: 'column' },
+  closeBtn: { position: 'absolute', top: '20px', right: '20px', background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', zIndex: 10 },
+  container: { display: 'flex', gap: '30px', padding: '40px', overflowY: 'auto' },
+  leftCol: { width: '400px', flexShrink: 0 },
+  mainImgBox: { width: '100%', aspectRatio: '1/1', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #e2e8f0', marginBottom: '15px' },
+  mainImg: { width: '100%', height: '100%', objectFit: 'cover' },
   thumbList: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
-  thumbBox: { width: '70px', height: '70px', borderRadius: '6px', cursor: 'pointer', overflow: 'hidden', transition: '0.2s' },
+  thumbBox: { width: '70px', height: '70px', borderRadius: '8px', cursor: 'pointer', overflow: 'hidden', transition: '0.2s' },
   thumb: { width: '100%', height: '100%', objectFit: 'cover' },
-  midCol: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  title: { fontSize: '24px', fontWeight: '800', color: '#1e293b', margin: 0, lineHeight: 1.3 },
-  priceRow: { display: 'flex', alignItems: 'baseline', gap: '15px' },
-  currentPrice: { fontSize: '28px', fontWeight: '800', color: '#1e293b' },
-  statusRow: { display: 'flex', gap: '20px', alignItems: 'center' },
-  status: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#10b981' },
-  sku: { fontSize: '13px', color: '#64748b', fontWeight: '500' },
-  divider: { height: '1px', background: '#e2e8f0', margin: '5px 0' },
-  qtySection: { display: 'flex', alignItems: 'center', gap: '20px' },
-  qtyLabel: { fontSize: '13px', fontWeight: '700', color: '#1e293b' },
-  qtyBox: { display: 'flex', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden' },
-  qtyBtn: { width: '32px', height: '32px', background: '#fff', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#64748b' },
-  qtyInput: { width: '40px', border: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', textAlign: 'center', fontWeight: '700', background: '#fff' },
-  actionRow: { display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' },
-  buyBtn: { flex: '1 1 100%', padding: '14px', background: '#24416b', color: '#fff', border: 'none', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase' },
-  cartBtn: { flex: 1, padding: '14px', background: '#fff', color: '#24416b', border: '1px solid #24416b', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-  wishBtn: { width: '48px', height: '48px', border: '1px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', cursor: 'pointer' },
-  overview: { marginTop: '20px' },
-  overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#1e293b', margin: '0 0 10px' },
-  rightCol: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  sellerCard: { background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #f1f5f9' },
+  midCol: { flex: 1, minWidth: 0 },
+  title: { fontSize: '28px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px' },
+  priceRow: { marginBottom: '20px' },
+  currentPrice: { fontSize: '24px', fontWeight: '800', color: '#1E3A5F' },
+  statusRow: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' },
+  status: { display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '700', color: '#10b981' },
+  sku: { fontSize: '12px', fontWeight: '600', color: '#94a3b8' },
+  divider: { height: '1px', background: '#e2e8f0', margin: '25px 0' },
+  qtySection: { marginBottom: '25px' },
+  qtyLabel: { fontSize: '12px', fontWeight: '800', color: '#64748b', display: 'block', marginBottom: '10px', textTransform: 'uppercase' },
+  qtyBox: { display: 'flex', alignItems: 'center', width: 'fit-content', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' },
+  qtyBtn: { width: '40px', height: '40px', background: '#fff', border: 'none', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#1E3A5F', transition: '0.2s' },
+  qtyInput: { width: '50px', height: '40px', border: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', textAlign: 'center', fontSize: '14px', fontWeight: '700', color: '#1E3A5F' },
+  actionRow: { display: 'flex', gap: '15px', marginBottom: '35px' },
+  buyBtn: { flex: 1, height: '52px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  wishBtn: { width: '52px', height: '52px', background: '#f1f5f9', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' },
+  overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px', textTransform: 'uppercase' },
+  rightCol: { width: '280px', flexShrink: 0 },
+  sellerCard: { padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' },
   sellerHeader: { display: 'flex', gap: '12px', marginBottom: '20px' },
-  sellerLogo: { width: '50px', height: '50px', borderRadius: '10px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', overflow: 'hidden' },
+  sellerLogo: { width: '48px', height: '48px', borderRadius: '10px', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   logo: { width: '100%', height: '100%', objectFit: 'cover' },
-  sellerName: { fontSize: '15px', fontWeight: '700', color: '#1e293b', margin: '0 0 4px' },
+  sellerName: { fontSize: '14px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px' },
   sellerRating: { display: 'flex', alignItems: 'center', gap: '2px' },
-  ratingCount: { fontSize: '12px', color: '#94a3b8', marginLeft: '5px' },
-  visitBtn: { width: '100%', padding: '10px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
-  shippingInfo: { padding: '10px', display: 'flex', flexDirection: 'column', gap: '15px' },
+  ratingCount: { fontSize: '12px', color: '#94a3b8', marginLeft: '4px', fontWeight: '600' },
+  visitBtn: { width: '100%', padding: '10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px', fontWeight: '700', color: '#1E3A5F', cursor: 'pointer', transition: '0.2s' }
 };
 
 export default ProductDetail;

@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import { 
   Globe, Tags, Eye, Users, LayoutDashboard, 
-  LogOut, UserCog, ShieldCheck, ChevronRight 
+  LogOut, UserCog, ShieldCheck, ChevronRight, Sparkles 
 } from "lucide-react";
 import { useGetProfileQuery } from "../../../redux/features/profileApiSlice"; // ✅ AJOUT
 
@@ -22,6 +22,7 @@ const AdminDashboardLayout = () => {
     { path: "/admin/taxonomy",  label: "Taxonomie",     icon: <Tags size={20}/> },
     { path: "/admin/moderation",label: "Modération",    icon: <Eye size={20}/> },
     { path: "/admin/roles",     label: "Rôles",         icon: <ShieldCheck size={20}/> },
+    { path: "/admin/scraper",   label: "Générateur IA", icon: <Sparkles size={20}/> },
   ];
 
   const currentPathLabel = adminMenu.find(item => item.path === location.pathname)?.label || "Admin";

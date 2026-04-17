@@ -8,8 +8,8 @@ const createRegion = async (req, res) => {
   try {
     const { name, country } = req.body;
 
-    if (!name || !country)
-      return res.status(400).json({ message: "All fields are required" });
+    if (!name || !country || !mongoose.Types.ObjectId.isValid(country))
+      return res.status(400).json({ message: "All fields are required and country must be a valid ID" });
 
     // Check for duplicate
     const duplicate = await Region.findOne({ name }).exec();
@@ -118,8 +118,8 @@ const getRegionsByCountry = async (req, res) => {
   try {
     const { country_id } = req.params;
 
-    if (!country_id)
-      return res.status(400).json({ message: "Country ID is required" });
+    if (!country_id || !mongoose.Types.ObjectId.isValid(country_id))
+      return res.status(400).json({ message: "A valid Country ID is required" });
 
     const regions = await Region.find({ country: country_id }).exec();
     if (!regions.length)

@@ -24,6 +24,7 @@ require("./models/city");
 require("./models/country");
 require("./models/region");
 require("./models/Review");
+require("./models/Professional");
 
 connectDB();
 
@@ -44,6 +45,7 @@ app.use("/profile", require("./routes/profileRoutes"));
 app.use("/admin", require("./routes/adminRoutes"));
 
 app.use("/company", require("./routes/companyRoutes"));
+app.use("/professional", require("./routes/professionalRoutes"));
 app.use("/products", require("./routes/productRoutes"));
 app.use("/company-services", require("./routes/companyServiceRoutes"));
 app.use("/reservations", require("./routes/reservationRoutes"));

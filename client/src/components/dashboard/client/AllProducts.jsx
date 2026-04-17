@@ -11,10 +11,10 @@ const AllProducts = ({ onAction }) => {
   return (
     <div style={g.grid}>
       {products.map(p => (
-        <div 
-          key={p._id} 
+        <div
+          key={p._id}
           className="grid-card"
-          style={g.card} 
+          style={g.card}
           onClick={() => onAction(p, 'product')}
         >
           <div style={g.imgWrapper}>

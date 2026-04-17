@@ -5,7 +5,7 @@ const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
 
 // Ajouter un avis
-exports.createReview = async (req, res) => {
+const createReview = async (req, res) => {
   try {
     const { company_id, rating, comment } = req.body;
     const user_id = req.user;
@@ -51,7 +51,7 @@ exports.createReview = async (req, res) => {
 };
 
 // Récupérer les avis d'une entreprise
-exports.getCompanyReviews = async (req, res) => {
+const getCompanyReviews = async (req, res) => {
   try {
     const { company_id } = req.params;
     const reviews = await Review.find({ company_id })
@@ -65,7 +65,7 @@ exports.getCompanyReviews = async (req, res) => {
 };
 
 // Supprimer un avis
-exports.deleteReview = async (req, res) => {
+const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
     const user_id = req.user;
@@ -82,7 +82,7 @@ exports.deleteReview = async (req, res) => {
 };
 
 // Modifier un avis
-exports.updateReview = async (req, res) => {
+const updateReview = async (req, res) => {
   try {
     const { id } = req.params;
     const { rating, comment } = req.body;
@@ -106,7 +106,7 @@ exports.updateReview = async (req, res) => {
 };
 
 // Récupérer la note moyenne d'une entreprise
-exports.getAverageRating = async (req, res) => {
+const getAverageRating = async (req, res) => {
   try {
     const { company_id } = req.params;
     const stats = await Review.aggregate([
@@ -131,4 +131,12 @@ exports.getAverageRating = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Erreur lors du calcul de la note moyenne" });
   }
+};
+
+module.exports = {
+  createReview,
+  getCompanyReviews,
+  deleteReview,
+  updateReview,
+  getAverageRating
 };

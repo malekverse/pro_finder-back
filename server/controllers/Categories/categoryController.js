@@ -1,16 +1,15 @@
 const Category = require("../../models/Category");
 const Activity = require("../../models/Activity");
 
-const getCategories=async(req,res)=>{
-  try{
-    const categories=await Category.find();
+const getCategories = async (req, res) => {
+  try {
+    const categories = await Category.find();
     res.json(categories);
-
-  }catch(err){
+  } catch (err) {
     console.error(err);
-    res.status(500).json({message:"Error fetching categories"});
+    res.status(500).json({ message: "Error fetching categories" });
   }
-}
+};
 
 const createCategorie = async (req, res) => {
   try {

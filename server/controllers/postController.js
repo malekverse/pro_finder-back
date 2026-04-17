@@ -11,6 +11,7 @@ const getModels = () => {
     Post:         mongoose.model("Post"),
     User:         mongoose.model("User"),
     Company:      mongoose.model("Company"),
+    Professional: mongoose.model("Professional"),
     Notification: mongoose.model("Notification"),
   };
 };
@@ -18,6 +19,7 @@ const getModels = () => {
 // ─── Helpers ──────────────────────────────────────────────────────────────
 const getAuthorType = (roles) => {
   if (roles?.includes("company") || roles?.includes("owner") || roles?.includes("manager")) return "Company";
+  if (roles?.includes("professional")) return "Professional";
   return "User";
 };
 
@@ -81,11 +83,14 @@ const getAllPosts = async (req, res) => {
         companyQuery.services = { $in: services.map(s => s._id) };
       }
 
+      const { Company, Professional } = getModels();
       const matchingCompanies = await Company.find(companyQuery).select("_id");
-      const companyIds = matchingCompanies.map(c => c._id);
+      const matchingProfessionals = await Professional.find(companyQuery).select("_id"); // companyQuery works for Professional too as fields names are the same
       
-      postQuery.author_id = { $in: companyIds };
-      postQuery.authorType = "Company";
+      const actorIds = [...matchingCompanies.map(c => c._id), ...matchingProfessionals.map(p => p._id)];
+      
+      postQuery.author_id = { $in: actorIds };
+      postQuery.authorType = { $in: ["Company", "Professional"] };
     }
 
     const posts = await Post.find(postQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
@@ -374,6 +379,10 @@ const populateAuthor = async (post) => {
   if (post.authorType === "Company") {
     const c = await Company.findById(post.author_id).select("companyName logoUrl").lean();
     if (c) author = { name: c.companyName, avatarUrl: c.logoUrl ? `${SERVER_URL}/${c.logoUrl}` : null };
+  } else if (post.authorType === "Professional") {
+    const { Professional } = getModels();
+    const p = await Professional.findById(post.author_id).select("fullName photoProfessional").lean();
+    if (p) author = { name: p.fullName, avatarUrl: p.photoProfessional ? `${SERVER_URL}/${p.photoProfessional}` : null };
   } else {
     const u = await User.findById(post.author_id).select("fullName avatarUrl").lean();
     if (u) author = { name: u.fullName, avatarUrl: u.avatarUrl ? `${SERVER_URL}/${u.avatarUrl}` : null };
@@ -393,6 +402,10 @@ const populateAuthor = async (post) => {
           const u = await User.findById(comment.author_id).select("fullName avatarUrl").lean();
           if (u) commentAuthor = { name: u.fullName, avatarUrl: u.avatarUrl ? `${SERVER_URL}/${u.avatarUrl}` : null };
         }
+      } else if (comment.authorType === "Professional") {
+        const { Professional } = getModels();
+        const p = await Professional.findById(comment.author_id).select("fullName photoProfessional").lean();
+        if (p) commentAuthor = { name: p.fullName, avatarUrl: p.photoProfessional ? `${SERVER_URL}/${p.photoProfessional}` : null };
       } else {
         const u = await User.findById(comment.author_id).select("fullName avatarUrl").lean();
         if (u) commentAuthor = { name: u.fullName, avatarUrl: u.avatarUrl ? `${SERVER_URL}/${u.avatarUrl}` : null };

@@ -23,9 +23,16 @@ import {
   useGetAllServicesQuery,
 } from "../../redux/features/company/companyServiceApiSlice";
 import {
+  useSearchProfessionalsQuery,
+  useGetRecommendedProfessionalsQuery as useGetRecommendedProsQuery,
+  useGetSuggestedProfessionalsQuery,
+  useFollowProfessionalMutation,
+  useUnfollowProfessionalMutation,
+} from "../../redux/features/professional/professionalApiSlice";
+import {
   Loader, Users, ChevronDown, LogOut, Bell,
   Home as HomeIcon, User, Newspaper, Building2, MapPin, Search, X,
-  LogIn, UserPlus, Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, ShieldCheck, CheckCircle2, Clock
+  LogIn, UserPlus, Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, ShieldCheck, CheckCircle2, Clock, LayoutGrid
 } from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
@@ -33,7 +40,7 @@ import { toImageUrl } from "../../utils/imageUtils";
 const Header = ({ user, onProfileClick, onLogout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  
+
   const initials = user?.fullName
     ? user.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "?";
@@ -44,7 +51,7 @@ const Header = ({ user, onProfileClick, onLogout }) => {
         <div style={h.brandDot} />
         <span style={h.brandName}>ProFinder</span>
       </div>
-      
+
       <div style={h.nav}>
         <button type="button" style={{ ...h.navBtn, color: "#1E3A5F", borderBottom: "2px solid #1E3A5F" }}>
           <HomeIcon size={18} /><span style={h.navLabel}>Accueil</span>
@@ -95,8 +102,9 @@ const Header = ({ user, onProfileClick, onLogout }) => {
   );
 };
 
-const CompanySearchBar = ({ onFilterChange }) => {
+const GlobalSearchBar = ({ onFilterChange }) => {
   const navigate = useNavigate();
+  const [q, setQ] = useState("");
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
   const [city, setCity] = useState("");
@@ -105,18 +113,19 @@ const CompanySearchBar = ({ onFilterChange }) => {
   const [service, setService] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  const { data: countries = [] } = useGetCountriesQuery(undefined, { pollingInterval: 3000 });
-  const { data: regionsData } = useGetRegionsQuery(country, { skip: !country, pollingInterval: 3000 });
+  const { data: countries = [] } = useGetCountriesQuery(undefined, { pollingInterval: 30000 });
+  const { data: regionsData } = useGetRegionsQuery(country, { skip: !country, pollingInterval: 30000 });
   const regions = regionsData?.regions || [];
-  const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region, pollingInterval: 3000 });
+  const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region, pollingInterval: 30000 });
 
-  const { data: categories = [] } = useGetCategoriesQuery(undefined, { pollingInterval: 3000 });
-  const { data: subCategories = [] } = useGetSubCategoriesQuery(category, { skip: !category, pollingInterval: 3000 });
-  const { data: services = [] } = useGetServicesBySubQuery(subCategory, { skip: !subCategory, pollingInterval: 3000 });
+  const { data: categories = [] } = useGetCategoriesQuery(undefined, { pollingInterval: 30000 });
+  const { data: subCategories = [] } = useGetSubCategoriesQuery(category, { skip: !category, pollingInterval: 30000 });
+  const { data: services = [] } = useGetServicesBySubQuery(subCategory, { skip: !subCategory, pollingInterval: 30000 });
 
   const handleSearch = () => {
     setIsSearching(true);
     const filters = {
+      q,
       country,
       region,
       city,
@@ -130,64 +139,51 @@ const CompanySearchBar = ({ onFilterChange }) => {
 
   const quickTags = [
     { label: "Médecins", icon: <Heart size={14} color="#ef4444" />, name: "Santé" },
-    { label: "Plombiers", icon: <Wrench size={14} />, name: "Maison" },
+    { label: "Plombiers", icon: <Wrench size={14} />, name: "Plomberie" },
     { label: "Avocats", icon: <Briefcase size={14} />, name: "Juridique" },
-    { label: "Électriciens", icon: <Zap size={14} color="#fea809ff" />, name: "maison" },
-    { label: "Transport", icon: <Store size={14} />, name: "transport" },
+    { label: "Électriciens", icon: <Zap size={14} color="#fea809ff" />, name: "Électricité" },
+    { label: "Transport", icon: <Store size={14} />, name: "Transport" },
   ];
 
   const handleQuickTagClick = (e, tagName) => {
     e.preventDefault();
-    // Trouver la catégorie correspondante dans la liste chargée depuis la DB
-    const found = categories.find(c => 
-      c.name.toLowerCase().includes(tagName.toLowerCase()) || 
-      tagName.toLowerCase().includes(c.name.toLowerCase())
-    );
-    
-    if (found) {
-      setCategory(found._id);
-      setSubCategory("");
-      setService("");
-      // Déclencher la recherche immédiatement avec cette catégorie
-      onFilterChange({
-        category: found._id,
-        subCategory: "",
-        service: "",
-        country,
-        region,
-        city
-      });
-    }
+    setQ(tagName);
+    // On lance la recherche immédiatement avec le mot-clé
+    onFilterChange({
+      q: tagName,
+      category: "",
+      subCategory: "",
+      service: "",
+      country,
+      region,
+      city
+    });
   };
 
   return (
     <div style={sr.heroContainer}>
-      <h1 style={sr.heroTitle}>Recherchez un professionnel <strong>ou une société...</strong></h1>
-      
+      <h1 style={sr.heroTitle}>Trouvez un professionnel <strong>ou une entreprise</strong></h1>
+
       <div style={sr.searchContainer}>
-        {/* LIGNE 1 : TAXONOMIE */}
+        {/* LIGNE 1 : MOT-CLÉ ET TAXONOMIE */}
         <div style={sr.searchBarRow}>
+          <div style={{ ...sr.filterGroup, flex: 1.5 }}>
+            <Search size={18} color="#1E3A5F" />
+            <input
+              type="text"
+              placeholder="Que recherchez-vous ? (ex: plombier, avocat...)"
+              style={{ ...sr.select, appearance: 'auto', paddingRight: '10px' }}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+          <div style={sr.divider} />
           <div style={sr.filterGroup}>
             <Tag size={18} color="#1E3A5F" />
             <select style={sr.select} value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(""); setService(""); }}>
               <option value="">Toutes les catégories</option>
               {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-            <ChevronDown size={14} color="#94a3b8" />
-          </div>
-          <div style={sr.divider} />
-          <div style={sr.filterGroup}>
-            <select style={sr.select} value={subCategory} onChange={(e) => { setSubCategory(e.target.value); setService(""); }} disabled={!category}>
-              <option value="">Toutes les sous-catégories</option>
-              {subCategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-            </select>
-            <ChevronDown size={14} color="#94a3b8" />
-          </div>
-          <div style={sr.divider} />
-          <div style={sr.filterGroup}>
-            <select style={sr.select} value={service} onChange={(e) => setService(e.target.value)} disabled={!subCategory}>
-              <option value="">Tous les services</option>
-              {services.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
             </select>
             <ChevronDown size={14} color="#94a3b8" />
           </div>
@@ -241,14 +237,14 @@ const CompanySearchBar = ({ onFilterChange }) => {
 const SuggestedCompanies = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.account);
-  const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 10000 });
-  const [followCompany, { isLoading: following }] = useFollowCompanyMutation();
+  const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 30000 });
+  const [followCompany] = useFollowCompanyMutation();
   const [followedIds, setFollowedIds] = useState([]);
 
   const handleFollow = async (companyId) => {
     if (!user) {
-        navigate("/auth/login");
-        return;
+      navigate("/auth/login");
+      return;
     }
     const isFollowed = followedIds.includes(companyId);
     try {
@@ -259,7 +255,140 @@ const SuggestedCompanies = () => {
     } catch (err) { console.error(err); }
   };
 
+  if (isLoading || suggestions.length === 0) return null;
 
+  return (
+    <div style={{ ...sg.card, marginBottom: '30px' }}>
+      <h3 style={sg.title}>Entreprises à suivre</h3>
+      <div style={sg.list}>
+        {suggestions.map((comp) => (
+          <div key={comp._id} style={sg.item}>
+            <div style={sg.logoWrap} onClick={() => navigate(`/user/company/${comp._id}`)}>
+              {comp.logoUrl 
+                ? <img src={toImageUrl(comp.logoUrl)} alt="" style={sg.logo} />
+                : <div style={sg.logoFallback}><Building2 size={18} color="#94a3b8" /></div>
+              }
+            </div>
+            <div style={sg.info}>
+              <span style={sg.name} onClick={() => navigate(`/user/company/${comp._id}`)}>{comp.companyName}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={sg.city}><MapPin size={10} /> {comp.city || "Tunisie"}</span>
+                <span style={sg.city}><Users size={10} /> {comp.followersCount || 0} abonnés</span>
+              </div>
+            </div>
+            <button 
+              style={{ ...sg.followBtn, ...(followedIds.includes(comp._id) ? sg.followBtnActive : {}) }}
+              onClick={() => handleFollow(comp._id)}
+            >
+              {followedIds.includes(comp._id) ? "Suivi" : "Suivre"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SuggestedProfessionals = () => {
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.account);
+  const { data: suggestions = [], isLoading } = useGetSuggestedProfessionalsQuery(undefined, { pollingInterval: 30000 });
+  const [followPro] = useFollowProfessionalMutation();
+  const [unfollowPro] = useUnfollowProfessionalMutation();
+  const [followedIds, setFollowedIds] = useState([]);
+
+  const handleFollow = async (proId) => {
+    if (!user) {
+      navigate("/auth/login");
+      return;
+    }
+    const isFollowed = followedIds.includes(proId);
+    try {
+      if (isFollowed) {
+        await unfollowPro(proId).unwrap();
+        setFollowedIds(prev => prev.filter(id => id !== proId));
+      } else {
+        await followPro(proId).unwrap();
+        setFollowedIds(prev => [...prev, proId]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (isLoading || suggestions.length === 0) return null;
+
+  return (
+    <div style={{ ...sg.card, marginBottom: '20px' }}>
+      <h3 style={sg.title}>Professionnels à suivre</h3>
+      <div style={sg.list}>
+        {suggestions.map((pro) => (
+          <div key={pro._id} style={sg.item}>
+            <div style={sg.logoWrap} onClick={() => navigate(`/user/professional/${pro._id}`)}>
+              {pro.photoProfessional 
+                ? <img src={toImageUrl(pro.photoProfessional)} alt="" style={{ ...sg.logo}} />
+                : <div style={{ ...sg.logoFallback}}><User size={18} color="#94a3b8" /></div>
+              }
+            </div>
+            <div style={sg.info}>
+              <span style={sg.name} onClick={() => navigate(`/user/professional/${pro._id}`)}>{pro.fullName}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={sg.city}><MapPin size={10} /> {pro.city || "Tunisie"}</span>
+                <span style={sg.city}><Users size={10} /> {pro.followersCount || 0} abonnés</span>
+              </div>
+            </div>
+            <button 
+              style={{ ...sg.followBtn, ...(followedIds.includes(pro._id) ? sg.followBtnActive : {}) }}
+              onClick={() => handleFollow(pro._id)}
+            >
+              {followedIds.includes(pro._id) ? "Suivi" : "Suivre"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const RecommendedProfessionals = () => {
+  const { data: recommended = [], isLoading } = useGetRecommendedProsQuery(undefined, { pollingInterval: 30000 });
+  const navigate = useNavigate();
+
+  if (isLoading || recommended.length === 0) return null;
+
+  return (
+    <div style={{ ...r.section, marginBottom: '30px' }}>
+      <div style={r.header}>
+        <h2 style={{ ...r.title, fontSize: '16px' }}>Professionnels Recommandés</h2>
+        <button type="button" style={r.moreBtn} onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 1200, behavior: 'smooth' }); }}>
+          Voir plus <ChevronRight size={14} />
+        </button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {recommended.slice(0, 5).map((pro) => (
+          <div key={pro._id} style={{ ...r.card, padding: '10px' }} onClick={(e) => { e.preventDefault(); navigate(`/user/professional/${pro._id}`); }}>
+            <div style={{ ...r.logoBox, width: '45px', height: '45px', borderRadius: '50%' }}>
+              {pro.photoProfessional
+                ? <img src={toImageUrl(pro.photoProfessional)} alt="" style={r.logo} />
+                : <User size={20} color="#b89494ff" />
+              }
+            </div>
+            <div style={r.info}>
+              <h4 style={{ ...r.companyName, fontSize: '14px' }}>{pro.fullName}</h4>
+              <div style={r.ratingRow}>
+                <div style={r.stars}>
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={10} fill={s <= Math.round(pro.averageRating) ? "#fbbf24" : "none"} color={s <= Math.round(pro.averageRating) ? "#fbbf24" : "#cbd5e1"} />
+                  ))}
+                </div>
+                <span style={{ ...r.cityText, fontSize: '11px' }}>{pro.city || "Tunisie"}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
@@ -341,7 +470,7 @@ const ProductDetail = ({ product, onClose }) => {
     <div style={pd.overlay} onClick={onClose}>
       <div style={pd.modal} onClick={e => e.stopPropagation()}>
         <button type="button" style={pd.closeBtn} onClick={onClose}><X size={24} /></button>
-        
+
         <div style={pd.container}>
           {/* GAUCHE: IMAGES */}
           <div style={pd.leftCol}>
@@ -354,9 +483,9 @@ const ProductDetail = ({ product, onClose }) => {
             </div>
             <div style={pd.thumbList}>
               {product.imagesProduct?.map((img, i) => (
-                <div 
-                  key={i} 
-                  style={{...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0'}}
+                <div
+                  key={i}
+                  style={{ ...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0' }}
                   onMouseEnter={() => setSelectedImg(img)}
                 >
                   <img src={toImageUrl(img)} alt="" style={pd.thumb} />
@@ -374,7 +503,7 @@ const ProductDetail = ({ product, onClose }) => {
             </div>
 
             <div style={pd.statusRow}>
-              <span style={{...pd.status, color: product.stock > 0 ? '#10b981' : '#ef4444'}}>
+              <span style={{ ...pd.status, color: product.stock > 0 ? '#10b981' : '#ef4444' }}>
                 <CheckCircle2 size={16} /> {product.stock > 0 ? 'EN STOCK' : 'RUPTURE'}
               </span>
               <span style={pd.sku}>SKU: {product._id.slice(-8).toUpperCase()}</span>
@@ -528,7 +657,7 @@ const ServiceDetail = ({ service, onClose }) => {
     <div style={pd.overlay} onClick={onClose}>
       <div style={pd.modal} onClick={e => e.stopPropagation()}>
         <button type="button" style={pd.closeBtn} onClick={onClose}><X size={24} /></button>
-        
+
         <div style={pd.container}>
           <div style={pd.leftCol}>
             <div style={pd.mainImgBox}>
@@ -540,9 +669,9 @@ const ServiceDetail = ({ service, onClose }) => {
             </div>
             <div style={pd.thumbList}>
               {service.imagesServices?.map((img, i) => (
-                <div 
-                  key={i} 
-                  style={{...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0'}}
+                <div
+                  key={i}
+                  style={{ ...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0' }}
                   onMouseEnter={() => setSelectedImg(img)}
                 >
                   <img src={toImageUrl(img)} alt="" style={pd.thumb} />
@@ -558,7 +687,7 @@ const ServiceDetail = ({ service, onClose }) => {
             </div>
 
             <div style={pd.statusRow}>
-              <span style={{...pd.status, color: '#10b981'}}>
+              <span style={{ ...pd.status, color: '#10b981' }}>
                 <Clock size={16} /> DURÉE: {service.duration} min
               </span>
               <span style={pd.sku}>SKU: {service._id.slice(-8).toUpperCase()}</span>
@@ -731,7 +860,7 @@ const RecommendedCompanies = () => {
         {recommended.slice(0, 5).map((company) => (
           <div key={company._id} style={{ ...r.card, padding: '10px' }} onClick={(e) => { e.preventDefault(); navigate(`/user/company/${company._id}`); }}>
             <div style={{ ...r.logoBox, width: '45px', height: '45px' }}>
-              {company.logoUrl 
+              {company.logoUrl
                 ? <img src={toImageUrl(company.logoUrl)} alt="" style={r.logo} />
                 : <Building2 size={20} color="#94a3b8" />
               }
@@ -780,7 +909,7 @@ const CompanyFeed = ({ filters }) => {
         <div key={company._id} style={c.listCard}>
           <div style={c.listHeader}>
             <div style={c.listLogoWrap}>
-              {company.logoUrl 
+              {company.logoUrl
                 ? <img src={toImageUrl(company.logoUrl)} alt={company.companyName} style={c.listLogo} />
                 : <div style={c.listLogoFallback}><Building2 size={20} color="#94a3b8" /></div>
               }
@@ -815,6 +944,68 @@ const CompanyFeed = ({ filters }) => {
   );
 };
 
+const ProfessionalFeed = ({ filters }) => {
+  const { data: professionals = [], isLoading } = useSearchProfessionalsQuery(filters, { pollingInterval: 3000 });
+
+  if (isLoading) return (
+    <div style={f.center}>
+      <Loader size={28} color="#1E3A5F" style={{ animation: "spin 1s linear infinite" }} />
+      <p style={f.loadingText}>Recherche des professionnels...</p>
+    </div>
+  );
+
+  if (professionals.length === 0) return (
+    <div style={f.empty}>
+      <User size={44} color="#cbd5e1" style={{ marginBottom: 16 }} />
+      <p style={f.emptyTitle}>Aucun professionnel trouvé</p>
+      <p style={f.emptyText}>
+        Vérifiez vos filtres ou assurez-vous que les professionnels ont été <strong>validés par l'administrateur</strong>.
+      </p>
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      {professionals.map((pro) => (
+        <div key={pro._id} style={c.listCard}>
+          <div style={c.listHeader}>
+            <div style={c.listLogoWrap}>
+              {pro.photoProfessional
+                ? <img src={toImageUrl(pro.photoProfessional)} alt={pro.fullName} style={{ ...c.listLogo, borderRadius: '50%' }} />
+                : <div style={{ ...c.listLogoFallback, borderRadius: '50%' }}><User size={20} color="#94a3b8" /></div>
+              }
+            </div>
+            <div style={c.listInfo}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h3 style={c.listName}>{pro.fullName}</h3>
+                  <p style={c.listMeta}>
+                    <MapPin size={12} /> {pro.city || "Tunisie"}
+                    {pro.categoryName && <span style={{ marginLeft: '10px', color: '#3b82f6', fontWeight: '700' }}>• {pro.categoryName}</span>}
+                  </p>
+                </div>
+                <div style={c.listRating}>
+                  <div style={c.listStars}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} size={14} fill={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
+                    ))}
+                  </div>
+                  <span style={c.listReviewCount}>{pro.rating?.count || 0} avis</span>
+                </div>
+              </div>
+            </div>
+            <div style={c.listActions}>
+              <Link to={`/user/professional/${pro._id}`} style={{ ...c.listBtn, background: '#3b82f6' }}>
+                Voir Profil
+              </Link>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -822,6 +1013,7 @@ const Home = () => {
   const [filters, setFilters] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
+  const [searchTab, setSearchTab] = useState("companies"); // 'companies' | 'professionals'
 
   const { data: allProducts, isLoading: productsLoading } = useGetAllProductsQuery();
   const { data: allServices, isLoading: servicesLoading } = useGetAllServicesQuery();
@@ -837,51 +1029,102 @@ const Home = () => {
       <Header user={user} onProfileClick={() => navigate("/profile")} onLogout={handleLogout} />
       <div style={p.layout}>
         <div style={p.searchWrap}>
-          <CompanySearchBar onFilterChange={(f) => setFilters(f)} />
+          <GlobalSearchBar onFilterChange={(f) => setFilters(f)} />
         </div>
-        
+
         <div style={p.contentWrapper}>
           <main style={p.main}>
-            <ProductCarousel 
-              title="Produits des entreprises" 
-              products={allProducts} 
+            <ProductCarousel
+              title="Produits des entreprises"
+              products={allProducts}
               isLoading={productsLoading}
               onProductClick={(p) => setSelectedProduct(p)}
             />
-            
-            <ServiceCarousel 
-              title="Services recommandés" 
-              services={allServices} 
-              isLoading={servicesLoading} 
+
+            <ServiceCarousel
+              title="Services recommandés"
+              services={allServices}
+              isLoading={servicesLoading}
               onServiceClick={(s) => setSelectedService(s)}
             />
-            
+
             <div style={p.feedHeader}>
               <Search size={18} color="#1E3A5F" />
               <h2 style={p.feedTitle}>Résultats de Recherche</h2>
             </div>
+
+            {/* Toggle tabs */}
+            <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '2px solid #e2e8f0' }}>
+              <button
+                type="button"
+                onClick={() => setSearchTab('companies')}
+                style={{
+                  padding: '12px 24px',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: searchTab === 'companies' ? '3px solid #1E3A5F' : '3px solid transparent',
+                  color: searchTab === 'companies' ? '#1E3A5F' : '#94a3b8',
+                  fontWeight: '700',
+                  fontSize: '15px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: '0.2s'
+                }}
+              >
+                <Building2 size={16} /> Entreprises
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchTab('professionals')}
+                style={{
+                  padding: '12px 24px',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: searchTab === 'professionals' ? '3px solid #3b82f6' : '3px solid transparent',
+                  color: searchTab === 'professionals' ? '#3b82f6' : '#94a3b8',
+                  fontWeight: '700',
+                  fontSize: '15px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: '0.2s'
+                }}
+              >
+                <User size={16} /> Professionnels
+              </button>
+            </div>
+
             <div style={p.feedScroll}>
-              <CompanyFeed filters={filters} />
+              {searchTab === 'companies' ? (
+                <CompanyFeed filters={filters} />
+              ) : (
+                <ProfessionalFeed filters={filters} />
+              )}
             </div>
           </main>
           <aside style={p.rightSidebar}>
             <RecommendedCompanies />
+            <RecommendedProfessionals />
             <SuggestedCompanies />
+            <SuggestedProfessionals />
           </aside>
         </div>
       </div>
 
       {selectedProduct && (
-        <ProductDetail 
-          product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)} 
+        <ProductDetail
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
         />
       )}
 
       {selectedService && (
-        <ServiceDetail 
-          service={selectedService} 
-          onClose={() => setSelectedService(null)} 
+        <ServiceDetail
+          service={selectedService}
+          onClose={() => setSelectedService(null)}
         />
       )}
 
@@ -1045,7 +1288,7 @@ const p = {
     alignItems: 'flex-start'
   },
   main: { flex: 1, minWidth: 0 },
-  searchWrap: { 
+  searchWrap: {
     marginBottom: 40,
     padding: '40px',
     background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',

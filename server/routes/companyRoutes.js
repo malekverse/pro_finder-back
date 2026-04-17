@@ -37,4 +37,10 @@ router.get("/recommended", companyController.getRecommendedCompanies);
 router.get("/blocked", verifyJWT, authorizeRoles("company", "admin", "owner", "team_member"), companyController.getBlockedUsers);
 router.put("/followers/:followId/block", verifyJWT, checkPermission("block_user"), companyController.toggleBlockFollower);
 
+// Sauvegarde entreprise générée par l'IA
+router.post("/ai-create", companyController.createScrapedCompany);
+router.get("/claim-preview", companyController.getClaimPreview);
+router.post("/claim-profile", companyController.claimCompanyProfile);
+router.post("/request-claim/:companyId", companyController.requestClaim);
+
 module.exports = router;
