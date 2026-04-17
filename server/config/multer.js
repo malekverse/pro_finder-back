@@ -27,6 +27,8 @@ const storage = multer.diskStorage({
       folder = 'uploads/products';
     } else if (file.fieldname === 'imagesServices') {
       folder = 'uploads/services';
+    } else if (file.fieldname === 'photoProfessional') {
+      folder = 'uploads/professionals';
     }
 
     ensureDir(folder);

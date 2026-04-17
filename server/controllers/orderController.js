@@ -5,7 +5,7 @@ const Company = require("../models/company");
 const User = require("../models/User");
 
 // Client: Create an order
-exports.createOrder = async (req, res) => {
+const createOrder = async (req, res) => {
   try {
     const { companyId, items, totalPrice, shippingAddress, notes } = req.body;
     const userId = req.user;
@@ -65,7 +65,7 @@ exports.createOrder = async (req, res) => {
 };
 
 // Client: Get my orders
-exports.getMyOrders = async (req, res) => {
+const getMyOrders = async (req, res) => {
   try {
     const userId = req.user;
     const orders = await Order.find({ userId })
@@ -81,7 +81,7 @@ exports.getMyOrders = async (req, res) => {
 };
 
 // Company: Get company orders
-exports.getCompanyOrders = async (req, res) => {
+const getCompanyOrders = async (req, res) => {
   try {
     const companyId = req.companyId || req.user;
     const orders = await Order.find({ companyId })
@@ -97,7 +97,7 @@ exports.getCompanyOrders = async (req, res) => {
 };
 
 // Company: Update order status
-exports.updateOrderStatus = async (req, res) => {
+const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, adminNotes } = req.body;
@@ -138,4 +138,10 @@ exports.updateOrderStatus = async (req, res) => {
     console.error("Error updating order status:", error);
     res.status(500).json({ message: "Erreur serveur" });
   }
+};
+module.exports = { 
+  createOrder,
+  getMyOrders,  
+  getCompanyOrders,
+  updateOrderStatus 
 };

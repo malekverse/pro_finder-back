@@ -235,9 +235,13 @@ const PostCard = ({ post, onDeleted }) => {
     toImageUrl(post.author?.logoUrl) ||
     toImageUrl(post.author?.companyLogo);
 
-  const openCompanyProfile = () => {
+  const openProfile = () => {
     if (!authorId) return;
-    navigate(`/user/company/${authorId}`);
+    if (post.authorType === "Professional") {
+      navigate(`/user/professional/${authorId}`);
+    } else {
+      navigate(`/user/company/${authorId}`);
+    }
   };
 
   const handleLike = async () => {
@@ -290,14 +294,14 @@ const PostCard = ({ post, onDeleted }) => {
               src={authorImage}
               alt="avatar"
               style={{ ...s.avatar, cursor: "pointer" }}
-              onClick={openCompanyProfile}
-              title="Voir le profil de l'entreprise"
+              onClick={openProfile}
+              title={`Voir le profil ${post.authorType === "Professional" ? "du professionnel" : "de l'entreprise"}`}
             />
           ) : (
             <div
               style={{ ...s.avatarFallback, cursor: "pointer" }}
-              onClick={openCompanyProfile}
-              title="Voir le profil de l'entreprise"
+              onClick={openProfile}
+              title={`Voir le profil ${post.authorType === "Professional" ? "du professionnel" : "de l'entreprise"}`}
             >
               {getInitials(authorName)}
             </div>
@@ -306,14 +310,14 @@ const PostCard = ({ post, onDeleted }) => {
             style={{ ...s.authorBlock, flex: 1 }}
             role="button"
             tabIndex={0}
-            onClick={openCompanyProfile}
+            onClick={openProfile}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                openCompanyProfile();
+                openProfile();
               }
             }}
-            title="Voir le profil de l'entreprise"
+            title={`Voir le profil ${post.authorType === "Professional" ? "du professionnel" : "de l'entreprise"}`}
           >
             <p style={s.authorName}>{authorName}</p>
             <p style={s.date}>{formatDate(post.createdAt)}</p>

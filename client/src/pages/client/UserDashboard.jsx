@@ -4,15 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { logOut } from "../../redux/features/auth/authSlice";
 import { apiSlice } from "../../redux/app/api/apiSlice";
 import { useGetFollowedFeedQuery } from "../../redux/features/posts/postApiSlice";
-import { 
-  useGetFollowedProductsQuery 
+import {
+  useGetFollowedProductsQuery
 } from "../../redux/features/products/productApiSlice";
-import { 
-  useGetFollowedServicesQuery 
+import {
+  useGetFollowedServicesQuery
 } from "../../redux/features/company/companyServiceApiSlice";
 import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
 import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
-import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart } from "lucide-react";
+import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart, User } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
 import Cart from "../../components/dashboard/client/Cart";
 
@@ -23,7 +23,10 @@ import AllServices from "../../components/dashboard/client/AllServices";
 import AllProducts from "../../components/dashboard/client/AllProducts";
 import SuggestedCompanies from "../../components/dashboard/client/SuggestedCompanies";
 import ProductDetail from "../../components/dashboard/client/ProductDetail";
+import ServiceDetail from "../../components/dashboard/client/ServiceDetail";
 import ActionModal from "../../components/dashboard/client/ActionModal";
+import CompaniesExplorer from "../../components/dashboard/client/CompaniesExplorer";
+import ProfessionalsExplorer from "../../components/dashboard/client/ProfessionalsExplorer";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
@@ -32,7 +35,7 @@ const UserDashboard = () => {
   const roles = user?.roles || [];
   const hasCompanyAccess = user?.companyId && roles.length > 1;
 
-  const [activeTab, setActiveTab] = useState("feed"); // feed, services, products
+  const [activeTab, setActiveTab] = useState("feed"); // feed, services, products, societes, pros
   const [page, setPage] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [actionType, setActionType] = useState(null);
@@ -48,7 +51,7 @@ const UserDashboard = () => {
   const { data: feedData, isLoading: isLoadingFeed, isFetching: isFetchingFeed, refetch: refetchFeed } = useGetFollowedFeedQuery({ page, limit: 10 }, { pollingInterval: 3000 });
   const { data: followedProducts = [] } = useGetFollowedProductsQuery(undefined, { pollingInterval: 3000 });
   const { data: followedServices = [] } = useGetFollowedServicesQuery(undefined, { pollingInterval: 3000 });
-  
+
   const [createOrder, { isLoading: isOrdering }] = useCreateOrderMutation();
   const [createReservation, { isLoading: isReserving }] = useCreateReservationMutation();
 
@@ -101,9 +104,9 @@ const UserDashboard = () => {
 
   return (
     <div style={p.root}>
-      <Header 
-        user={user} 
-        onProfileClick={() => navigate("/profile")} 
+      <Header
+        user={user}
+        onProfileClick={() => navigate("/profile")}
         onLogout={handleLogout}
         onCompanyClick={hasCompanyAccess ? () => navigate("/company/stats") : null}
         onHomeClick={() => {
@@ -117,30 +120,42 @@ const UserDashboard = () => {
       <div style={p.layout}>
         <main style={p.main}>
           <div style={p.tabs}>
-            <button 
-              onClick={() => setActiveTab("feed")} 
+            <button
+              onClick={() => setActiveTab("feed")}
               style={activeTab === "feed" ? p.tabActive : p.tab}
             >
               <Newspaper size={18} /> Fil d'actualité
             </button>
-            <button 
-              onClick={() => setActiveTab("services")} 
+            <button
+              onClick={() => setActiveTab("services")}
               style={activeTab === "services" ? p.tabActive : p.tab}
             >
               <Wrench size={18} /> Services
             </button>
-            <button 
-              onClick={() => setActiveTab("products")} 
+            <button
+              onClick={() => setActiveTab("products")}
               style={activeTab === "products" ? p.tabActive : p.tab}
             >
               <Package size={18} /> Produits
+            </button>
+            <button
+              onClick={() => setActiveTab("societes")}
+              style={activeTab === "societes" ? p.tabActive : p.tab}
+            >
+              <Building2 size={18} /> Sociétés
+            </button>
+            <button
+              onClick={() => setActiveTab("pros")}
+              style={activeTab === "pros" ? p.tabActive : p.tab}
+            >
+              <User size={18} /> Professionnels
             </button>
           </div>
 
           <div style={p.feedScroll}>
             {activeTab === "feed" && (
-              <Feed 
-                setActiveTab={setActiveTab} 
+              <Feed
+                setActiveTab={setActiveTab}
                 onAction={(item, type) => {
                   if (type === 'product') {
                     setProductForDetail(item);
@@ -172,14 +187,20 @@ const UserDashboard = () => {
                 setSelectedImg(item.imagesProduct?.[0] || null);
               }} />
             )}
+            {activeTab === "societes" && (
+              <CompaniesExplorer />
+            )}
+            {activeTab === "pros" && (
+              <ProfessionalsExplorer />
+            )}
           </div>
         </main>
         <aside style={p.rightSidebar}><SuggestedCompanies /></aside>
       </div>
 
       {productForDetail && (
-        <ProductDetail 
-          product={productForDetail} 
+        <ProductDetail
+          product={productForDetail}
           onClose={() => setProductForDetail(null)}
           onOrder={(p) => handleAction(p, 'product')}
         />
@@ -189,7 +210,7 @@ const UserDashboard = () => {
         <div style={pd.overlay} onClick={() => setServiceForDetail(null)}>
           <div style={pd.modal} onClick={e => e.stopPropagation()}>
             <button type="button" style={pd.closeBtn} onClick={() => setServiceForDetail(null)}><X size={24} /></button>
-            
+
             <div style={pd.container}>
               <div style={pd.leftCol}>
                 <div style={pd.mainImgBox}>
@@ -201,9 +222,9 @@ const UserDashboard = () => {
                 </div>
                 <div style={pd.thumbList}>
                   {serviceForDetail.imagesServices?.map((img, i) => (
-                    <div 
-                      key={i} 
-                      style={{...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0'}}
+                    <div
+                      key={i}
+                      style={{ ...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0' }}
                       onMouseEnter={() => setSelectedImg(img)}
                     >
                       <img src={toImageUrl(img)} alt="" style={pd.thumb} />
@@ -219,7 +240,7 @@ const UserDashboard = () => {
                 </div>
 
                 <div style={pd.statusRow}>
-                  <span style={{...pd.status, color: '#10b981'}}>
+                  <span style={{ ...pd.status, color: '#10b981' }}>
                     <Clock size={16} /> DURÉE: {serviceForDetail.duration} min
                   </span>
                   <span style={pd.sku}>SKU: {serviceForDetail._id.slice(-8).toUpperCase()}</span>
@@ -273,7 +294,7 @@ const UserDashboard = () => {
       )}
 
       {selectedItem && (
-        <ActionModal 
+        <ActionModal
           type={actionType}
           item={selectedItem}
           user={user}
@@ -298,7 +319,7 @@ const p = {
   root: { minHeight: "100vh", background: "#f0f4f8" },
   layout: {
     maxWidth: 1160, margin: "0 auto",
-    paddingTop: 76, paddingBottom: 40,
+    paddingTop: 86, paddingBottom: 40,
     paddingLeft: 16, paddingRight: 16,
     display: "flex", gap: 24, alignItems: "flex-start",
   },
@@ -321,7 +342,7 @@ const p = {
     justifyContent: "center", gap: "8px", borderRadius: "8px",
   },
   feedScroll: { display: "flex", flexDirection: "column", gap: 20 },
-  rightSidebar: { width: 260, flexShrink: 0, position: "sticky", top: 76 },
+  rightSidebar: { width: 260, flexShrink: 0, position: "sticky", top: 86 },
 };
 
 const pd = {

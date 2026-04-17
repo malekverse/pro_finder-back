@@ -3,7 +3,7 @@ const Company = require("../models/company");
 const Activity = require("../models/Activity");
 
 // Client-side: Create a report
-exports.createReport = async (req, res) => {
+const createReport = async (req, res) => {
   try {
     const { company_id, reason } = req.body;
     const reporter_id = req.user; // From verifyJWT middleware
@@ -33,7 +33,7 @@ exports.createReport = async (req, res) => {
 };
 
 // Admin-side: Get all reports
-exports.getAllReports = async (req, res) => {
+const getAllReports = async (req, res) => {
   try {
     const reports = await Report.find()
       .populate("reporter_id", "fullName email")
@@ -48,7 +48,7 @@ exports.getAllReports = async (req, res) => {
 };
 
 // Admin-side: Take action on a report
-exports.updateReportStatus = async (req, res) => {
+const updateReportStatus = async (req, res) => {
   try {
     const { reportId } = req.params;
     const { status, adminNotes } = req.body;
@@ -76,4 +76,10 @@ exports.updateReportStatus = async (req, res) => {
     console.error("Error updating report status:", error);
     res.status(500).json({ message: "Server error" });
   }
+};
+
+module.exports = {
+  createReport,
+  getAllReports,
+  updateReportStatus
 };

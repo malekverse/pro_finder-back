@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const commentSchema = new mongoose.Schema(
   {
     author_id:  { type: mongoose.Schema.Types.ObjectId, required: true },
-    authorType: { type: String, enum: ["User", "Company"], required: true },
+    authorType: { type: String, enum: ["User", "Company", "Professional"], required: true },
     text:       { type: String, required: true, trim: true },
     companyId:  { type: mongoose.Schema.Types.ObjectId, default: null }, // pour owner/member
   },
@@ -15,7 +15,7 @@ const commentSchema = new mongoose.Schema(
 const postSchema = new mongoose.Schema(
   {
     author_id:  { type: mongoose.Schema.Types.ObjectId, required: true },
-    authorType: { type: String, enum: ["User", "Company"], required: true },
+    authorType: { type: String, enum: ["User", "Company", "Professional"], required: true },
 
     content: { type: String, trim: true, default: "" },
     imagesPost: [{ type: String }],

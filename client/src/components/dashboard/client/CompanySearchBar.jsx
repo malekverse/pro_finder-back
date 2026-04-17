@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Loader, X, MapPin, Building2 } from "lucide-react";
+import { Search, Loader, X, MapPin, Building2, User } from "lucide-react";
 import { useSearchCompaniesQuery } from "../../../redux/features/company/companyApiSlice";
+import { useSearchProfessionalsQuery } from "../../../redux/features/professional/professionalApiSlice";
 import { toImageUrl } from "../../../utils/imageUtils";
 
-const CompanySearchBar = () => {
+const GlobalSearchBar = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
@@ -28,61 +29,84 @@ const CompanySearchBar = () => {
       setDebouncedQ(v.trim());
       if (v.trim()) setOpen(true);
       else setOpen(false);
-    }, 350);
+    }, 400);
   };
 
-  const { data: results = [], isFetching } = useSearchCompaniesQuery({ q: debouncedQ }, {
-    skip: !debouncedQ,
-    pollingInterval: 10000
-  });
+  // Recherches parallèles
+  const { data: companies = [], isFetching: isFetchingCos } = useSearchCompaniesQuery({ q: debouncedQ }, { skip: !debouncedQ });
+  const { data: pros = [], isFetching: isFetchingPros } = useSearchProfessionalsQuery({ q: debouncedQ }, { skip: !debouncedQ });
+
+  const isFetching = isFetchingCos || isFetchingPros;
 
   const clear = () => { setQuery(""); setDebouncedQ(""); setOpen(false); };
-  const goTo = (id) => { navigate(`/user/company/${id}`); clear(); };
+  
+  const results = [
+    ...companies.map(c => ({ ...c, type: 'company' })),
+    ...pros.map(p => ({ ...p, type: 'pro' }))
+  ].slice(0, 10);
+
+  const handleSelect = (item) => {
+    if (item.type === 'company') navigate(`/user/company/${item._id}`);
+    else navigate(`/user/professional/${item._id}`);
+    clear();
+  };
 
   return (
     <div ref={wrapRef} style={sr.wrap}>
       <div style={sr.inputRow}>
-        <Search size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+        <Search size={18} color="#94a3b8" style={{ flexShrink: 0 }} />
         <input
           style={sr.input}
           type="text"
-          placeholder="Rechercher une entreprise..."
+          placeholder="Trouver une entreprise ou un expert..."
           value={query}
           onChange={handleChange}
           onFocus={() => results.length > 0 && setOpen(true)}
         />
         {isFetching && (
-          <Loader size={15} color="#94a3b8" style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} />
+          <Loader size={16} color="#3b82f6" style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} />
         )}
         {query && !isFetching && (
-          <button style={sr.clearBtn} onClick={clear}><X size={14} /></button>
+          <button style={sr.clearBtn} onClick={clear}><X size={16} /></button>
         )}
       </div>
 
       {open && (
         <div style={sr.dropdown}>
-          {results.length > 0 ? results.map((c) => {
-            const logo = toImageUrl(c.logoUrl);
-            return (
-              <div
-                key={c._id}
-                style={sr.item}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                onMouseDown={() => goTo(c._id)}
-              >
-                {logo
-                  ? <img src={logo} alt={c.companyName} style={sr.logo} />
-                  : <div style={sr.logoFallback}><Building2 size={14} color="#94a3b8" /></div>}
-                <div style={sr.itemInfo}>
-                  <span style={sr.itemName}>{c.companyName}</span>
-                  {c.city && <span style={sr.itemCity}><MapPin size={10} /> {c.city}</span>}
+          {results.length > 0 ? (
+            <div style={sr.resultsList}>
+              {results.map((res) => (
+                <div
+                  key={`${res.type}-${res._id}`}
+                  style={sr.item}
+                  onClick={() => handleSelect(res)}
+                  onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={sr.logoWrapper}>
+                    {res.type === 'company' ? (
+                      res.logoUrl ? <img src={toImageUrl(res.logoUrl)} style={sr.logo} alt="" /> : <Building2 size={16} color="#94a3b8" />
+                    ) : (
+                      res.photoProfessional ? <img src={toImageUrl(res.photoProfessional)} style={sr.logo} alt="" /> : <User size={16} color="#94a3b8" />
+                    )}
+                  </div>
+                  <div style={sr.itemContent}>
+                    <div style={sr.nameRow}>
+                      <span style={sr.itemName}>{res.companyName || res.fullName}</span>
+                      <span style={{ ...sr.typeBadge, background: res.type === 'company' ? '#eff6ff' : '#f0fdf4', color: res.type === 'company' ? '#2563eb' : '#16a34a' }}>
+                        {res.type === 'company' ? 'Entreprise' : 'Professionnel'}
+                      </span>
+                    </div>
+                    {res.city && (
+                      <span style={sr.itemMeta}><MapPin size={10} /> {res.city}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          }) : (
-            <div style={sr.noResult}>
-              {isFetching ? "Recherche..." : `Aucun résultat pour « ${debouncedQ} »`}
+              ))}
+            </div>
+          ) : (
+            <div style={sr.empty}>
+              {isFetching ? "Recherche en cours..." : `Aucun résultat pour "${debouncedQ}"`}
             </div>
           )}
         </div>
@@ -92,41 +116,41 @@ const CompanySearchBar = () => {
 };
 
 const sr = {
-  wrap: { position: "relative" },
+  wrap: { position: "relative", width: "100%" },
   inputRow: {
-    display: "flex", alignItems: "center", gap: 10,
-    background: "#fff", border: "1px solid #e2e8f0",
-    borderRadius: 12, padding: "10px 14px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+    display: "flex", alignItems: "center", gap: 12,
+    background: "#fff", border: "1.5px solid #f1f5f9",
+    borderRadius: 16, padding: "12px 18px",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
   },
   input: {
-    flex: 1, border: "none", outline: "none",
-    fontSize: 14, color: "#0f172a", background: "transparent",
+    flex: 1, border: "none", outline: "none", fontSize: "14px",
+    fontWeight: "500", color: "#0f172a", background: "transparent",
   },
-  clearBtn: {
-    background: "none", border: "none", cursor: "pointer",
-    color: "#94a3b8", display: "flex", alignItems: "center", padding: 0, flexShrink: 0,
-  },
+  clearBtn: { background: "none", border: "none", cursor: "pointer", color: "#94a3b8", display: "flex", alignItems: "center" },
   dropdown: {
-    position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
-    background: "#fff", border: "1px solid #e2e8f0",
-    borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-    zIndex: 50, overflow: "hidden",
+    position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0,
+    background: "#fff", borderRadius: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
+    border: "1px solid #f1f5f9", zIndex: 1000, overflow: "hidden",
   },
+  resultsList: { padding: "8px" },
   item: {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "10px 14px", cursor: "pointer", background: "transparent",
+    display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+    borderRadius: 12, cursor: "pointer", transition: "0.2s",
   },
-  logo: { width: 36, height: 36, borderRadius: 8, objectFit: "cover", border: "1px solid #e9eef5", flexShrink: 0 },
-  logoFallback: {
-    width: 36, height: 36, borderRadius: 8,
-    background: "#f1f5f9", border: "1px solid #e9eef5",
-    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  logoWrapper: {
+    width: 40, height: 40, borderRadius: 10, background: "#f8fafc",
+    display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+    border: "1px solid #f1f5f9", flexShrink: 0,
   },
-  itemInfo: { display: "flex", flexDirection: "column", gap: 1, flex: 1, minWidth: 0 },
-  itemName: { fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  itemCity: { fontSize: 11, color: "#94a3b8", display: "flex", alignItems: "center", gap: 3 },
-  noResult: { padding: "14px 16px", fontSize: 13, color: "#94a3b8", textAlign: "center" },
+  logo: { width: "100%", height: "100%", objectFit: "cover" },
+  itemContent: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 },
+  nameRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 },
+  itemName: { fontSize: 13, fontWeight: "700", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  typeBadge: { fontSize: "9px", fontWeight: "800", padding: "2px 6px", borderRadius: "6px", textTransform: "uppercase" },
+  itemMeta: { fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 },
+  empty: { padding: "30px 20px", textAlign: "center", color: "#94a3b8", fontSize: "13px", fontWeight: "500" },
 };
 
-export default CompanySearchBar;
+export default GlobalSearchBar;

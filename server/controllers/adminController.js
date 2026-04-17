@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Company = require("../models/company"); 
+const Professional = require("../models/Professional");
 const Activity = require("../models/Activity");
 const Category = require("../models/Category");
 const Service = require("../models/Service");
@@ -46,17 +47,25 @@ const getDashboard = async (req, res) => {
       });
     }
 
+    const totalProfessionals = await Professional.countDocuments();
+    const pendingProfessionals = await Professional.countDocuments({ Status: "pending" });
+    const verifiedProfessionals = await Professional.countDocuments({ Status: "active" });
+
     res.json({
       totalUsers,
       totalCompanies,
+      totalProfessionals,
       pendingCompanies,
       verifiedCompanies,
+      pendingProfessionals,
+      verifiedProfessionals,
       totalReports,
       recentPending,
-      growthData, // Données réelles pour la courbe
+      growthData,
       stats: {
         users: totalUsers,
         companies: totalCompanies,
+        professionals: totalProfessionals,
         villes: totalCities, 
         categories: totalCategories, 
         services: totalServices,
@@ -286,6 +295,76 @@ const contactCompany = async (req, res) => {
   }
 };
 
+const getPendingProfessionals = async (req, res) => {
+  try {
+    const pending = await Professional.find({ Status: "pending" });
+    res.json(pending);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching pending professionals" });
+  }
+};
+
+const verifyProfessional = async (req, res) => {
+  try {
+    const professional = await Professional.findById(req.params.professionalId);
+    if (!professional) return res.status(404).json({ message: "Professional not found" });
+
+    professional.Status = "active";
+    await professional.save();
+
+    try {
+      await sendStatusEmail(professional.email, professional.fullName, "active");
+    } catch (emailErr) {
+      console.error("Email notification failed:", emailErr);
+    }
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Vérification de professionnel",
+      target: professional.fullName,
+      status: "success"
+    });
+
+    res.json({ message: "Professional verified successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error verifying professional" });
+  }
+};
+
+const rejectProfessional = async (req, res) => {
+  try {
+    const { professionalId } = req.params;
+    const { reason } = req.body;
+
+    const professional = await Professional.findById(professionalId);
+    if (!professional) return res.status(404).json({ message: "Professional not found" });
+
+    const name = professional.fullName;
+    professional.Status = "rejected";
+    professional.rejectionReason = reason || "Motif non spécifié";
+    await professional.save();
+
+    try {
+      await sendStatusEmail(professional.email, name, "rejected", reason);
+    } catch (emailErr) {
+      console.error("Email notification failed:", emailErr);
+    }
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Refus de professionnel",
+      target: `${name} (Motif: ${reason || 'Non spécifié'})`,
+      status: "error"
+    });
+
+    res.status(200).json({ message: `Professionnel refusé. Motif : ${reason || 'Non spécifié'}` });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors du rejet du professionnel." });
+  }
+};
+
 module.exports = {
   getDashboard,
   getActivities,
@@ -296,5 +375,8 @@ module.exports = {
   rejectCompany,
   changePassword,
   resolveCompany,
-  contactCompany
+  contactCompany,
+  getPendingProfessionals,
+  verifyProfessional,
+  rejectProfessional
 };

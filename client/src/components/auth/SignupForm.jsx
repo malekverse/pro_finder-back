@@ -5,7 +5,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/features/auth/authSlice'; 
 import Cookies from 'js-cookie';
-// On utilise './' pour dire "dans le même dossier"
 import Autocomplete from "./Autocomplete";
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
@@ -46,9 +45,26 @@ const SignupForm = () => {
     country_id: '',
     region_id: '',
     city_id: '',
-    domaine: '',        // Nouveau
-    sous_domaine: [],    // Nouveau
-  type_societe: [],
+    domaine: '',
+    sous_domaine: [],
+    type_societe: [],
+  });
+
+  const [professionalInputs, setProfessionalInputs] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirm_password: '',
+    phone: '',
+    description: '',
+    website: '',
+    photoProfessional: null,
+    country_id: '',
+    region_id: '',
+    city_id: '',
+    domaine: '',
+    sous_domaine: '',
+    services_list: [],
   });
 const [categories, setCategories] = useState([]);
 const [subCategories, setSubCategories] = useState([]);
@@ -59,22 +75,27 @@ useEffect(() => {
     .then(data => setCategories(data))
     .catch(err => console.log(err));
 }, []);
+
+// Domaine pour company
 useEffect(() => {
-  if (companyInputs.domaine) {
-    fetch(`http://localhost:5000/categories/subCategories/${companyInputs.domaine}`)
+  const domaine = role === 'company' ? companyInputs.domaine : professionalInputs.domaine;
+  if (domaine) {
+    fetch(`http://localhost:5000/categories/subCategories/${domaine}`)
       .then(res => res.json())
       .then(data => setSubCategories(data))
       .catch(err => console.log(err));
   }
-}, [companyInputs.domaine]);
+}, [companyInputs.domaine, professionalInputs.domaine, role]);
+
 useEffect(() => {
-  if (companyInputs.sous_domaine) {
-    fetch(`http://localhost:5000/categories/services/${companyInputs.sous_domaine}`)
+  const sousDomaine = role === 'company' ? companyInputs.sous_domaine : professionalInputs.sous_domaine;
+  if (sousDomaine) {
+    fetch(`http://localhost:5000/categories/services/${sousDomaine}`)
       .then(res => res.json())
       .then(data => setServices(data))
       .catch(err => console.log(err));
   }
-}, [companyInputs.sous_domaine]);
+}, [companyInputs.sous_domaine, professionalInputs.sous_domaine, role]);
   const [register, { isError, error }] = useRegisterMutation();
 
   useEffect(() => {
@@ -85,25 +106,26 @@ useEffect(() => {
   }, []);
 
 useEffect(() => {
- 
-  if (companyInputs.country_id) {
-    fetch(`http://localhost:5000/localisation/getRegionsByCountry/${companyInputs.country_id}`)
+  const countryId = role === 'company' ? companyInputs.country_id : professionalInputs.country_id;
+  if (countryId) {
+    fetch(`http://localhost:5000/localisation/getRegionsByCountry/${countryId}`)
       .then(res => res.json())
       .then(data => {
         setRegions(data.regions || []);
       })
       .catch(err => console.log(err));
   }
-}, [companyInputs.country_id]);
+}, [companyInputs.country_id, professionalInputs.country_id, role]);
 
   useEffect(() => {
-  if (companyInputs.region_id) {
-    fetch(`http://localhost:5000/localisation/getCitiesByRegion/${companyInputs.region_id}`)
+  const regionId = role === 'company' ? companyInputs.region_id : professionalInputs.region_id;
+  if (regionId) {
+    fetch(`http://localhost:5000/localisation/getCitiesByRegion/${regionId}`)
       .then(res => res.json())
       .then(data => setCities(data))
       .catch(err => console.log(err));
   } 
-}, [companyInputs.region_id, companyInputs.country_id]);
+}, [companyInputs.region_id, professionalInputs.region_id, role]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -145,6 +167,26 @@ useEffect(() => {
           city: companyInputs.city_id,
           services: companyInputs.type_societe,
           roles: ["company"],
+        };
+      } else if (role === 'professional') {
+        if (professionalInputs.password !== professionalInputs.confirm_password) {
+          alert("Passwords do not match");
+          return;
+        }
+
+        payload = {
+          fullName: professionalInputs.fullName,
+          email: professionalInputs.email,
+          password: professionalInputs.password,
+          phone: professionalInputs.phone,
+          website: professionalInputs.website || '',
+          description: professionalInputs.description || '',
+          photoProfessional: professionalInputs.photoProfessional ? await fileToBase64(professionalInputs.photoProfessional) : null,
+          country: professionalInputs.country_id,
+          region: professionalInputs.region_id,
+          city: professionalInputs.city_id,
+          services: professionalInputs.services_list,
+          roles: ["professional"],
         };
       }
 
@@ -203,6 +245,13 @@ useEffect(() => {
               onClick={() => { setRole('company'); setStep(1); }}
             >
               Entreprise
+            </button>
+            <button
+              type="button"
+              className={`${styles.roleButton} ${role === 'professional' ? styles.activeRole : ''}`}
+              onClick={() => { setRole('professional'); setStep(1); }}
+            >
+              Professionnel
             </button>
           </div>
 
@@ -463,6 +512,207 @@ useEffect(() => {
                           getOptionLabel={(option) => option.name}
                           value={companyInputs.city_id ? cities.find(c => c._id === companyInputs.city_id) : null}
                           onSelect={(city) => setCompanyInputs(prev => ({ ...prev, city_id: city?._id }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                      <button type="button" className={styles.submitButton} style={{ background: '#f1f5f9', color: '#64748b', flex: 1 }} onClick={() => setStep(1)}>Retour</button>
+                      <button type="submit" className={styles.submitButton} style={{ flex: 2 }}>Finaliser l'inscription</button>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </>
+          )}
+
+          {role === 'professional' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+                <div style={{ width: '40px', height: '6px', borderRadius: '3px', background: step === 1 ? '#1E3A5F' : '#e2e8f0' }} />
+                <div style={{ width: '40px', height: '6px', borderRadius: '3px', background: step === 2 ? '#1E3A5F' : '#e2e8f0' }} />
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                {step === 1 && (
+                  <div className={styles.stepContent}>
+                    <div className={styles.inputGroup}>
+                      <label>Nom Complet</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Ahmed Ben Salem"
+                        required
+                        value={professionalInputs.fullName}
+                        onChange={(e) => setProfessionalInputs({ ...professionalInputs, fullName: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Description</label>
+                      <textarea
+                        style={{ width: '100%', padding: '14px 18px', borderRadius: '12px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '15px' }}
+                        placeholder="Décrivez vos compétences et services..."
+                        rows="3"
+                        value={professionalInputs.description}
+                        onChange={(e) => setProfessionalInputs({ ...professionalInputs, description: e.target.value })}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Site Web</label>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={professionalInputs.website}
+                          onChange={(e) => setProfessionalInputs({ ...professionalInputs, website: e.target.value })}
+                        />
+                      </div>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Email Professionnel</label>
+                        <input
+                          type="email"
+                          placeholder="contact@professionnel.com"
+                          required
+                          value={professionalInputs.email}
+                          onChange={(e) => setProfessionalInputs({ ...professionalInputs, email: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Mot de passe</label>
+                        <input
+                          type="password"
+                          placeholder="••••••••"
+                          required
+                          value={professionalInputs.password}
+                          onChange={(e) => setProfessionalInputs({ ...professionalInputs, password: e.target.value })}
+                        />
+                      </div>
+                      <div className={styles.inputGroup} style={{ flex: 1 }}>
+                        <label>Confirmation</label>
+                        <input
+                          type="password"
+                          placeholder="••••••••"
+                          required
+                          value={professionalInputs.confirm_password}
+                          onChange={(e) => setProfessionalInputs({ ...professionalInputs, confirm_password: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Téléphone</label>
+                      <input
+                        type="tel"
+                        placeholder="+216 -- --- ---"
+                        required
+                        value={professionalInputs.phone}
+                        onChange={(e) => setProfessionalInputs({ ...professionalInputs, phone: e.target.value })}
+                      />
+                    </div>
+                    <button type="button" className={styles.submitButton} onClick={() => setStep(2)}>Étape suivante</button>
+                  </div>
+                )}
+                {step === 2 && (
+                  <div className={styles.stepContent}>
+                    <div className={styles.inputGroup}>
+                      <label>Photo de profil</label>
+                      <input type="file" accept="image/*" onChange={(e) => setProfessionalInputs({ ...professionalInputs, photoProfessional: e.target.files[0] })} />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <Autocomplete
+                          label="Domaine d'activité"
+                          placeholder="Choisir domaine..."
+                          options={categories}
+                          getOptionLabel={(option) => option.name}
+                          value={professionalInputs.domaine ? categories.find(c => c._id === professionalInputs.domaine) : null}
+                          onSelect={(selected) => {
+                            setProfessionalInputs(prev => ({
+                              ...prev,
+                              domaine: selected?._id || "",
+                              sous_domaine: "",
+                              services_list: []
+                            }));
+                          }}
+                        />
+
+                        <Autocomplete
+                          label="Sous-Domaine"
+                          placeholder="Choisir sous domaine..."
+                          options={subCategories}
+                          getOptionLabel={(option) => option.name}
+                          value={professionalInputs.sous_domaine ? subCategories.find(s => s._id === professionalInputs.sous_domaine) : null}
+                          onSelect={(selected) => {
+                            setProfessionalInputs(prev => ({
+                              ...prev,
+                              sous_domaine: selected?._id || "",
+                              services_list: []
+                            }));
+                          }}
+                        />
+
+                        <div className={styles.inputGroup}>
+                          <label>Services proposés</label>
+                          <Autocomplete
+                            placeholder="Choisir service..."
+                            options={services}
+                            getOptionLabel={(option) => option.name}
+                            value={[]}
+                            onSelect={(selected) => {
+                              if (selected && !professionalInputs.services_list.includes(selected._id)) {
+                                setProfessionalInputs(prev => ({
+                                  ...prev,
+                                  services_list: [...prev.services_list, selected._id]
+                                }));
+                              }
+                            }}
+                          />
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                            {professionalInputs.services_list.map(id => {
+                              const service = services.find(s => s._id === id);
+                              return (
+                                <span key={id} style={{ background: '#e0e7ff', padding: '4px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: '600', color: '#1E3A5F' }}>
+                                  {service?.name}
+                                  <button type="button" style={{ background: 'none', border: 'none', marginLeft: '6px', cursor: 'pointer', fontWeight: 'bold', color: '#ef4444' }} onClick={() => {
+                                    setProfessionalInputs(prev => ({
+                                      ...prev,
+                                      services_list: prev.services_list.filter(sid => sid !== id)
+                                    }));
+                                  }}>×</button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <Autocomplete
+                          label="Pays"
+                          placeholder="Tunisie"
+                          options={countries}
+                          getOptionLabel={(option) => option.name}
+                          value={professionalInputs.country_id ? countries.find(c => c._id === professionalInputs.country_id) : null}
+                          onSelect={(country) => setProfessionalInputs(prev => ({ ...prev, country_id: country._id, region_id: '', city_id: '' }))}
+                        />
+
+                        <Autocomplete
+                          label="Région"
+                          placeholder="Choisir région..."
+                          options={regions}
+                          getOptionLabel={(option) => option.name}
+                          value={professionalInputs.region_id ? regions.find(r => r._id === professionalInputs.region_id) : null}
+                          onSelect={(region) => setProfessionalInputs(prev => ({ ...prev, region_id: region?._id, city_id: '' }))}
+                        />
+
+                        <Autocomplete
+                          label="Ville"
+                          placeholder="Choisir ville..."
+                          options={cities}
+                          getOptionLabel={(option) => option.name}
+                          value={professionalInputs.city_id ? cities.find(c => c._id === professionalInputs.city_id) : null}
+                          onSelect={(city) => setProfessionalInputs(prev => ({ ...prev, city_id: city?._id }))}
                         />
                       </div>
                     </div>

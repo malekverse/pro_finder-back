@@ -25,7 +25,7 @@ export default function AdminTaxonomy() {
     try {
       const [catRes, subRes, servRes] = await Promise.all([
         axios.get(`${API}/categories`),
-        axios.get(`${API}/subcategories`),
+        axios.get(`${API}/subCategories`),
         axios.get(`${API}/services`),
       ]);
       setCategories(catRes.data || []);
@@ -44,7 +44,7 @@ export default function AdminTaxonomy() {
   const toggleStatus = async (item, type) => {
     try {
       // On définit l'état inverse (si indéfini, on considère qu'il était actif)
-      const newStatus = item.statut === "Inactif" ? "Actif" : "Inactif";
+      const newStatus = item.status === "Inactif" ? "Actif" : "Inactif";
       
       let endpoint = "";
       if (type === "cat") endpoint = `${API}/updateCategory/${item._id}`;
@@ -52,7 +52,7 @@ export default function AdminTaxonomy() {
       else endpoint = `${API}/updateService/${item._id}`;
 
       // Envoi de la mise à jour au serveur
-      await axios.put(endpoint, { statut: newStatus }, {
+      await axios.put(endpoint, { status: newStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -120,8 +120,8 @@ export default function AdminTaxonomy() {
   };
 
   const filteredCategories = categories.filter((cat) => {
-    const subCats = subCategories.filter(s => s.category_id === cat._id);
-    const servicesInCat = subCats.flatMap(sub => services.filter(s => s.subcategory_id === sub._id));
+    const subCats = subCategories.filter(s => (s.category_id?._id || s.category_id)?.toString() === cat._id?.toString());
+    const servicesInCat = subCats.flatMap(sub => services.filter(s => (s.subcategory_id?._id || s.subcategory_id)?.toString() === sub._id?.toString()));
     const match = (val) => val?.toLowerCase().includes(search.toLowerCase());
     return match(cat.name) || subCats.some(s => match(s.name)) || servicesInCat.some(s => match(s.name));
   });
@@ -186,7 +186,7 @@ export default function AdminTaxonomy() {
           </thead>
           <tbody>
             {filteredCategories.map((cat) => {
-              const subs = subCategories.filter(s => s.category_id === cat._id);
+              const subs = subCategories.filter(s => (s.category_id?._id || s.category_id)?.toString() === cat._id?.toString());
               return (
                 <React.Fragment key={cat._id}>
                   <tr className={styles.categoryRow}>
@@ -201,7 +201,7 @@ export default function AdminTaxonomy() {
                     </td>
                   </tr>
                   {subs.map((sub) => {
-                    const servs = services.filter(s => s.subcategory_id === sub._id);
+                    const servs = services.filter(s => (s.subcategory_id?._id || s.subcategory_id)?.toString() === sub._id?.toString());
                     return (
                       <React.Fragment key={sub._id}>
                         <tr className={styles.subCategoryRow}>

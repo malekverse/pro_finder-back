@@ -32,10 +32,10 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
       }
     }
   }, [feedData, page]);
-/**
-   * Effet pour le Scroll Infini (Infinite Scroll)
-   * Utilise l'API IntersectionObserver pour détecter quand l'utilisateur arrive en bas
-   */
+  /**
+     * Effet pour le Scroll Infini (Infinite Scroll)
+     * Utilise l'API IntersectionObserver pour détecter quand l'utilisateur arrive en bas
+     */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -53,29 +53,29 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
 
     return () => observer.disconnect();
   }, [hasMore, isFetchingFeed, setPage]);
-// Affichage d'un loader plein écran lors du premier chargement initial
+  // Affichage d'un loader plein écran lors du premier chargement initial
   if (isLoadingFeed && page === 1) {
     return <div style={f.center}><Loader size={32} className="animate-spin" color="#1E3A5F" /></div>;
   }
   return (
     <div>
       {/* Section Carrousel des Produits */}
-      <ItemsCarousel 
-        title="Produits des entreprises suivies" 
-        items={followedProducts} 
+      <ItemsCarousel
+        title="Produits des entreprises suivies"
+        items={followedProducts}
         type="product"
-        onSeeMore={() => setActiveTab("products")} 
+        onSeeMore={() => setActiveTab("products")}
         onAction={(item) => onAction(item, 'product')}
       />
       {/* Section Carrousel des Services */}
-      <ItemsCarousel 
-        title="Services recommandés" 
-        items={followedServices} 
+      <ItemsCarousel
+        title="Services recommandés"
+        items={followedServices}
         type="service"
-        onSeeMore={() => setActiveTab("services")} 
+        onSeeMore={() => setActiveTab("services")}
         onAction={(item) => onAction(item, 'service')}
       />
-    {/* Section Fil d'actualité Principal */}
+      {/* Section Fil d'actualité Principal */}
       <div style={{ marginTop: '24px', paddingTop: '0' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Newspaper size={20} color="#1E3A5F" /> Fil d'actualité
@@ -86,11 +86,11 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
             <PostCard key={post._id} post={post} onDeleted={refetchFeed} />
           ))}
         </div>
-{/* Zone cible pour l'IntersectionObserver (Loader de pagination) */}
+        {/* Zone cible pour l'IntersectionObserver (Loader de pagination) */}
         <div ref={loaderRef} style={{ padding: '20px 0', display: 'flex', justifyContent: 'center', visibility: hasMore ? 'visible' : 'hidden' }}>
           {isFetchingFeed && <Loader size={24} className="animate-spin" color="#1E3A5F" />}
         </div>
-{/* Message affiché une fois que toutes les pages sont chargées */}
+        {/* Message affiché une fois que toutes les pages sont chargées */}
         {!hasMore && allPosts.length > 0 && (
           <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '14px', fontWeight: 500 }}>
             Vous avez rattrapé toutes les publications !

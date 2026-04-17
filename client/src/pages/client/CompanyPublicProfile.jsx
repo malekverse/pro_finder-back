@@ -10,7 +10,7 @@ import PostCard from "../../components/Posts/PostCard";
 import {
   ArrowLeft, Building2, Globe, Mail, Phone,
   MapPin, Newspaper, Loader, UserCheck, UserPlus, Flag, X, Send,
-  Package, Wrench, Calendar, Info, Clock, CreditCard, Ban, Star, MessageSquare
+  Package, Wrench, Calendar, Info, Clock, CreditCard, Ban, Star, MessageSquare, AlertCircle, ShieldCheck
 } from "lucide-react";
 import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
@@ -24,6 +24,7 @@ import {
   useDeleteReviewMutation,
   useUpdateReviewMutation,
 } from "../../redux/features/reviewApiSlice";
+import { useRequestClaimMutation as useReqClaim } from "../../redux/features/company/companyApiSlice";
 import { useSelector } from "react-redux";
 import { Edit, Trash2 } from "lucide-react";
 
@@ -88,6 +89,12 @@ const CompanyPublicProfile = () => {
   
   const { data: reviews = [], isLoading: loadingReviews } = useGetCompanyReviewsQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
   const { data: ratingStats } = useGetAverageRatingQuery(companyId, { skip: !companyId, pollingInterval: 3000 });
+
+  const [requestClaim, { isLoading: claiming }] = useReqClaim();
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [claimSuccess, setClaimSuccess] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [claimWarning, setClaimWarning] = useState("");
 
   const { data: company, isLoading: loadingProfile, refetch: refetchProfile } =
     useGetPublicCompanyProfileQuery(companyId, {
@@ -287,6 +294,31 @@ const CompanyPublicProfile = () => {
     }
   };
 
+  const handleRequestClaim = async () => {
+    try {
+      const result = await requestClaim(companyId).unwrap();
+      setMaskedEmail(result.maskedEmail);
+      if (result.warning) {
+        setClaimWarning(result.warning);
+      } else {
+        setClaimWarning("");
+      }
+      setClaimSuccess(true);
+      // On ne ferme pas automatiquement si c'est un avertissement (pour que l'utilisateur puisse lire)
+      if (!result.warning) {
+        setTimeout(() => {
+          setIsClaimModalOpen(false);
+          setClaimSuccess(false);
+        }, 5000);
+      }
+    } catch (err) {
+      console.error("Claim error", err);
+      const msg = err.data?.message || "Erreur lors de la demande de revendication.";
+      const detail = err.data?.details ? `\n\nDétails: ${err.data.details}` : "";
+      alert(msg + detail);
+    }
+  };
+
   const posts = postsData?.posts ?? [];
   const totalPages = postsData?.totalPages ?? 0;
 
@@ -364,19 +396,29 @@ const CompanyPublicProfile = () => {
                   <Ban size={15} /> Bloqué
                 </div>
               ) : (
-                <button
-                  onClick={handleFollow}
-                  disabled={following}
-                  style={isFollowed ? s.btnFollowing : s.btnFollow}
-                >
-                  {following ? (
-                    <Loader size={14} style={{ animation: "spin 1s linear infinite" }} />
-                  ) : isFollowed ? (
-                    <><UserCheck size={15} /> Déjà suivi</>
-                  ) : (
-                    <><UserPlus size={15} /> Suivre</>
+                <>
+                  {company?.isGenerated && (
+                    <button 
+                      onClick={() => setIsClaimModalOpen(true)}
+                      style={{ ...s.btnFollow, background: '#10b981' }}
+                    >
+                      <ShieldCheck size={16} /> Revendiquer
+                    </button>
                   )}
-                </button>
+                  <button
+                    onClick={handleFollow}
+                    disabled={following}
+                    style={isFollowed ? s.btnFollowing : s.btnFollow}
+                  >
+                    {following ? (
+                      <Loader size={14} style={{ animation: "spin 1s linear infinite" }} />
+                    ) : isFollowed ? (
+                      <><UserCheck size={15} /> Déjà suivi</>
+                    ) : (
+                      <><UserPlus size={15} /> Suivre</>
+                    )}
+                  </button>
+                </>
               )}
               
               <button 
@@ -673,8 +715,7 @@ const CompanyPublicProfile = () => {
             )}
           </>
         )}
-      </div>
-
+      
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* MODAL RESERVATION */}
@@ -907,7 +948,80 @@ const CompanyPublicProfile = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL REVENDICATION */}
+      {isClaimModalOpen && (
+        <div style={s.modalOverlay}>
+          <div style={s.modalContent}>
+            <div style={s.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '10px' }}>
+                  <ShieldCheck size={20} color="#10b981" />
+                </div>
+                <h3 style={s.modalTitle}>Revendiquer cette entreprise</h3>
+              </div>
+              <button onClick={() => setIsClaimModalOpen(false)} style={s.closeBtn}><X size={20} /></button>
+            </div>
+
+            {claimSuccess ? (
+              <div style={s.successMsg}>
+                <div style={{ background: '#10b981', color: 'white', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                  <Mail size={24} />
+                </div>
+                <p style={{ fontWeight: '700', color: '#111827', fontSize: '18px', marginBottom: '8px' }}>
+                  {claimWarning ? "Action requise (Mode Test)" : "E-mail envoyé !"}
+                </p>
+                <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: '1.5' }}>
+                  {claimWarning ? (
+                    <span style={{ color: '#b45309', fontWeight: '600' }}>
+                      {claimWarning}
+                    </span>
+                  ) : (
+                    <>
+                      Un lien de vérification a été envoyé à l'adresse officielle : <br/>
+                      <strong style={{ color: '#059669' }}>{maskedEmail}</strong>
+                    </>
+                  )}
+                </p>
+                <button
+                  onClick={() => setIsClaimModalOpen(false)}
+                  style={{ ...s.submitBtn, background: claimWarning ? '#f59e0b' : '#10b981', marginTop: '25px', width: '100%' }}
+                >
+                  Fermer
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p style={s.modalInfo}>
+                  Pour prouver que vous êtes le propriétaire légitime de <b>{company.companyName}</b>, nous devons vérifier votre identité commerciale.
+                </p>
+                
+                <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '25px' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <AlertCircle size={18} color="#2563eb" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
+                      En cliquant sur le bouton ci-dessous, un e-mail contenant un lien de sécurité sera envoyé à l'adresse enregistrée de l'entreprise.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={s.modalFooter}>
+                  <button onClick={() => setIsClaimModalOpen(false)} style={s.cancelBtn}>Annuler</button>
+                  <button 
+                    onClick={handleRequestClaim} 
+                    disabled={claiming} 
+                    style={{ ...s.submitBtn, background: '#10b981' }}
+                  >
+                    {claiming ? <Loader size={18} style={{ animation: "spin 1s linear infinite" }} /> : 'Envoyer le lien de vérification'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  </div>
   );
 };
 

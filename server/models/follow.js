@@ -11,7 +11,13 @@ const followSchema = new mongoose.Schema(
   company_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
-    required: true
+    default: null
+  },
+
+  professional_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Professional",
+    default: null
   },
 
   role_id: {

@@ -52,21 +52,21 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
                   )}
                 </div>
                 <div style={m.qtyBox}>
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     style={m.qtyBtn}
                   >
                     <Minus size={14} />
                   </button>
                   <span style={m.qtyVal}>{quantity}</span>
-                  <button 
+                  <button
                     onClick={() => {
                       if (quantity < (item.stock || 0)) {
                         setQuantity(quantity + 1);
                       } else {
                         alert("Stock maximum atteint !");
                       }
-                    }} 
+                    }}
                     style={m.qtyBtn}
                   >
                     <Plus size={14} />
@@ -76,28 +76,28 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
 
               <div style={m.field}>
                 <label style={m.label}>Adresse de livraison</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="street"
-                  placeholder="Rue et numéro" 
-                  style={{ ...m.input, marginBottom: '10px' }} 
+                  placeholder="Rue et numéro"
+                  style={{ ...m.input, marginBottom: '10px' }}
                   value={address.street}
                   onChange={handleAddressChange}
                 />
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="city"
-                    placeholder="Ville" 
-                    style={{ ...m.input, flex: 2 }} 
+                    placeholder="Ville"
+                    style={{ ...m.input, flex: 2 }}
                     value={address.city}
                     onChange={handleAddressChange}
                   />
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="zipCode"
-                    placeholder="CP" 
-                    style={{ ...m.input, flex: 1 }} 
+                    placeholder="CP"
+                    style={{ ...m.input, flex: 1 }}
                     value={address.zipCode}
                     onChange={handleAddressChange}
                   />
@@ -119,10 +119,10 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
 
           <div style={m.field}>
             <label style={m.label}>Note optionnelle</label>
-            <textarea 
-              style={m.textarea} 
-              placeholder="Instructions particulières..." 
-              value={note} 
+            <textarea
+              style={m.textarea}
+              placeholder="Instructions particulières..."
+              value={note}
               onChange={(e) => setNote(e.target.value)}
             />
           </div>
@@ -135,8 +135,8 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
 
         <div style={m.footer}>
           <button onClick={onClose} style={m.cancelBtn}>Annuler</button>
-          <button 
-            onClick={() => onSubmit({ quantity, date, time, note, address })} 
+          <button
+            onClick={() => onSubmit({ quantity, date, time, note, address })}
             style={{
               ...m.confirmBtn,
               opacity: (isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))) ? 0.6 : 1,

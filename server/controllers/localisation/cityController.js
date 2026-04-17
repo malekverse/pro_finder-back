@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const City = require("../../models/city");
 const Region = require("../../models/region");
 const Activity = require("../../models/Activity");
@@ -51,6 +52,9 @@ const getCities = async (req, res) => {
 const getCitiesByRegion = async (req, res) => {
   try {
     const { region_id } = req.params;
+
+    if (!region_id || !mongoose.Types.ObjectId.isValid(region_id))
+      return res.status(400).json({ message: "A valid Region ID is required" });
     
     const cities = await City.find({ 
       region: region_id 

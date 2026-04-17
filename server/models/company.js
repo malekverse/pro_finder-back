@@ -10,20 +10,21 @@ const companySchema = new mongoose.Schema(
 
     email: {
       type: String,
-      required: true,
+      required: function() { return !this.isGenerated; },
       unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
     },
 
     password: {
       type: String,
-      required: true,
+      required: function() { return !this.isGenerated; },
     },
 
     phone: {
       type: String,
-      required: true,
+      required: function() { return !this.isGenerated; },
     },
 
     website: {
@@ -42,16 +43,19 @@ const companySchema = new mongoose.Schema(
       type: String,
     },
     country: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Country",
+      required: function() { return !this.isGenerated; },
     },
     region: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Region",
+      required: function() { return !this.isGenerated; },
     },
     city: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "City",
+      required: function() { return !this.isGenerated; },
     },
     
     services: [
@@ -71,6 +75,10 @@ const companySchema = new mongoose.Schema(
     roles: {
       type: [String],
       default: ["company"],
+    },
+    isGenerated: {
+      type: Boolean,
+      default: false,
     },
 
   },

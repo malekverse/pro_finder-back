@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation } from "../../../redux/features/profileApiSlice";
+import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation, useGetPendingProfessionalsQuery, useVerifyProfessionalMutation, useRejectProfessionalMutation } from "../../../redux/features/profileApiSlice";
 import { useGetAllReportsQuery, useUpdateReportStatusMutation } from "../../../redux/features/reportApiSlice";
-import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2, Info } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2, Info, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "../../../styles/dashboardAdmin.module.css";
 
@@ -30,6 +30,14 @@ const AdminModeration = () => {
     const [contactType, setContactType] = useState("manual"); // 'manual' or 'pending'
     const [isReportActionModalOpen, setIsReportActionModalOpen] = useState(false);
     const [adminNotes, setAdminNotes] = useState("");
+
+    // Professionals logic
+    const { data: professionals = [], isLoading: loadingProfessionals } = useGetPendingProfessionalsQuery(undefined, { pollingInterval: 3000 });
+    const [verifyProfessional, { isLoading: isVerifyingPro }] = useVerifyProfessionalMutation();
+    const [rejectProfessional, { isLoading: isRejectingPro }] = useRejectProfessionalMutation();
+    const [selectedProfessional, setSelectedProfessional] = useState(null);
+    const [proRefusalReason, setProRefusalReason] = useState("");
+    const [isProModalOpen, setIsProModalOpen] = useState(false);
 
     const handleApprove = async (id) => {
         try {
@@ -121,7 +129,7 @@ const AdminModeration = () => {
         }
     };
 
-    if (loadingCompanies || loadingReports) {
+    if (loadingCompanies || loadingReports || loadingProfessionals) {
         return (
             <div className={styles.container} style={{ textAlign: 'center', paddingTop: '50px' }}>
                 <Loader2 className="animate-spin" size={40} color="#24416b" />
@@ -167,6 +175,22 @@ const AdminModeration = () => {
                     }}
                 >
                     Signalements ({reports.filter(r => r.status === 'pending').length})
+                </button>
+                <button 
+                    onClick={() => setActiveTab("professionals")}
+                    style={{ 
+                        padding: '12px 20px', 
+                        background: 'none', 
+                        border: 'none', 
+                        borderBottom: activeTab === 'professionals' ? '3px solid #3b82f6' : '3px solid transparent',
+                        color: activeTab === 'professionals' ? '#3b82f6' : '#64748b',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        transition: '0.2s'
+                    }}
+                >
+                    Professionnels ({professionals.length})
                 </button>
             </div>
 
@@ -392,6 +416,112 @@ const AdminModeration = () => {
                                                 >
                                                     Gérer
                                                 </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+
+            {activeTab === 'professionals' && (
+                <>
+                    <p style={{ color: '#64748b', marginBottom: '20px' }}>
+                        Validez les nouveaux professionnels pour leur donner accès à la plateforme.
+                    </p>
+
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <thead className={styles.thead}>
+                                <tr>
+                                    <th className={styles.th}>PROFESSIONNEL</th>
+                                    <th className={styles.th}>CONTACT</th>
+                                    <th className={styles.th}>STATUT</th>
+                                    <th className={styles.th} style={{ textAlign: 'center' }}>DÉCISION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {professionals.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                                            <User size={40} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.5 }} />
+                                            Aucun professionnel en attente de validation.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    professionals.map((pro) => (
+                                        <tr key={pro._id} className={styles.tr}>
+                                            <td className={styles.td}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    {pro.photoProfessional ? (
+                                                        <img 
+                                                            src={`${SERVER_URL}/${pro.photoProfessional}`} 
+                                                            alt="photo" 
+                                                            style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }} 
+                                                        />
+                                                    ) : (
+                                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <User size={20} color="#94a3b8" />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                            {pro.fullName || "Nom inconnu"}
+                                                        </div>
+                                                        <div style={{ fontSize: '12px', color: '#64748b' }}>{pro.phone}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className={styles.td}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
+                                                    <Mail size={14} /> {pro.email}
+                                                </div>
+                                            </td>
+                                            <td className={styles.td}>
+                                                <span style={{ 
+                                                    padding: '4px 12px', 
+                                                    borderRadius: '20px', 
+                                                    fontSize: '12px', 
+                                                    backgroundColor: '#dbeafe', 
+                                                    color: '#1e40af',
+                                                    fontWeight: '500' 
+                                                }}>
+                                                    En attente
+                                                </span>
+                                            </td>
+                                            <td className={styles.td} style={{ textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                    <button 
+                                                        className={styles.addBtnBlue} 
+                                                        onClick={async () => {
+                                                            try {
+                                                                await verifyProfessional(pro._id).unwrap();
+                                                                alert("Professionnel approuvé avec succès !");
+                                                            } catch (err) {
+                                                                console.error(err);
+                                                                alert("Erreur lors de la validation");
+                                                            }
+                                                        }}
+                                                        disabled={isVerifyingPro}
+                                                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                                                    >
+                                                        <CheckCircle size={14} /> Approuver
+                                                    </button>
+                                                    <button 
+                                                        className={styles.deleteBtn} 
+                                                        onClick={() => {
+                                                            setSelectedProfessional(pro);
+                                                            setProRefusalReason("");
+                                                            setIsProModalOpen(true);
+                                                        }}
+                                                        disabled={isRejectingPro}
+                                                        style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #fee2e2' }}
+                                                    >
+                                                        <XCircle size={14} /> Refuser
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -659,6 +789,73 @@ const AdminModeration = () => {
                                 className={styles.button} 
                                 style={{ flex: 1, background: '#f1f5f9', color: '#334155', boxShadow: 'none' }}
                                 onClick={() => setIsContactModalOpen(false)}
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de refus professionnel */}
+            {isProModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+                        <div className={styles.modalHeader}>
+                            <h3>Motif du refus</h3>
+                            <button onClick={() => setIsProModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '15px' }}>
+                                Vous allez refuser le professionnel <strong>{selectedProfessional?.fullName}</strong>. 
+                                Veuillez saisir un motif de refus.
+                            </p>
+                            <textarea 
+                                value={proRefusalReason}
+                                onChange={(e) => setProRefusalReason(e.target.value)}
+                                placeholder="Ex: Profil incomplet, informations incorrectes..."
+                                style={{ 
+                                    width: '100%', 
+                                    height: '120px', 
+                                    padding: '12px', 
+                                    borderRadius: '12px', 
+                                    border: '1.5px solid #e2e8f0',
+                                    outline: 'none',
+                                    fontSize: '14px',
+                                    resize: 'none'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button 
+                                className={styles.button} 
+                                style={{ flex: 1, background: '#ef4444' }}
+                                onClick={async () => {
+                                    if (!selectedProfessional) return;
+                                    try {
+                                        await rejectProfessional({ 
+                                            professionalId: selectedProfessional._id, 
+                                            reason: proRefusalReason 
+                                        }).unwrap();
+                                        setIsProModalOpen(false);
+                                        setSelectedProfessional(null);
+                                        alert("Professionnel refusé.");
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert("L'action a échoué.");
+                                    }
+                                }}
+                                disabled={isRejectingPro}
+                            >
+                                {isRejectingPro ? <Loader2 className="animate-spin" size={18} /> : "Confirmer le refus"}
+                            </button>
+                            <button 
+                                className={styles.button} 
+                                style={{ flex: 1, background: '#f1f5f9', color: '#334155', boxShadow: 'none' }}
+                                onClick={() => setIsProModalOpen(false)}
                             >
                                 Annuler
                             </button>

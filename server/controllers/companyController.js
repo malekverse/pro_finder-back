@@ -1,4 +1,6 @@
 const Company = require("../models/company");
+const jwt = require("jsonwebtoken");
+const { sendEmail } = require("../utils/emailService");
 const Follow = require("../models/follow");
 const Role = require("../models/Role");
 const User = require("../models/User");
@@ -128,17 +130,17 @@ const getPublicCompanyProfile = async (req, res) => {
     const followersCount = await Follow.countDocuments({ company_id: companyId, is_blocked: { $ne: true } });
 
     // Récupérer les noms des localisations manuellement pour plus de robustesse
-    let cName = null, rName = null, cityName = null;
+    let cName = company.country, rName = company.region, cityName = company.city;
     try {
-      if (company.country) {
+      if (company.country && mongoose.isValidObjectId(company.country)) {
         const cDoc = await Country.findById(company.country).select("name").lean();
         cName = cDoc?.name || null;
       }
-      if (company.region) {
+      if (company.region && mongoose.isValidObjectId(company.region)) {
         const rDoc = await Region.findById(company.region).select("name").lean();
         rName = rDoc?.name || null;
       }
-      if (company.city) {
+      if (company.city && mongoose.isValidObjectId(company.city)) {
         const cityDoc = await City.findById(company.city).select("name").lean();
         cityName = cityDoc?.name || null;
       }
@@ -157,6 +159,7 @@ const getPublicCompanyProfile = async (req, res) => {
       country: cName,
       region: rName,
       city: cityName,
+      isGenerated: company.isGenerated || false,
       followersCount
     });
   } catch (err) {
@@ -361,9 +364,9 @@ const getSuggestedCompanies = async (req, res) => {
       // S'assurer que les champs sont des ObjectIds pour le $lookup
       {
         $addFields: {
-          countryObj: { $cond: { if: { $ne: ["$country", null] }, then: { $toObjectId: "$country" }, else: null } },
-          regionObj: { $cond: { if: { $ne: ["$region", null] }, then: { $toObjectId: "$region" }, else: null } },
-          cityObj: { $cond: { if: { $ne: ["$city", null] }, then: { $toObjectId: "$city" }, else: null } }
+          countryObj: { $cond: { if: { $and: [{ $ne: ["$country", null] }, { $regexMatch: { input: { $toString: "$country" }, regex: /^[0-9a-fA-F]{24}$/ } }] }, then: { $toObjectId: "$country" }, else: null } },
+          regionObj: { $cond: { if: { $and: [{ $ne: ["$region", null] }, { $regexMatch: { input: { $toString: "$region" }, regex: /^[0-9a-fA-F]{24}$/ } }] }, then: { $toObjectId: "$region" }, else: null } },
+          cityObj: { $cond: { if: { $and: [{ $ne: ["$city", null] }, { $regexMatch: { input: { $toString: "$city" }, regex: /^[0-9a-fA-F]{24}$/ } }] }, then: { $toObjectId: "$city" }, else: null } }
         }
       },
       {
@@ -480,7 +483,7 @@ const searchCompanies = async (req, res) => {
 
 
     let companies = await Company.find(query)
-      .select("companyName logoUrl description city region country website phone services Status")
+      .select("companyName logoUrl description city region country website phone services Status isGenerated")
       .limit(50)
       .lean();
 
@@ -540,22 +543,41 @@ const searchCompanies = async (req, res) => {
           count: stats[0].totalReviews
         } : { average: 0, count: 0 };
 
-        let cName = null, rName = null, cityName = null;
+        let cName = company.country, rName = company.region, cityName = company.city;
+        let categoryName = "Multi-services";
         
         try {
-          if (company.country) {
+          // Résolution adresse
+          if (company.country && mongoose.isValidObjectId(company.country)) {
             const cDoc = await Country.findById(company.country).select("name").lean();
             cName = cDoc?.name || null;
           }
-          if (company.region) {
+          if (company.region && mongoose.isValidObjectId(company.region)) {
             const rDoc = await Region.findById(company.region).select("name").lean();
             rName = rDoc?.name || null;
           }
-          if (company.city) {
+          if (company.city && mongoose.isValidObjectId(company.city)) {
             const cityDoc = await City.findById(company.city).select("name").lean();
             cityName = cityDoc?.name || null;
           }
-        } catch (e) { console.error("Error populating address names", e); }
+
+          // Résolution Catégorie (via le premier service)
+          if (company.services && company.services.length > 0) {
+            const Service = mongoose.model("Service");
+            const SubCategory = mongoose.model("SubCategory");
+            const Category = mongoose.model("Category");
+
+            const serviceId = company.services[0];
+            const serviceDoc = await Service.findById(serviceId).select("subcategory_id").lean();
+            if (serviceDoc && serviceDoc.subcategory_id) {
+              const subDoc = await SubCategory.findById(serviceDoc.subcategory_id).select("category_id").lean();
+              if (subDoc && subDoc.category_id) {
+                const catDoc = await Category.findById(subDoc.category_id).select("name").lean();
+                categoryName = catDoc?.name || "Multi-services";
+              }
+            }
+          }
+        } catch (e) { console.error("Error populating details", e); }
 
         return { 
           ...company, 
@@ -563,7 +585,8 @@ const searchCompanies = async (req, res) => {
           rating,
           country: cName,
           region: rName,
-          city: cityName
+          city: cityName,
+          categoryName
         };
       })
     );
@@ -605,8 +628,8 @@ const getRecommendedCompanies = async (req, res) => {
       companies.map(async (company) => {
         const reviewStat = topReviews.find(r => r._id.toString() === company._id.toString());
         
-        let cityName = null;
-        if (company.city) {
+        let cityName = company.city;
+        if (company.city && mongoose.isValidObjectId(company.city)) {
           const cityDoc = await mongoose.model("City").findById(company.city).select("name").lean();
           cityName = cityDoc?.name || null;
         }
@@ -642,22 +665,303 @@ const getCompaniesByService = async (req, res) => {
 };
 
 
+
+const createScrapedCompany = async (req, res) => {
+  try {
+    const { companyName, description, suggestedCategory, website, serviceId, email } = req.body;
+
+    if (!companyName || !email) {
+      return res.status(400).json({ message: "Le nom de l'entreprise et l'email de contact sont requis." });
+    }
+
+    // Protection : Vérifier que l'e-mail n'est pas déjà dans la base
+    const existingEmail = await Company.findOne({ email });
+    if (existingEmail) {
+      return res.status(409).json({ message: "Cette entreprise existe déjà dans la base (e-mail en doublon)." });
+    }
+
+    // Le mot de passe reste provisoire tant que l'entreprise n'a pas revendiqué
+    const fakePassword = `AI_GENERATED_${Math.random().toString(36).slice(-8)}`;
+    const bcrypt = require("bcrypt");
+    const hashedPassword = await bcrypt.hash(fakePassword, 10);
+
+    const companyData = {
+      companyName,
+      description: description ? `${description}\n\n[Catégorie suggérée : ${suggestedCategory}]` : `[Catégorie suggérée : ${suggestedCategory}]`,
+      website,
+      email, // Le vrai e-mail extrait par l'IA
+      password: hashedPassword,
+      isGenerated: true,
+      Status: "active", // Pour qu'elle soit visible publiquement comme "à revendiquer"
+    };
+
+    // Si on a un service identifié formellement par l'IA de notre taxonomie
+    if (serviceId) {
+      companyData.services = [serviceId];
+    }
+
+    const newCompany = new Company(companyData);
+
+    const savedCompany = await newCompany.save();
+
+    // Création du Token de Revendication (Valide 7 jours)
+    const claimToken = jwt.sign(
+      { companyId: savedCompany._id, email },
+      process.env.ACCESS_TOKEN_SECRET || "default_secret",
+      { expiresIn: '7d' }
+    );
+
+    // Lien vers la page de revendication du front-end
+    const claimUrl = `${process.env.CLIENT_URL || 'http://localhost:3001'}/claim?token=${claimToken}`;
+    
+    // Pour faciliter les tests locaux
+    console.log("=========================================");
+    console.log("Lien de revendication (Test) :", claimUrl);
+    console.log("=========================================");
+
+    // Envoi de l'e-mail d'invitation automatiquement
+    const htmlEmail = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 25px; border-radius: 12px;">
+        <h1 style="color: #1a2b47; font-size: 24px; text-align: center;">Félicitations !</h1>
+        <p>Bonjour,</p>
+        <p>L'équipe de <strong>ProFinder</strong> a le plaisir de vous informer que votre entreprise <b>${companyName}</b> a été référencée sur notre réseau professionnel.</p>
+        
+        <p>Afin de pouvoir ajouter votre logo, compléter votre description et recevoir des devis de nouveaux clients, vous devez prendre le contrôle de votre fiche.</p>
+        
+        <div style="text-align: center; margin: 35px 0;">
+          <a href="${claimUrl}" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            Revendiquer ma page (Gratuit)
+          </a>
+        </div>
+        
+        <p style="color: #64748b; font-size: 13px;">Si ce bouton ne fonctionne pas, copiez-collez ce lien : <br/>${claimUrl}</p>
+        <p>À très bientôt sur ProFinder !</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail(email, "Prenez le contrôle de votre page sur ProFinder !", htmlEmail);
+    } catch (mailError) {
+      console.error("Erreur lors de l'envoi de l'email mais l'entite est sauvegardee:", mailError);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Entreprise générée sauvegardée avec succès.",
+      company: savedCompany,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde de l'entreprise scrapée :", error);
+    res.status(500).json({ success: false, message: "Erreur serveur lors de la sauvegarde." });
+  }
+};
+
+const claimCompanyProfile = async (req, res) => {
+  try {
+    const { token, password, phone, country, region, city, website, description, logoUrl, coverUrl, services, companyName } = req.body;
+
+    if (!token || !password || !phone) {
+      return res.status(400).json({ message: "Le jeton, le mot de passe et le numéro de téléphone sont requis." });
+    }
+
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || "default_secret");
+    
+    const company = await Company.findById(decoded.companyId);
+    if (!company) {
+      return res.status(404).json({ message: "Entreprise introuvable." });
+    }
+
+    if (!company.isGenerated) {
+      return res.status(400).json({ message: "Cette entreprise a déjà été revendiquée." });
+    }
+
+    const bcrypt = require("bcrypt");
+    company.password = await bcrypt.hash(password, 10);
+    company.companyName = companyName || company.companyName;
+    company.phone = phone;
+    company.country = country;
+    company.region = region;
+    company.city = city;
+    company.website = website || company.website || "";
+    company.description = description || company.description || "";
+    company.logoUrl = logoUrl || company.logoUrl || null;
+    company.coverUrl = coverUrl || company.coverUrl || null;
+    company.services = services || company.services || [];
+    company.isGenerated = false;
+    company.Status = "pending"; // Pass en attente de validation comme une inscription normale
+
+    await company.save();
+
+    res.json({ success: true, message: "Entreprise revendiquée avec succès." });
+
+  } catch (error) {
+    console.error("Erreur lors de la revendication de l'entreprise :", error);
+    if (error.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Le lien de revendication a expiré." });
+    }
+    return res.status(500).json({ message: "Erreur lors de la revendication." });
+  }
+};
+
+const getClaimPreview = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: "Jeton manquant." });
+    }
+
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || "default_secret");
+    
+    const company = await Company.findById(decoded.companyId)
+      .populate("services")
+      .populate("country")
+      .populate("region")
+      .populate("city");
+
+    if (!company) {
+      return res.status(404).json({ message: "Entreprise introuvable." });
+    }
+
+    if (!company.isGenerated) {
+      return res.status(400).json({ message: "Cette entreprise a déjà été revendiquée." });
+    }
+
+    res.json({
+      companyName: company.companyName,
+      email: company.email,
+      phone: company.phone,
+      website: company.website,
+      description: company.description,
+      country: company.country?._id,
+      region: company.region?._id,
+      city: company.city?._id,
+      services: company.services?.map(s => s._id) || [],
+      logoUrl: company.logoUrl,
+      coverUrl: company.coverUrl
+    });
+
+  } catch (error) {
+    console.error("Erreur lors de la prévisualisation :", error);
+    if (error.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Le lien de revendication a expiré." });
+    }
+    return res.status(500).json({ message: "Erreur lors de la récupération des données." });
+  }
+};
+
+
+const requestClaim = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const company = await Company.findById(companyId);
+
+    if (!company) {
+      return res.status(404).json({ message: "Entreprise introuvable." });
+    }
+
+    if (!company.isGenerated) {
+      return res.status(400).json({ message: "Cette entreprise a déjà été revendiquée." });
+    }
+
+    if (!company.email) {
+      return res.status(400).json({ message: "Aucun e-mail de contact n'est associé à cette fiche. Veuillez contacter le support." });
+    }
+
+    // Génération du Token (7 jours)
+    const claimToken = jwt.sign(
+      { companyId: company._id },
+      process.env.ACCESS_TOKEN_SECRET || "default_secret",
+      { expiresIn: '7d' }
+    );
+
+    const claimUrl = `${process.env.CLIENT_URL || 'http://localhost:3001'}/claim?token=${claimToken}`;
+
+    // On masque l'email pour la réponse (sécurité)
+    const [user, domain] = company.email.split('@');
+    const maskedEmail = `${user.substring(0, 2)}***@${domain}`;
+
+    const htmlEmail = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 25px; border-radius: 12px;">
+        <h1 style="color: #1a2b47; font-size: 24px; text-align: center;">Vérification de propriété</h1>
+        <p>Bonjour,</p>
+        <p>Une demande de revendication a été initiée pour l'entreprise <b>${company.companyName}</b> sur <strong>ProFinder</strong>.</p>
+        
+        <p>Si vous êtes le propriétaire légitime, cliquez sur le bouton ci-dessous pour compléter votre profil et activer votre compte :</p>
+        
+        <div style="text-align: center; margin: 35px 0;">
+          <a href="${claimUrl}" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            Confirmer la revendication
+          </a>
+        </div>
+        
+        <p style="color: #64748b; font-size: 13px;">Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.</p>
+        <p>À très bientôt sur ProFinder !</p>
+      </div>
+    `;
+
+    // LOG DE SÉCURITÉ (Très utile pour le dev si le SMTP échoue)
+    console.log("=========================================");
+    console.log("DEMANDE DE REVENDICATION POUR :", company.companyName);
+    console.log("DESTINATAIRE :", company.email);
+    console.log("LIEN DE SÉCURITÉ :", claimUrl);
+    console.log("=========================================");
+
+    let emailSent = true;
+    let emailError = null;
+
+    try {
+      await sendEmail(company.email, "Revendiquez votre entreprise sur ProFinder", htmlEmail);
+    } catch (mailErr) {
+      console.error("ERREUR ENVOI EMAIL REVENDICATION:", mailErr.message);
+      emailSent = false;
+      emailError = mailErr.message;
+    }
+
+    if (!emailSent) {
+      // On retourne quand même un succès partiel pour ne pas bloquer le développeur
+      return res.json({ 
+        success: true, 
+        message: "Demande générée avec succès (Mode Test / Console).",
+        warning: "L'e-mail n'a pas pu être envoyé, mais le lien est disponible dans la console du serveur.",
+        maskedEmail 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "L'e-mail de vérification a été envoyé.",
+      maskedEmail 
+    });
+
+  } catch (error) {
+    console.error("Erreur requestClaim:", error);
+    res.status(500).json({ 
+      message: "Erreur serveur lors de la demande de revendication.",
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
- 
   getDashboard,
+  getCompanyFollowers,
   getCompanyProfile,
-  getPublicCompanyProfile,
   updateCompanyProfile,
   getCompanyUsers,
   assignRoleToUser,
-  getCompanyFollowers,
   updateRoleToUser,
   deleteRoleToUser,
+  getPublicCompanyProfile,
   getUserAccessToCompany,
   getCompaniesByService,
+  searchCompanies,
   getSuggestedCompanies,
   getRecommendedCompanies,
-  searchCompanies,
+  getBlockedUsers,
   toggleBlockFollower,
-  getBlockedUsers
+  createScrapedCompany,
+  getClaimPreview,
+  claimCompanyProfile,
+  requestClaim
 };
