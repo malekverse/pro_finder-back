@@ -1,213 +1,859 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useGetPublicProfessionalProfileQuery } from '../../redux/features/professional/professionalApiSlice';
-import { toImageUrl } from '../../utils/imageUtils';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
-  User, MapPin, Phone, Globe, Mail, Users, Star, Loader, ArrowLeft,
-  UserPlus, UserMinus
-} from 'lucide-react';
-import { 
-  useFollowProfessionalMutation, 
+  useGetPublicProfessionalProfileQuery,
+  useFollowProfessionalMutation,
   useUnfollowProfessionalMutation,
-  useCheckFollowProStatusQuery 
-} from '../../redux/features/professional/professionalApiSlice';
-import { useSelector } from 'react-redux';
-import { ROLES } from '../../constants/roles';
+  useCheckFollowProStatusQuery,
+} from "../../redux/features/professional/professionalApiSlice";
+import { useGetPostsByCompanyQuery } from "../../redux/features/posts/postApiSlice";
+import PostCard from "../../components/Posts/PostCard";
+import {
+  ArrowLeft, Globe, Mail, Phone,
+  MapPin, Newspaper, Loader, UserCheck, UserPlus, Flag, X, Send,
+  Package, Wrench, Calendar, Info, Clock, CreditCard, Star, MessageSquare, AlertCircle, User
+} from "lucide-react";
+import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
+import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
+import { useGetCompanyServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
+import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
+import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
+import {
+  useGetProfessionalReviewsQuery,
+  useGetProfessionalAverageRatingQuery,
+  useCreateReviewMutation,
+  useDeleteReviewMutation,
+  useUpdateReviewMutation,
+} from "../../redux/features/reviewApiSlice";
+import { useSelector } from "react-redux";
+import { Edit, Trash2 } from "lucide-react";
+
+import { toImageUrl } from "../../utils/imageUtils";
 
 const ProfessionalPublicProfile = () => {
-  const { professionalId } = useParams();
   const navigate = useNavigate();
-  const { data: pro, isLoading, error, refetch } = useGetPublicProfessionalProfileQuery(professionalId);
-  const { data: followStatus, isLoading: isStatusLoading } = useCheckFollowProStatusQuery(professionalId);
-  const [followPro, { isLoading: isFollowing }] = useFollowProfessionalMutation();
-  const [unfollowPro, { isLoading: isUnfollowing }] = useUnfollowProfessionalMutation();
-  const authUser = useSelector((state) => state.auth.user);
+  const location = useLocation();
+  const { professionalId } = useParams();
+  const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("posts"); // posts, products, services, reviews
+
+  const user = useSelector((state) => state.auth.user);
+
+  const {
+    data: followStatusData,
+    refetch: refetchFollowStatus,
+  } = useCheckFollowProStatusQuery(professionalId, {
+    skip: !professionalId || !user,
+    pollingInterval: 3000,
+  });
+
+  const isFollowed = followStatusData?.isFollowing ?? false;
+  const isBlocked = followStatusData?.isBlocked ?? false;
+
+  const [followPro, { isLoading: following }] = useFollowProfessionalMutation();
+  const [unfollowPro, { isLoading: unfollowing }] = useUnfollowProfessionalMutation();
+
+  const [createReport, { isLoading: reporting }] = useCreateReportMutation();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSuccess, setReportSuccess] = useState(false);
+
+  // Reservation & Order Logic
+  const [createReservation, { isLoading: reserving }] = useCreateReservationMutation();
+  const [createOrder, { isLoading: ordering }] = useCreateOrderMutation();
+  
+  const [selectedService, setSelectedService] = useState(null);
+  const [reservationDate, setReservationDate] = useState("");
+  const [reservationTime, setReservationTime] = useState("");
+  const [reservationNotes, setReservationNotes] = useState("");
+  const [resSuccess, setResSuccess] = useState(false);
+
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [shippingAddress, setShippingAddress] = useState({
+    fullName: user?.fullName || "",
+    street: "",
+    city: "",
+    zipCode: "",
+    phone: user?.phone || "",
+  });
+  const [orderSuccess, setOrderSuccess] = useState(false);
+
+  // Review Logic
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [createReview, { isLoading: submittingReview }] = useCreateReviewMutation();
+  const [updateReview, { isLoading: updatingReview }] = useUpdateReviewMutation();
+  const [deleteReview] = useDeleteReviewMutation();
+  
+  const { data: reviews = [], isLoading: loadingReviews } = useGetProfessionalReviewsQuery(professionalId, { skip: !professionalId, pollingInterval: 3000 });
+  const { data: ratingStats } = useGetProfessionalAverageRatingQuery(professionalId, { skip: !professionalId, pollingInterval: 3000 });
+
+  const { data: pro, isLoading: loadingProfile, refetch: refetchProfile } =
+    useGetPublicProfessionalProfileQuery(professionalId, {
+      skip: !professionalId,
+      pollingInterval: 3000,
+    });
+
+  const {
+    data: postsData,
+    isLoading: loadingPosts,
+    isFetching,
+    refetch: refetchPosts,
+  } = useGetPostsByCompanyQuery(
+    { companyId: professionalId, page, limit: 10 },
+    { skip: !professionalId, pollingInterval: 3000 }
+  );
+
+  const { data: products = [], isLoading: loadingProducts } = useGetCompanyProductsQuery(professionalId, { skip: !professionalId, pollingInterval: 3000 });
+  const { data: proServices = [], isLoading: loadingServices } = useGetCompanyServicesQuery(professionalId, { skip: !professionalId, pollingInterval: 3000 });
+
+  // ✅ Auto-select tab and item if redirected from dashboard
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (location.state?.selectServiceId && proServices.length > 0) {
+      const service = proServices.find(s => s._id === location.state.selectServiceId);
+      if (service) {
+        setSelectedService(service);
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [proServices, location.state]);
+
+  useEffect(() => {
+    if (location.state?.selectProductId && products.length > 0) {
+      const product = products.find(p => p._id === location.state.selectProductId);
+      if (product) {
+        setSelectedProduct(product);
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [products, location.state]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [professionalId]);
 
   const handleFollowToggle = async () => {
-    if (!authUser) {
-      navigate('/auth/login');
+    if (!user) {
+      navigate("/auth/login", { state: { from: location.pathname } });
       return;
     }
     try {
-      if (followStatus?.isFollowing) {
+      if (isFollowed) {
         await unfollowPro(professionalId).unwrap();
       } else {
         await followPro(professionalId).unwrap();
       }
-      refetch();
+      refetchFollowStatus();
+      refetchProfile();
     } catch (err) {
-      console.error("Follow error:", err);
+      console.error(err);
     }
   };
 
-  const showFollowBtn = authUser && authUser.id !== professionalId && authUser.companyId !== professionalId;
+  const handleReport = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/auth/login", { state: { from: location.pathname } });
+      return;
+    }
+    if (!reportReason.trim()) return;
+    try {
+      await createReport({ professional_id: professionalId, reason: reportReason }).unwrap();
+      setReportSuccess(true);
+      setReportReason("");
+      setTimeout(() => {
+        setIsReportModalOpen(false);
+        setReportSuccess(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Report error", err);
+    }
+  };
 
-  if (isLoading) return (
-    <div style={s.loadingContainer}>
-      <Loader size={32} color="#1E3A5F" style={{ animation: 'spin 1s linear infinite' }} />
-      <p style={{ color: '#64748b', marginTop: '16px' }}>Chargement du profil...</p>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/auth/login", { state: { from: location.pathname } });
+      return;
+    }
+    if (!reviewComment.trim()) return;
+    try {
+      if (editingReviewId) {
+        await updateReview({
+          id: editingReviewId,
+          professional_id: professionalId,
+          rating: reviewRating,
+          comment: reviewComment,
+        }).unwrap();
+        setEditingReviewId(null);
+        alert("Avis modifié avec succès !");
+      } else {
+        await createReview({
+          professional_id: professionalId,
+          rating: reviewRating,
+          comment: reviewComment,
+        }).unwrap();
+        alert("Merci pour votre avis !");
+      }
+      setReviewComment("");
+      setReviewRating(5);
+    } catch (err) {
+      console.error("Review error", err);
+      alert(err.data?.message || "Erreur lors de l'envoi de l'avis");
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReviewId(review._id);
+    setReviewRating(review.rating);
+    setReviewComment(review.comment);
+    const formElement = document.getElementById("review-form");
+    if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleDeleteReview = async (id) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) {
+      try {
+        await deleteReview(id).unwrap();
+        alert("Avis supprimé.");
+      } catch (err) {
+        console.error("Delete review error", err);
+        alert("Erreur lors de la suppression de l'avis");
+      }
+    }
+  };
+
+  const handleBookService = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/auth/login", { state: { from: location.pathname } });
+      return;
+    }
+    try {
+      await createReservation({
+        serviceId: selectedService._id,
+        professionalId,
+        date: reservationDate,
+        timeSlot: reservationTime,
+        notes: reservationNotes,
+      }).unwrap();
+      setResSuccess(true);
+      setTimeout(() => {
+        setSelectedService(null);
+        setResSuccess(false);
+        setReservationDate("");
+        setReservationTime("");
+        setReservationNotes("");
+      }, 2000);
+    } catch (err) {
+      console.error("Reservation error", err);
+      alert("Erreur lors de la réservation");
+    }
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/auth/login", { state: { from: location.pathname } });
+      return;
+    }
+    try {
+      await createOrder({
+        professionalId,
+        items: [{
+          productId: selectedProduct._id,
+          quantity: orderQuantity,
+          price: selectedProduct.price
+        }],
+        totalPrice: selectedProduct.price * orderQuantity,
+        shippingAddress,
+      }).unwrap();
+      setOrderSuccess(true);
+      setTimeout(() => {
+        setSelectedProduct(null);
+        setOrderSuccess(false);
+        setOrderQuantity(1);
+      }, 2000);
+    } catch (err) {
+      console.error("Order error", err);
+      alert("Erreur lors de la commande");
+    }
+  };
+
+  const posts = postsData?.posts ?? [];
+  const totalPages = postsData?.totalPages ?? 0;
+
+  const fullAddress = useMemo(
+    () => [pro?.cityName, pro?.regionName, pro?.countryName].filter(Boolean).join(", "),
+    [pro]
   );
 
-  if (error || !pro) return (
-    <div style={s.errorContainer}>
-      <User size={48} color="#000000ff" />
-      <h2 style={{ color: '#1e293b', marginTop: '16px' }}>Professionnel non trouvé</h2>
-      <button onClick={() => navigate('/')} style={s.backBtn}>
-        <ArrowLeft size={16} /> Retour à l'accueil
-      </button>
-    </div>
-  );
+  if (loadingProfile) {
+    return (
+      <div style={s.page}>
+        <div style={s.loadingCard}>
+          <Loader size={24} style={{ animation: "spin 1s linear infinite" }} />
+          <span>Chargement du profil...</span>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (!pro) {
+    return (
+      <div style={s.page}>
+        <div style={s.card}>Profil professionnel introuvable.</div>
+      </div>
+    );
+  }
+
+  const photo = toImageUrl(pro.photoProfessional);
 
   return (
-    <div style={s.root}>
-      {/* Header */}
-      <div style={s.header}>
-        <button onClick={() => navigate(-1)} style={s.backLink}>
-          <ArrowLeft size={18} /> Retour
+    <div style={s.page}>
+      <div style={s.container}>
+        <button type="button" onClick={() => navigate(-1)} style={s.backBtn}>
+          <ArrowLeft size={16} /> Retour
         </button>
-      </div>
 
-      {/* Cover */}
-      <div style={s.cover}>
-        <div style={s.coverGradient} />
-      </div>
+        <div style={s.card}>
+          <div style={s.cover}>
+             <div style={s.coverGradient} />
+          </div>
 
-      {/* Profile Card */}
-      <div style={s.profileCard}>
-        <div style={s.avatarWrapper}>
-          {pro.photoProfessional ? (
-            <img src={toImageUrl(pro.photoProfessional)} alt={pro.fullName} style={s.avatar} />
-          ) : (
-            <div style={s.avatarFallback}>
-              <User size={48} color="#000000ff" />
+          <div style={s.header}>
+            {photo ? (
+              <img src={photo} alt={pro.fullName} style={s.logo} />
+            ) : (
+              <div style={s.logoFallback}>
+                <User size={36} />
+              </div>
+            )}
+
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h1 style={s.name}>{pro.fullName || "Professionnel"}</h1>
+                {ratingStats?.averageRating > 0 && (
+                  <div style={s.ratingBadge}>
+                    <Star size={14} fill="#fbbf24" color="#fbbf24" />
+                    <span>{ratingStats.averageRating}</span>
+                    <span style={s.ratingCount}>({ratingStats.totalReviews})</span>
+                  </div>
+                )}
+              </div>
+              {!isBlocked && (pro.city || pro.region) ? (
+                <p style={s.meta}>
+                  <MapPin size={14} /> {pro.city}{pro.region ? `, ${pro.region}` : ''}{pro.country ? `, ${pro.country}` : ''}
+                </p>
+              ) : null}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={handleFollowToggle}
+                disabled={following || unfollowing}
+                style={isFollowed ? s.btnFollowing : s.btnFollow}
+              >
+                {following || unfollowing ? (
+                  <Loader size={14} style={{ animation: "spin 1s linear infinite" }} />
+                ) : isFollowed ? (
+                  <><UserCheck size={15} /> Déjà suivi</>
+                ) : (
+                  <><UserPlus size={15} /> Suivre</>
+                )}
+              </button>
+              
+              <button 
+                onClick={() => setIsReportModalOpen(true)}
+                style={s.btnReport}
+                title="Signaler ce professionnel"
+              >
+                <Flag size={15} />
+              </button>
+            </div>
+          </div>
+
+          {!isBlocked && pro.description ? <p style={s.description}>{pro.description}</p> : null}
+
+          {!isBlocked && (
+            <div style={s.links}>
+              {pro.website && (
+                <a href={pro.website} target="_blank" rel="noreferrer" style={s.linkChip}>
+                  <Globe size={14} /> Site web
+                </a>
+              )}
+              {pro.email && (
+                <a href={`mailto:${pro.email}`} style={s.linkChip}>
+                  <Mail size={14} /> {pro.email}
+                </a>
+              )}
+              {pro.phone && (
+                <a href={`tel:${pro.phone}`} style={s.linkChip}>
+                  <Phone size={14} /> {pro.phone}
+                </a>
+              )}
             </div>
           )}
         </div>
 
-        <div style={s.infoSection}>
-          <h1 style={s.name}>{pro.fullName}</h1>
-
-          <div style={s.metaRow}>
-            {pro.city && (
-              <span style={s.metaItem}>
-                <MapPin size={14} color="#64748b" /> {pro.city}{pro.region ? `, ${pro.region}` : ''}{pro.country ? `, ${pro.country}` : ''}
-              </span>
-            )}
-            <span style={s.metaItem}>
-              <Users size={14} color="#64748b" /> {pro.followersCount || 0} abonnés
-            </span>
-          </div>
+        {/* TABS */}
+        <div style={s.tabs}>
+          <button 
+            onClick={() => setActiveTab("posts")} 
+            style={activeTab === "posts" ? s.tabActive : s.tab}
+          >
+            <Newspaper size={18} /> Publications
+          </button>
+          <button 
+            onClick={() => setActiveTab("services")} 
+            style={activeTab === "services" ? s.tabActive : s.tab}
+          >
+            <Wrench size={18} /> Services ({proServices.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab("products")} 
+            style={activeTab === "products" ? s.tabActive : s.tab}
+          >
+            <Package size={18} /> Produits ({products.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab("reviews")} 
+            style={activeTab === "reviews" ? s.tabActive : s.tab}
+          >
+            <MessageSquare size={18} /> Avis ({reviews.length})
+          </button>
         </div>
 
-        {/* TOP ACTIONS */}
-        <div style={s.topActions}>
-          {showFollowBtn && (
-            <button 
-              onClick={handleFollowToggle} 
-              disabled={isFollowing || isUnfollowing || isStatusLoading}
-              style={{
-                ...s.followBtn,
-                background: followStatus?.isFollowing ? '#f1f5f9' : '#fff',
-                color: followStatus?.isFollowing ? '#475569' : '#1E3A5F',
-              }}
-            >
-              {isFollowing || isUnfollowing ? (
-                <Loader size={16} className="animate-spin" />
-              ) : followStatus?.isFollowing ? (
-                <><UserMinus size={16} /> Ne plus suivre</>
+        {/* Content */}
+        {activeTab === "posts" && (
+          <section style={s.feedSection}>
+            {loadingPosts && page === 1 ? (
+              <div style={s.loadingCard}>
+                <Loader size={22} style={{ animation: "spin 1s linear infinite" }} />
+                <span>Chargement des publications...</span>
+              </div>
+            ) : posts.length === 0 ? (
+              <div style={s.emptyFeed}>
+                <Newspaper size={48} style={{ marginBottom: '15px', opacity: 0.5 }} />
+                <p>Aucune publication pour le moment.</p>
+              </div>
+            ) : (
+              <div style={s.postsGrid}>
+                {posts.map((post) => (
+                  <PostCard key={post._id} post={post} />
+                ))}
+              </div>
+            )}
+            {totalPages > 1 && (
+              <div style={s.pagination}>
+                <button 
+                  disabled={page === 1 || isFetching} 
+                  onClick={() => setPage(p => p - 1)}
+                  style={s.pageBtn}
+                >Précédent</button>
+                <span style={s.pageInfo}>Page {page} sur {totalPages}</span>
+                <button 
+                  disabled={page === totalPages || isFetching} 
+                  onClick={() => setPage(p => p + 1)}
+                  style={s.pageBtn}
+                >Suivant</button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeTab === "services" && (
+          <div style={s.itemsGrid}>
+            {proServices.length === 0 ? (
+              <div style={s.emptyFeed}>Aucun service proposé.</div>
+            ) : (
+              proServices.map(service => (
+                <div key={service._id} style={s.itemCard}>
+                  <img src={toImageUrl(service.imageService)} alt={service.name} style={s.itemImg} />
+                  <div style={s.itemContent}>
+                    <h4 style={s.itemName}>{service.name}</h4>
+                    <div style={s.itemMeta}>
+                      <span><Clock size={14} /> {service.duration} min</span>
+                      <span style={s.itemPrice}>{service.price} TND</span>
+                    </div>
+                    <button onClick={() => setSelectedService(service)} style={s.itemBtn}>
+                      <Calendar size={16} /> Réserver
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "products" && (
+          <div style={s.itemsGrid}>
+            {products.length === 0 ? (
+              <div style={s.emptyFeed}>Aucun produit en vente.</div>
+            ) : (
+              products.map(product => (
+                <div key={product._id} style={s.itemCard}>
+                  <img src={toImageUrl(product.imageProduct)} alt={product.name} style={s.itemImg} />
+                  <div style={s.itemContent}>
+                    <h4 style={s.itemName}>{product.name}</h4>
+                    <div style={s.itemMeta}>
+                      <span style={s.itemPrice}>{product.price} TND</span>
+                    </div>
+                    <button onClick={() => setSelectedProduct(product)} style={s.itemBtn}>
+                      <Package size={16} /> Commander
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "reviews" && (
+          <div style={s.reviewsSection}>
+            <div style={s.reviewsHeader}>
+              <div style={s.avgRatingBig}>
+                <div style={s.avgValue}>{ratingStats?.averageRating || "0.0"}</div>
+                <div style={s.avgStars}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star key={star} size={18} fill={star <= Math.round(ratingStats?.averageRating || 0) ? "#fbbf24" : "none"} color="#fbbf24" />
+                  ))}
+                </div>
+                <div style={s.avgCount}>{ratingStats?.totalReviews || 0} avis</div>
+              </div>
+              
+              <form id="review-form" onSubmit={handleReviewSubmit} style={s.reviewForm}>
+                <h4 style={s.formTitle}>{editingReviewId ? "Modifier votre avis" : "Laisser un avis"}</h4>
+                <div style={s.starRating}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button 
+                      key={star} 
+                      type="button" 
+                      onClick={() => setReviewRating(star)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
+                    >
+                      <Star size={24} fill={star <= reviewRating ? "#fbbf24" : "none"} color="#fbbf24" />
+                    </button>
+                  ))}
+                </div>
+                <textarea 
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Partagez votre expérience avec ce professionnel..."
+                  style={s.reviewTextarea}
+                  required
+                />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="submit" disabled={submittingReview || updatingReview} style={s.reviewSubmitBtn}>
+                    {submittingReview || updatingReview ? <Loader size={16} className="animate-spin" /> : "Envoyer"}
+                  </button>
+                  {editingReviewId && (
+                    <button type="button" onClick={() => {setEditingReviewId(null); setReviewComment(""); setReviewRating(5);}} style={s.reviewCancelBtn}>Annuler</button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div style={s.reviewsList}>
+              {loadingReviews ? (
+                <div style={s.loadingCard}><Loader size={20} className="animate-spin" /></div>
+              ) : reviews.length === 0 ? (
+                <div style={s.emptyFeed}>Soyez le premier à donner votre avis !</div>
               ) : (
-                <><UserPlus size={16} /> Suivre</>
+                reviews.map(review => (
+                  <div key={review._id} style={s.reviewCard}>
+                    <div style={s.reviewHeader}>
+                      <img src={toImageUrl(review.user_id?.avatarUrl)} alt={review.user_id?.fullName} style={s.reviewAvatar} />
+                      <div style={{ flex: 1 }}>
+                        <div style={s.reviewAuthor}>{review.user_id?.fullName}</div>
+                        <div style={s.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</div>
+                      </div>
+                      <div style={s.reviewStars}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <Star key={star} size={12} fill={star <= review.rating ? "#fbbf24" : "none"} color="#fbbf24" />
+                        ))}
+                      </div>
+                    </div>
+                    <p style={s.reviewComment}>{review.comment}</p>
+                    {user?.id === review.user_id?._id && (
+                      <div style={s.reviewActions}>
+                        <button onClick={() => handleEditReview(review)} style={s.actionBtn}><Edit size={14} /> Modifier</button>
+                        <button onClick={() => handleDeleteReview(review._id)} style={{ ...s.actionBtn, color: '#ef4444' }}><Trash2 size={14} /> Supprimer</button>
+                      </div>
+                    )}
+                  </div>
+                ))
               )}
-            </button>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div style={s.content}>
-        {/* About */}
-        <div style={s.card}>
-          <h3 style={s.cardTitle}>À propos</h3>
-          <p style={s.description}>
-            {pro.description || "Ce professionnel n'a pas encore ajouté de description."}
-          </p>
-        </div>
+      {/* Reservation Modal */}
+      {selectedService && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <button onClick={() => setSelectedService(null)} style={s.modalClose}><X size={24} /></button>
+            <div style={s.modalHeader}>
+              <Wrench size={24} color="#24416b" />
+              <h2 style={s.modalTitle}>Réserver un service</h2>
+            </div>
+            
+            {resSuccess ? (
+              <div style={s.successMsg}>
+                <Star size={48} color="#10b981" />
+                <h3>Demande envoyée !</h3>
+                <p>Le professionnel vous contactera pour confirmer.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleBookService} style={s.modalForm}>
+                <div style={s.modalItemInfo}>
+                  <img src={toImageUrl(selectedService.imageService)} alt="" style={s.modalItemImg} />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '18px' }}>{selectedService.name}</h3>
+                    <p style={{ margin: '5px 0', color: '#64748b' }}>{selectedService.price} TND • {selectedService.duration} min</p>
+                  </div>
+                </div>
 
-        {/* Contact */}
-        <div style={s.card}>
-          <h3 style={s.cardTitle}>Coordonnées</h3>
-          <div style={s.contactGrid}>
-            {pro.email && (
-              <div style={s.contactItem}>
-                <div style={s.contactIcon}><Mail size={18} color="#3b82f6" /></div>
-                <div>
-                  <p style={s.contactLabel}>Email</p>
-                  <p style={s.contactValue}>{pro.email}</p>
+                <div style={s.formGrid}>
+                  <div style={s.formGroup}>
+                    <label style={s.formLabel}>Date souhaitée</label>
+                    <input type="date" required style={s.formInput} value={reservationDate} onChange={e => setReservationDate(e.target.value)} />
+                  </div>
+                  <div style={s.formGroup}>
+                    <label style={s.formLabel}>Heure</label>
+                    <input type="time" required style={s.formInput} value={reservationTime} onChange={e => setReservationTime(e.target.value)} />
+                  </div>
                 </div>
-              </div>
-            )}
-            {pro.phone && (
-              <div style={s.contactItem}>
-                <div style={s.contactIcon}><Phone size={18} color="#10b981" /></div>
-                <div>
-                  <p style={s.contactLabel}>Téléphone</p>
-                  <p style={s.contactValue}>{pro.phone}</p>
+
+                <div style={s.formGroup}>
+                  <label style={s.formLabel}>Notes (optionnel)</label>
+                  <textarea 
+                    style={s.formTextarea} 
+                    placeholder="Précisez vos besoins..."
+                    value={reservationNotes}
+                    onChange={e => setReservationNotes(e.target.value)}
+                  />
                 </div>
-              </div>
-            )}
-            {pro.website && (
-              <div style={s.contactItem}>
-                <div style={s.contactIcon}><Globe size={18} color="#8b5cf6" /></div>
-                <div>
-                  <p style={s.contactLabel}>Site Web</p>
-                  <a href={pro.website} target="_blank" rel="noopener noreferrer" style={s.contactLink}>{pro.website}</a>
-                </div>
-              </div>
+
+                <button type="submit" disabled={reserving} style={s.modalSubmit}>
+                  {reserving ? <Loader size={18} className="animate-spin" /> : "Confirmer la réservation"}
+                </button>
+              </form>
             )}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Order Modal */}
+      {selectedProduct && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <button onClick={() => setSelectedProduct(null)} style={s.modalClose}><X size={24} /></button>
+            <div style={s.modalHeader}>
+              <Package size={24} color="#24416b" />
+              <h2 style={s.modalTitle}>Commander un produit</h2>
+            </div>
+
+            {orderSuccess ? (
+              <div style={s.successMsg}>
+                <Star size={48} color="#10b981" />
+                <h3>Commande validée !</h3>
+                <p>Votre commande a été transmise avec succès.</p>
+              </div>
+            ) : (
+              <form onSubmit={handlePlaceOrder} style={s.modalForm}>
+                <div style={s.modalItemInfo}>
+                  <img src={toImageUrl(selectedProduct.imageProduct)} alt="" style={s.modalItemImg} />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '18px' }}>{selectedProduct.name}</h3>
+                    <p style={{ margin: '5px 0', color: '#64748b' }}>{selectedProduct.price} TND / unité</p>
+                  </div>
+                </div>
+
+                <div style={s.formGroup}>
+                  <label style={s.formLabel}>Quantité</label>
+                  <input 
+                    type="number" min="1" required style={s.formInput} 
+                    value={orderQuantity} onChange={e => setOrderQuantity(parseInt(e.target.value))} 
+                  />
+                </div>
+
+                <div style={s.sectionDivider}>Adresse de livraison</div>
+                
+                <div style={s.formGroup}>
+                  <label style={s.formLabel}>Nom complet</label>
+                  <input 
+                    type="text" required style={s.formInput} 
+                    value={shippingAddress.fullName} onChange={e => setShippingAddress({...shippingAddress, fullName: e.target.value})} 
+                  />
+                </div>
+
+                <div style={s.formGroup}>
+                  <label style={s.formLabel}>Rue / Quartier</label>
+                  <input 
+                    type="text" required style={s.formInput} 
+                    value={shippingAddress.street} onChange={e => setShippingAddress({...shippingAddress, street: e.target.value})} 
+                  />
+                </div>
+
+                <div style={s.formGrid}>
+                  <div style={s.formGroup}>
+                    <label style={s.formLabel}>Ville</label>
+                    <input 
+                      type="text" required style={s.formInput} 
+                      value={shippingAddress.city} onChange={e => setShippingAddress({...shippingAddress, city: e.target.value})} 
+                    />
+                  </div>
+                  <div style={s.formGroup}>
+                    <label style={s.formLabel}>Téléphone</label>
+                    <input 
+                      type="text" required style={s.formInput} 
+                      value={shippingAddress.phone} onChange={e => setShippingAddress({...shippingAddress, phone: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div style={s.orderSummary}>
+                  <span>Total à payer:</span>
+                  <span style={{ fontSize: '20px', color: '#24416b' }}>{selectedProduct.price * orderQuantity} TND</span>
+                </div>
+
+                <button type="submit" disabled={ordering} style={s.modalSubmit}>
+                  {ordering ? <Loader size={18} className="animate-spin" /> : "Passer la commande"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <div style={s.modalOverlay}>
+          <div style={{ ...s.modal, maxWidth: '500px' }}>
+            <button onClick={() => setIsReportModalOpen(false)} style={s.modalClose}><X size={24} /></button>
+            <div style={s.modalHeader}>
+              <Flag size={24} color="#ef4444" />
+              <h2 style={s.modalTitle}>Signaler ce profil</h2>
+            </div>
+            
+            {reportSuccess ? (
+              <div style={s.successMsg}>
+                <Info size={48} color="#10b981" />
+                <h3>Signalement envoyé</h3>
+                <p>Nos administrateurs examineront ce profil sous peu.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReport} style={s.modalForm}>
+                <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '15px' }}>
+                  Aidez-nous à maintenir la communauté sûre. Pourquoi signalez-vous ce professionnel ?
+                </p>
+                <textarea 
+                  required
+                  style={s.formTextarea} 
+                  placeholder="Détaillez le problème rencontré..."
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                />
+                <button type="submit" disabled={reporting} style={{ ...s.modalSubmit, background: '#ef4444' }}>
+                  {reporting ? <Loader size={18} className="animate-spin" /> : "Envoyer le signalement"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 const s = {
-  root: { minHeight: '100vh', background: '#f8fafc' },
-  loadingContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' },
-  errorContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' },
-  header: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 60, background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', padding: '0 30px' },
-  backLink: { display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#1E3A5F', fontSize: '15px', fontWeight: '700', cursor: 'pointer' },
-  backBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', marginTop: '16px' },
-  cover: { height: 220, background: 'linear-gradient(135deg, #1E3A5F 0%, #3b82f6 50%, #8b5cf6 100%)', position: 'relative', marginTop: 60 },
+  page: { minHeight: '100vh', background: '#f8fafc', padding: '20px 0 60px' },
+  container: { maxWidth: '1000px', margin: '0 auto', padding: '0 20px' },
+  backBtn: { display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#64748b', fontWeight: '600', cursor: 'pointer', marginBottom: '20px' },
+  card: { background: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', marginBottom: '30px' },
+  cover: { height: '160px', background: 'linear-gradient(135deg, #1E3A5F 0%, #3b82f6 50%, #8b5cf6 100%)', position: 'relative' },
   coverGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60px', background: 'linear-gradient(transparent, rgba(0,0,0,0.1))' },
-  profileCard: { maxWidth: 900, margin: '-60px auto 0', padding: '0 20px', position: 'relative', zIndex: 10, display: 'flex', alignItems: 'flex-end', gap: '24px' },
-  avatarWrapper: { flexShrink: 0 },
-  avatar: { width: 140, height: 140, borderRadius: '50%', objectFit: 'cover', border: '4px solid #fff', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' },
-  avatarFallback: { width: 140, height: 140, borderRadius: '50%', background: '#f1f5f9', border: '4px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' },
-  infoSection: { paddingBottom: '10px' },
-  name: { fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: '0 0 8px' },
-  metaRow: { display: 'flex', gap: '20px', flexWrap: 'wrap' },
-  metaItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: '600', color: '#64748b' },
-  content: { maxWidth: 900, margin: '30px auto', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '60px' },
-  card: { background: '#fff', borderRadius: '16px', padding: '30px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
-  cardTitle: { fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: '0 0 16px', borderBottom: '2px solid #f1f5f9', paddingBottom: '12px' },
-  description: { fontSize: '15px', color: '#475569', lineHeight: '1.8', margin: 0, whiteSpace: 'pre-line' },
-  contactGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' },
-  contactItem: { display: 'flex', gap: '14px', alignItems: 'center', padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' },
-  contactIcon: { width: '44px', height: '44px', borderRadius: '12px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', flexShrink: 0 },
-  contactLabel: { fontSize: '12px', fontWeight: '700', color: '#535b65ff', textTransform: 'uppercase', margin: '0 0 2px' },
-  contactValue: { fontSize: '15px', fontWeight: '600', color: '#1e293b', margin: 0 },
-  contactLink: { fontSize: '15px', fontWeight: '600', color: '#3b82f6', textDecoration: 'none', margin: 0 },
-  topActions: { marginLeft: 'auto', display: 'flex', gap: '12px' },
-  followBtn: {
-    display: 'flex', alignItems: 'center', gap: '8px',
-    padding: '10px 24px', borderRadius: '12px',
-    fontSize: '14px', fontWeight: '800', border: '1px solid #e2e8f0',
-    cursor: 'pointer', transition: 'all 0.2s',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-  }
+  header: { padding: '0 40px 30px', marginTop: '-50px', display: 'flex', gap: '24px', alignItems: 'flex-end', position: 'relative' },
+  logo: { width: '120px', height: '120px', borderRadius: '30px', border: '6px solid white', background: 'white', objectFit: 'cover', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' },
+  logoFallback: { width: '120px', height: '120px', borderRadius: '30px', border: '6px solid white', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' },
+  name: { fontSize: '32px', fontWeight: '900', color: '#1e293b', margin: '0 0 5px' },
+  ratingBadge: { display: 'flex', alignItems: 'center', gap: '5px', background: '#fffbeb', color: '#b45309', padding: '4px 10px', borderRadius: '12px', fontSize: '14px', fontWeight: '700', border: '1px solid #fde68a' },
+  ratingCount: { color: '#d97706', opacity: 0.7, fontWeight: '500' },
+  meta: { display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '15px', fontWeight: '500', margin: 0 },
+  btnFollow: { display: 'flex', alignItems: 'center', gap: '8px', background: '#24416b', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  btnFollowing: { display: 'flex', alignItems: 'center', gap: '8px', background: '#eff6ff', color: '#24416b', border: '1px solid #dbeafe', padding: '12px 24px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  btnReport: { width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', color: '#94a3b8', border: '1px solid #e2e8f0', borderRadius: '14px', cursor: 'pointer', transition: '0.2s' },
+  description: { padding: '0 40px', color: '#475569', fontSize: '16px', lineHeight: '1.7', margin: '0 0 25px' },
+  links: { padding: '0 40px 30px', display: 'flex', gap: '15px', flexWrap: 'wrap' },
+  linkChip: { display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', color: '#1e293b', textDecoration: 'none', padding: '8px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', border: '1px solid #e2e8f0' },
+  tabs: { display: 'flex', gap: '10px', background: 'white', padding: '10px', borderRadius: '20px', border: '1px solid #e2e8f0', marginBottom: '30px' },
+  tab: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px', borderRadius: '14px', border: 'none', background: 'none', color: '#64748b', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  tabActive: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px', borderRadius: '14px', border: 'none', background: '#24416b', color: 'white', fontWeight: '700', cursor: 'pointer' },
+  feedSection: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  postsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '25px' },
+  emptyFeed: { textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '24px', border: '1px dashed #cbd5e1', color: '#64748b' },
+  itemsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' },
+  itemCard: { background: 'white', borderRadius: '20px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' },
+  itemImg: { width: '100%', height: '160px', objectFit: 'cover' },
+  itemContent: { padding: '15px' },
+  itemName: { margin: '0 0 10px', fontSize: '16px', fontWeight: '700', color: '#1e293b' },
+  itemMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', color: '#64748b', fontSize: '13px' },
+  itemPrice: { color: '#24416b', fontWeight: '800', fontSize: '16px' },
+  itemBtn: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0', padding: '10px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  reviewsSection: { background: 'white', borderRadius: '24px', padding: '30px', border: '1px solid #e2e8f0' },
+  reviewsHeader: { display: 'flex', gap: '40px', marginBottom: '40px', flexWrap: 'wrap' },
+  avgRatingBig: { textAlign: 'center', padding: '30px', background: '#f8fafc', borderRadius: '20px', minWidth: '180px' },
+  avgValue: { fontSize: '48px', fontWeight: '900', color: '#1e293b' },
+  avgStars: { display: 'flex', justifyContent: 'center', gap: '2px', margin: '10px 0' },
+  avgCount: { fontSize: '14px', color: '#64748b', fontWeight: '600' },
+  reviewForm: { flex: 1, minWidth: '300px' },
+  formTitle: { margin: '0 0 15px', fontSize: '18px', fontWeight: '800' },
+  starRating: { display: 'flex', gap: '5px', marginBottom: '15px' },
+  reviewTextarea: { width: '100%', minHeight: '100px', padding: '15px', borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: '15px', marginBottom: '15px', resize: 'none' },
+  reviewSubmitBtn: { background: '#24416b', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' },
+  reviewCancelBtn: { background: '#f1f5f9', color: '#64748b', border: 'none', padding: '12px 30px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' },
+  reviewsList: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  reviewCard: { padding: '20px', borderBottom: '1px solid #f1f5f9' },
+  reviewHeader: { display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '12px' },
+  reviewAvatar: { width: '40px', height: '40px', borderRadius: '12px', objectFit: 'cover' },
+  reviewAuthor: { fontWeight: '700', fontSize: '15px' },
+  reviewDate: { fontSize: '12px', color: '#94a3b8' },
+  reviewStars: { marginLeft: 'auto', display: 'flex', gap: '2px' },
+  reviewComment: { color: '#475569', fontSize: '15px', lineHeight: '1.6', margin: 0 },
+  reviewActions: { display: 'flex', gap: '15px', marginTop: '12px' },
+  actionBtn: { display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', color: '#64748b', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
+  modal: { background: 'white', borderRadius: '32px', width: '100%', maxWidth: '600px', padding: '40px', position: 'relative', maxHeight: '90vh', overflowY: 'auto' },
+  modalClose: { position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' },
+  modalHeader: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' },
+  modalTitle: { fontSize: '24px', fontWeight: '900', color: '#1e293b', margin: 0 },
+  modalForm: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  modalItemInfo: { display: 'flex', gap: '20px', alignItems: 'center', padding: '20px', background: '#f8fafc', borderRadius: '20px', marginBottom: '10px' },
+  modalItemImg: { width: '80px', height: '80px', borderRadius: '15px', objectFit: 'cover' },
+  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
+  formGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  formLabel: { fontSize: '14px', fontWeight: '700', color: '#475569' },
+  formInput: { padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '15px' },
+  formTextarea: { padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '15px', minHeight: '100px', resize: 'none' },
+  modalSubmit: { background: '#24416b', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', marginTop: '10px' },
+  successMsg: { textAlign: 'center', padding: '40px 0' },
+  sectionDivider: { fontSize: '14px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', margin: '10px 0 5px' },
+  orderSummary: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', background: '#eff6ff', borderRadius: '16px', fontWeight: '800' },
+  pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '30px' },
+  pageBtn: { padding: '10px 20px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', fontWeight: '700', cursor: 'pointer' },
+  pageInfo: { color: '#64748b', fontWeight: '600' },
+  loadingCard: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '40px', color: '#64748b' }
 };
 
 export default ProfessionalPublicProfile;

@@ -36,7 +36,9 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={m.itemName}>{item.name}</p>
               <p style={m.itemPrice}>{item.price} TND {type === 'service' && `(${item.duration})`}</p>
-              <p style={m.itemCompany}>Vendu par {item.companyId?.companyName || 'Société'}</p>
+              <p style={m.itemCompany}>
+                Vendu par {item.companyId?.companyName || item.professionalId?.fullName || (item.professionalId ? 'Professionnel' : 'Société')}
+              </p>
             </div>
           </div>
 

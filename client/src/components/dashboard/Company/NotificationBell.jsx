@@ -76,23 +76,20 @@ const NotificationBell = ({ type }) => {
           border: "none",
           cursor: "pointer",
           position: "relative",
-          padding: "8px",
+          padding: "10px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "#64748b",
-          borderRadius: "10px",
-          transition: "background 0.2s"
+          transition: "all 0.2s"
         }}
-        onMouseEnter={(e) => e.currentTarget.style.background = "#f1f5f9"}
-        onMouseLeave={(e) => e.currentTarget.style.background = "none"}
       >
         <Bell size={22} />
         {unreadCount > 0 && (
           <span style={{
             position: "absolute",
-            top: "5px",
-            right: "5px",
+            top: "4px",
+            right: "4px",
             background: "#ef4444",
             color: "white",
             fontSize: "10px",

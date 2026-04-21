@@ -31,16 +31,23 @@ export const generateQuotePDF = (quote, company) => {
   doc.text(quote.userId?.email || "", 20, 80);
 
   // Items Table
-  const tableRows = quote.items.map(item => [
-    item.description,
-    item.quantity.toString(),
-    `${item.unitPrice.toFixed(2)} TND`,
-    `${item.total.toFixed(2)} TND`
-  ]);
+  const hasDuration = quote.items.some(item => item.duration);
+  
+  const tableHead = hasDuration 
+    ? [["Description", "Durée", "Prix Unitaire", "Total"]]
+    : [["Description", "Prix Unitaire", "Total"]];
 
+  const tableRows = quote.items.map(item => {
+    const row = [item.description];
+    if (hasDuration) row.push(item.duration || "-");
+    row.push(`${item.unitPrice.toFixed(2)} TND`);
+    row.push(`${((item.unitPrice || 0) * (item.quantity || 1)).toFixed(2)} TND`);
+    return row;
+  });
+  
   autoTable(doc, {
     startY: 90,
-    head: [["Description", "Quantité", "Prix Unitaire", "Total"]],
+    head: tableHead,
     body: tableRows,
     headStyles: { fillColor: [36, 65, 107] },
   });

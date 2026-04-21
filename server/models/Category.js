@@ -4,12 +4,16 @@ const categorySchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true
+  },
+  type: {
+    type: String,
+    enum: ["professional", "company"],
+    required: true
   },
   status: {
     type: String,
     enum: ["Actif", "Inactif"],
-    default: "Inactif"
+    default: "Actif"
   }
 }, { timestamps: true });
 

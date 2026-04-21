@@ -10,7 +10,12 @@ const quoteSchema = new mongoose.Schema(
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
+      required: false,
+    },
+    professionalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Professional",
+      required: false,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -26,6 +31,7 @@ const quoteSchema = new mongoose.Schema(
         description: { type: String, required: true },
         quantity: { type: Number, required: true, min: 1 },
         unitPrice: { type: Number, required: true, min: 0 },
+        duration: { type: String }, // e.g., "1h", "60 min"
         total: { type: Number, required: true },
       },
     ],

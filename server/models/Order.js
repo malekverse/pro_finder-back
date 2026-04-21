@@ -10,7 +10,12 @@ const orderSchema = new mongoose.Schema(
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
+      required: false,
+    },
+    professionalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Professional",
+      required: false,
     },
     items: [
       {

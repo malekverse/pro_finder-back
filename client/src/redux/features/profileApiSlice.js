@@ -84,6 +84,14 @@ updateProfile: builder.mutation({
       }),
       invalidatesTags: ['Dashboard', 'PendingProfessionals'],
     }),
+    contactProfessional: builder.mutation({
+      query: ({ professionalId, message, type }) => ({
+        url: `/admin/contact-professional/${professionalId}`,
+        method: 'POST',
+        body: { message, type },
+      }),
+      invalidatesTags: ['Dashboard', 'PendingProfessionals'],
+    }),
   }),
 });
 
@@ -101,4 +109,5 @@ export const {
   useGetPendingProfessionalsQuery,
   useVerifyProfessionalMutation,
   useRejectProfessionalMutation,
+  useContactProfessionalMutation,
 } = profileApiSlice;

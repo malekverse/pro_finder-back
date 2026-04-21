@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema(
     recipient_type: { 
       type: String, 
       required: true, 
-      enum: ["User", "Company"] 
+      enum: ["User", "Company", "Professional"] 
     },
     sender_id: { 
       type: mongoose.Schema.Types.ObjectId, 
@@ -20,7 +20,7 @@ const notificationSchema = new mongoose.Schema(
     sender_type: {
       type: String,
       required: true,
-      enum: ["User", "Company"],
+      enum: ["User", "Company", "Professional"],
       default: "User"
     },
     type: { 

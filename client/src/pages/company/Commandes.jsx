@@ -23,10 +23,11 @@ import {
   FileSpreadsheet
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css";
+import CompanyCalendar from "../../components/dashboard/Company/CompanyCalendar";
 
 const Commandes = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("orders"); // orders or reservations
+  const [activeTab, setActiveTab] = useState("orders"); // orders, reservations, or calendar
 
   const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery(undefined, { pollingInterval: 3000 });
   const { data: reservations = [], isLoading: loadingReservations } = useGetCompanyReservationsQuery(undefined, { pollingInterval: 3000 });
@@ -112,6 +113,12 @@ const Commandes = () => {
         >
           <Calendar size={18} /> Réservations ({reservations.length})
         </button>
+        <button 
+          onClick={() => setActiveTab("calendar")}
+          className={activeTab === "calendar" ? styles.tabActive : styles.tab}
+        >
+          <Calendar size={18} /> Vue Calendrier
+        </button>
       </div>
 
       {activeTab === "orders" ? (
@@ -182,7 +189,7 @@ const Commandes = () => {
             </div>
           )}
         </div>
-      ) : (
+      ) : activeTab === "reservations" ? (
         <div className={styles.content}>
           {loadingReservations ? (
             <div className={styles.loader}><Loader2 className="animate-spin" /></div>
@@ -307,6 +314,13 @@ const Commandes = () => {
               ))}
             </div>
           )}
+        </div>
+      ) : (
+        <div className={styles.content}>
+           <CompanyCalendar 
+                reservations={reservations.filter(r => ["confirmed", "completed", "blocked"].includes(r.status))} 
+                onUpdateStatus={handleUpdateReservation}
+           />
         </div>
       )}
     </div>

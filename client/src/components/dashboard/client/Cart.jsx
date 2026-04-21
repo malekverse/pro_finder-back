@@ -22,8 +22,13 @@ const Cart = ({ onClose }) => {
     }
 
     try {
+      // On vérifie si c'est un professionnel ou une entreprise
+      // On peut regarder si le premier item a professionalId
+      const isProfessional = !!cart.items[0]?.professionalId;
+
       const orderData = {
-        companyId,
+        companyId: isProfessional ? null : companyId,
+        professionalId: isProfessional ? companyId : null,
         items: cart.items.map(item => ({
           productId: item._id,
           quantity: item.quantity,
@@ -43,7 +48,7 @@ const Cart = ({ onClose }) => {
       alert(`Commande passée avec succès chez ${cart.companyName} !`);
     } catch (err) {
       console.error("Checkout failed:", err);
-      alert("Erreur lors de la commande.");
+      alert(err.data?.message || "Erreur lors de la commande.");
     }
   };
 

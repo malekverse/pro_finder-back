@@ -35,6 +35,24 @@ const getProfessionalProfile = async (req, res) => {
   }
 };
 
+const getProfessionalFollowers = async (req, res) => {
+  try {
+    const professionalId = req.user;
+    
+    const followers = await Follow.find({ 
+      professional_id: professionalId,
+      is_blocked: { $ne: true }
+    })
+      .populate("user_id", "fullName email avatarUrl phone")
+      .sort({ createdAt: -1 });
+      
+    res.json(followers);
+  } catch (error) {
+    console.error("Error fetching professional followers:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ── Profil public par ID ─────────────────────────────────────
 const getPublicProfessionalProfile = async (req, res) => {
   try {
@@ -123,25 +141,69 @@ const searchProfessionals = async (req, res) => {
     const { q, country, region, city, category, subCategory, service } = req.query;
     let query = { Status: "active" };
 
+    // Filtre texte amélioré (Recherche multi-critères)
     if (q && q.trim() !== "") {
-      query.fullName = { $regex: q, $options: "i" };
+      const keywords = q.trim().split(/\s+/);
+
+      // On prépare des recherches pour chaque mot-clé
+      const Category = mongoose.model("Category");
+      const SubCategory = mongoose.model("SubCategory");
+      const Service = mongoose.model("Service");
+      const Country = mongoose.model("Country");
+      const Region = mongoose.model("Region");
+      const City = mongoose.model("City");
+
+      const keywordFilters = await Promise.all(keywords.map(async (kw) => {
+        // Pour chaque mot-clé, on trouve les IDs correspondants
+        const cats = await Category.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+        const subs = await SubCategory.find({
+          $or: [{ name: { $regex: kw, $options: "i" } }, { category_id: { $in: cats.map(c => c._id) } }]
+        }).select("_id");
+        const servs = await Service.find({
+          $or: [{ name: { $regex: kw, $options: "i" } }, { subcategory_id: { $in: subs.map(s => s._id) } }]
+        }).select("_id");
+
+        const countries = await Country.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+        const regions = await Region.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+        const cities = await City.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+
+        return {
+          $or: [
+            { fullName: { $regex: kw, $options: "i" } },
+            { description: { $regex: kw, $options: "i" } },
+            { services: { $in: servs.map(s => s._id) } },
+            { country: { $in: countries.map(c => c._id) } },
+            { region: { $in: regions.map(r => r._id) } },
+            { city: { $in: cities.map(c => c._id) } }
+          ]
+        };
+      }));
+
+      // On veut que le pro matche TOUS les mots-clés
+      query.$and = keywordFilters;
     }
 
     // Filtres Géo
     if (country && country !== "") {
-      query.country = mongoose.isValidObjectId(country)
-        ? { $in: [country, new mongoose.Types.ObjectId(country)] }
-        : country;
+      if (mongoose.isValidObjectId(country)) {
+        query.country = new mongoose.Types.ObjectId(country);
+      } else {
+        query.country = country;
+      }
     }
     if (region && region !== "") {
-      query.region = mongoose.isValidObjectId(region)
-        ? { $in: [region, new mongoose.Types.ObjectId(region)] }
-        : region;
+      if (mongoose.isValidObjectId(region)) {
+        query.region = new mongoose.Types.ObjectId(region);
+      } else {
+        query.region = region;
+      }
     }
     if (city && city !== "") {
-      query.city = mongoose.isValidObjectId(city)
-        ? { $in: [city, new mongoose.Types.ObjectId(city)] }
-        : city;
+      if (mongoose.isValidObjectId(city)) {
+        query.city = new mongoose.Types.ObjectId(city);
+      } else {
+        query.city = city;
+      }
     }
 
     // Filtres Taxonomie
@@ -364,6 +426,7 @@ module.exports = {
   getProfessionalProfile,
   getPublicProfessionalProfile,
   updateProfessionalProfile,
+  getProfessionalFollowers,
   searchProfessionals,
   getSuggestedProfessionals,
   getRecommendedProfessionals,

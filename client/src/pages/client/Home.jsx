@@ -30,14 +30,13 @@ import {
   useUnfollowProfessionalMutation,
 } from "../../redux/features/professional/professionalApiSlice";
 import {
-  Loader, Users, ChevronDown, LogOut, Bell,
-  Home as HomeIcon, User, Newspaper, Building2, MapPin, Search, X,
-  LogIn, UserPlus, Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, ShieldCheck, CheckCircle2, Clock, LayoutGrid
-} from "lucide-react";
+  Loader, Users, ChevronDown, LogOut,
+  Home as HomeIcon, User, Building2, MapPin, Search, X,
+ Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock} from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
 
-const Header = ({ user, onProfileClick, onLogout }) => {
+const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -47,14 +46,47 @@ const Header = ({ user, onProfileClick, onLogout }) => {
 
   return (
     <div style={h.bar}>
-      <div style={{ ...h.brand, cursor: 'pointer' }} onClick={(e) => { e.preventDefault(); navigate("/"); }}>
+      <div style={{ ...h.brand, cursor: 'pointer' }} onClick={(e) => { 
+        e.preventDefault(); 
+        if (window.location.pathname === "/") {
+          onAction('home');
+        } else {
+          navigate("/");
+        }
+      }}>
         <div style={h.brandDot} />
         <span style={h.brandName}>ProFinder</span>
       </div>
 
       <div style={h.nav}>
-        <button type="button" style={{ ...h.navBtn, color: "#1E3A5F", borderBottom: "2px solid #1E3A5F" }}>
+        <button 
+          type="button" 
+          onClick={() => {
+            if (window.location.pathname === "/") {
+              onAction('home');
+            } else {
+              navigate("/");
+            }
+          }}
+          style={{ ...h.navBtn, color: activeTab === null ? "#1E3A5F" : "#64748b", borderBottom: activeTab === null ? "2px solid #1E3A5F" : "none" }}
+        >
           <HomeIcon size={18} /><span style={h.navLabel}>Accueil</span>
+        </button>
+        
+        <button 
+          type="button" 
+          onClick={() => onAction('companies')}
+          style={{ ...h.navBtn, color: activeTab === 'companies' ? "#1E3A5F" : "#64748b", borderBottom: activeTab === 'companies' ? "2px solid #1E3A5F" : "none" }}
+        >
+          <Building2 size={18} /><span style={h.navLabel}>Sociétés</span>
+        </button>
+
+        <button 
+          type="button" 
+          onClick={() => onAction('professionals')}
+          style={{ ...h.navBtn, color: activeTab === 'professionals' ? "#1E3A5F" : "#64748b", borderBottom: activeTab === 'professionals' ? "2px solid #1E3A5F" : "none" }}
+        >
+          <Briefcase size={18} /><span style={h.navLabel}>Professionnels</span>
         </button>
       </div>
 
@@ -102,8 +134,7 @@ const Header = ({ user, onProfileClick, onLogout }) => {
   );
 };
 
-const GlobalSearchBar = ({ onFilterChange }) => {
-  const navigate = useNavigate();
+const GlobalSearchBar = ({ onFilterChange, onAction }) => {
   const [q, setQ] = useState("");
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
@@ -119,9 +150,7 @@ const GlobalSearchBar = ({ onFilterChange }) => {
   const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region, pollingInterval: 30000 });
 
   const { data: categories = [] } = useGetCategoriesQuery(undefined, { pollingInterval: 30000 });
-  const { data: subCategories = [] } = useGetSubCategoriesQuery(category, { skip: !category, pollingInterval: 30000 });
-  const { data: services = [] } = useGetServicesBySubQuery(subCategory, { skip: !subCategory, pollingInterval: 30000 });
-
+ 
   const handleSearch = () => {
     setIsSearching(true);
     const filters = {
@@ -148,7 +177,6 @@ const GlobalSearchBar = ({ onFilterChange }) => {
   const handleQuickTagClick = (e, tagName) => {
     e.preventDefault();
     setQ(tagName);
-    // On lance la recherche immédiatement avec le mot-clé
     onFilterChange({
       q: tagName,
       category: "",
@@ -161,74 +189,109 @@ const GlobalSearchBar = ({ onFilterChange }) => {
   };
 
   return (
-    <div style={sr.heroContainer}>
-      <h1 style={sr.heroTitle}>Trouvez un professionnel <strong>ou une entreprise</strong></h1>
+    <div style={sr.heroSection}>
+      <div style={sr.heroContent}>
+        <h1 style={sr.heroTitle}>Trouvez un professionnel <strong>ou une entreprise</strong></h1>
+        <p style={sr.heroSubtitle}>La première plateforme de mise en relation entre professionnels et clients en Tunisie.</p>
 
-      <div style={sr.searchContainer}>
-        {/* LIGNE 1 : MOT-CLÉ ET TAXONOMIE */}
-        <div style={sr.searchBarRow}>
-          <div style={{ ...sr.filterGroup, flex: 1.5 }}>
-            <Search size={18} color="#1E3A5F" />
-            <input
-              type="text"
-              placeholder="Que recherchez-vous ? (ex: plombier, avocat...)"
-              style={{ ...sr.select, appearance: 'auto', paddingRight: '10px' }}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
+        <div style={sr.searchContainer}>
+          {/* LIGNE 1 : MOT-CLÉ ET TAXONOMIE */}
+          <div style={sr.searchBarRow}>
+            <div style={{ ...sr.filterGroup, flex: 1.5 }}>
+              <Search size={18} color="#1E3A5F" />
+              <input
+                type="text"
+                placeholder="Que recherchez-vous ? (ex: plombier, avocat...)"
+                style={sr.inputOld}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+            <div style={sr.divider} />
+            <div style={sr.filterGroup}>
+              <Tag size={18} color="#1E3A5F" />
+              <select style={sr.selectOld} value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(""); setService(""); }}>
+                <option value="">Toutes les catégories</option>
+                {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+              </select>
+              <ChevronDown size={14} color="#94a3b8" />
+            </div>
           </div>
-          <div style={sr.divider} />
-          <div style={sr.filterGroup}>
-            <Tag size={18} color="#1E3A5F" />
-            <select style={sr.select} value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(""); setService(""); }}>
-              <option value="">Toutes les catégories</option>
-              {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-            <ChevronDown size={14} color="#94a3b8" />
+
+          {/* LIGNE 2 : GÉOGRAPHIE */}
+          <div style={sr.searchBarRow}>
+            <div style={sr.filterGroup}>
+              <MapPin size={18} color="#1E3A5F" />
+              <select style={sr.selectOld} value={country} onChange={(e) => { setCountry(e.target.value); setRegion(""); setCity(""); }}>
+                <option value="">Tous les pays</option>
+                {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+              </select>
+              <ChevronDown size={14} color="#94a3b8" />
+            </div>
+            <div style={sr.divider} />
+            <div style={sr.filterGroup}>
+              <select style={sr.selectOld} value={region} onChange={(e) => { setRegion(e.target.value); setCity(""); }} disabled={!country}>
+                <option value="">Toutes les régions</option>
+                {regions.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+              </select>
+              <ChevronDown size={14} color="#94a3b8" />
+            </div>
+            <div style={sr.divider} />
+            <div style={sr.filterGroup}>
+              <select style={sr.selectOld} value={city} onChange={(e) => setCity(e.target.value)} disabled={!region}>
+                <option value="">Toutes les villes</option>
+                {cities.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+              </select>
+              <ChevronDown size={14} color="#94a3b8" />
+            </div>
+
+            <button type="button" style={sr.searchBtnOld} onClick={(e) => { e.preventDefault(); handleSearch(); }} disabled={isSearching}>
+              {isSearching ? <Loader size={18} className="animate-spin" /> : "Rechercher"}
+            </button>
           </div>
         </div>
 
-        {/* LIGNE 2 : GÉOGRAPHIE */}
-        <div style={sr.searchBarRow}>
-          <div style={sr.filterGroup}>
-            <MapPin size={18} color="#1E3A5F" />
-            <select style={sr.select} value={country} onChange={(e) => { setCountry(e.target.value); setRegion(""); setCity(""); }}>
-              <option value="">Tous les pays</option>
-              {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-            <ChevronDown size={14} color="#94a3b8" />
-          </div>
-          <div style={sr.divider} />
-          <div style={sr.filterGroup}>
-            <select style={sr.select} value={region} onChange={(e) => { setRegion(e.target.value); setCity(""); }} disabled={!country}>
-              <option value="">Toutes les régions</option>
-              {regions.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-            </select>
-            <ChevronDown size={14} color="#94a3b8" />
-          </div>
-          <div style={sr.divider} />
-          <div style={sr.filterGroup}>
-            <select style={sr.select} value={city} onChange={(e) => setCity(e.target.value)} disabled={!region}>
-              <option value="">Toutes les villes</option>
-              {cities.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-            <ChevronDown size={14} color="#94a3b8" />
-          </div>
-
-          <button type="button" style={sr.searchBtn} onClick={(e) => { e.preventDefault(); handleSearch(); }} disabled={isSearching}>
-            {isSearching ? <Loader size={18} className="animate-spin" /> : "Rechercher"}
-          </button>
+        <div style={sr.quickTags}>
+          {quickTags.map((tag, idx) => (
+            <button key={idx} type="button" style={sr.tagBtn} onClick={(e) => handleQuickTagClick(e, tag.name || tag.label)}>
+              {tag.icon}
+              {tag.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div style={sr.quickTags}>
-        {quickTags.map((tag, idx) => (
-          <button key={idx} type="button" style={sr.tagBtn} onClick={(e) => handleQuickTagClick(e, tag.name || tag.label)}>
-            {tag.icon}
-            {tag.label}
-          </button>
-        ))}
+      <div style={sr.showcaseGrid}>
+        {/* CARTE 1: CHERCHER EXPERT */}
+        <div className="showcase-card" style={{...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1521791136064-7986c2959210?auto=format&fit=crop&w=800&q=80")'}} onClick={() => onAction('professionals')}>
+          <div style={sr.cardContent}>
+            <span style={{...sr.cardTag, background: '#10b981'}}>Experts</span>
+            <h3>Trouver un Expert</h3>
+            <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Besoin d'un conseil ? Trouvez le professionnel indépendant idéal pour vos projets.</p>
+            <button style={{...sr.cardBtn, background: '#10b981'}} onClick={(e) => { e.stopPropagation(); onAction('professionals'); }}>Chercher un expert</button>
+          </div>
+        </div>
+
+        {/* CARTE 2: CHERCHER SOCIÉTÉ */}
+        <div className="showcase-card" style={{...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80")'}} onClick={() => onAction('companies')}>
+          <div style={sr.cardContent}>
+            <span style={{...sr.cardTag, background: '#f59e0b'}}>Sociétés</span>
+            <h3>Chercher une Société</h3>
+            <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Découvrez les entreprises locales, explorez leurs produits et suivez leurs actualités.</p>
+            <button style={{...sr.cardBtn, background: '#f59e0b'}} onClick={(e) => { e.stopPropagation(); onAction('companies'); }}>Voir les sociétés</button>
+          </div>
+        </div>
+
+        {/* CARTE 3: DEVENIR PRESTATAIRE */}
+        <div className="showcase-card" style={{...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80")'}} onClick={() => onAction('join')}>
+          <div style={sr.cardContent}>
+            <span style={{...sr.cardTag, background: '#3b82f6'}}>Partenariat</span>
+            <h3>Booster votre Activité</h3>
+            <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Vous êtes un pro ? Rejoignez ProFinder pour trouver de nouveaux clients dès aujourd'hui.</p>
+            <button style={{...sr.cardBtn, background: '#3b82f6'}} onClick={(e) => { e.stopPropagation(); onAction('join'); }}>Devenir partenaire</button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -904,28 +967,47 @@ const CompanyFeed = ({ filters }) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {companies.map((company) => (
-        <div key={company._id} style={c.listCard}>
+        <div 
+          key={company._id} 
+          style={c.listCard} 
+          onClick={() => navigate(`/user/company/${company._id}`)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.06)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.03)';
+          }}
+        >
           <div style={c.listHeader}>
             <div style={c.listLogoWrap}>
               {company.logoUrl
                 ? <img src={toImageUrl(company.logoUrl)} alt={company.companyName} style={c.listLogo} />
-                : <div style={c.listLogoFallback}><Building2 size={20} color="#94a3b8" /></div>
+                : <div style={c.listLogoFallback}><Building2 size={32} color="#cbd5e1" /></div>
               }
             </div>
             <div style={c.listInfo}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={c.listName}>{company.companyName}</h3>
-                  <p style={c.listMeta}>
-                    <MapPin size={12} /> {company.city || "Tunisie"}
-                  </p>
+                  <div style={{ display: 'flex', gap: '15px' }}>
+                    <p style={c.listMeta}>
+                      <MapPin size={14} color="#3b82f6" /> {company.city || "Tunisie"}
+                    </p>
+                    {company.category?.name && (
+                      <p style={c.listMeta}>
+                        <Tag size={14} color="#10b981" /> {company.category.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div style={c.listRating}>
                   <div style={c.listStars}>
                     {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} size={14} fill={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
+                      <Star key={s} size={16} fill={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
                     ))}
                   </div>
                   <span style={c.listReviewCount}>{company.rating?.count || 0} avis</span>
@@ -933,9 +1015,12 @@ const CompanyFeed = ({ filters }) => {
               </div>
             </div>
             <div style={c.listActions}>
-              <Link to={`/user/company/${company._id}`} style={c.listBtn}>
+              <button 
+                onClick={(e) => { e.stopPropagation(); navigate(`/user/company/${company._id}`); }}
+                style={c.listBtn}
+              >
                 Voir Profil
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -945,6 +1030,7 @@ const CompanyFeed = ({ filters }) => {
 };
 
 const ProfessionalFeed = ({ filters }) => {
+  const navigate = useNavigate();
   const { data: professionals = [], isLoading } = useSearchProfessionalsQuery(filters, { pollingInterval: 3000 });
 
   if (isLoading) return (
@@ -965,29 +1051,47 @@ const ProfessionalFeed = ({ filters }) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {professionals.map((pro) => (
-        <div key={pro._id} style={c.listCard}>
+        <div 
+          key={pro._id} 
+          style={c.listCard}
+          onClick={() => navigate(`/user/professional/${pro._id}`)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.06)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.03)';
+          }}
+        >
           <div style={c.listHeader}>
             <div style={c.listLogoWrap}>
               {pro.photoProfessional
                 ? <img src={toImageUrl(pro.photoProfessional)} alt={pro.fullName} style={{ ...c.listLogo, borderRadius: '50%' }} />
-                : <div style={{ ...c.listLogoFallback, borderRadius: '50%' }}><User size={20} color="#94a3b8" /></div>
+                : <div style={{ ...c.listLogoFallback, borderRadius: '50%' }}><User size={32} color="#cbd5e1" /></div>
               }
             </div>
             <div style={c.listInfo}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={c.listName}>{pro.fullName}</h3>
-                  <p style={c.listMeta}>
-                    <MapPin size={12} /> {pro.city || "Tunisie"}
-                    {pro.categoryName && <span style={{ marginLeft: '10px', color: '#3b82f6', fontWeight: '700' }}>• {pro.categoryName}</span>}
-                  </p>
+                  <div style={{ display: 'flex', gap: '15px' }}>
+                    <p style={c.listMeta}>
+                      <MapPin size={14} color="#3b82f6" /> {pro.city || "Tunisie"}
+                    </p>
+                    {pro.categoryName && (
+                      <p style={c.listMeta}>
+                        <Briefcase size={14} color="#8b5cf6" /> {pro.categoryName}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div style={c.listRating}>
                   <div style={c.listStars}>
                     {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} size={14} fill={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
+                      <Star key={s} size={16} fill={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
                     ))}
                   </div>
                   <span style={c.listReviewCount}>{pro.rating?.count || 0} avis</span>
@@ -995,9 +1099,12 @@ const ProfessionalFeed = ({ filters }) => {
               </div>
             </div>
             <div style={c.listActions}>
-              <Link to={`/user/professional/${pro._id}`} style={{ ...c.listBtn, background: '#3b82f6' }}>
+              <button 
+                onClick={(e) => { e.stopPropagation(); navigate(`/user/professional/${pro._id}`); }}
+                style={{ ...c.listBtn, background: '#3b82f6', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)' }}
+              >
                 Voir Profil
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -1014,6 +1121,11 @@ const Home = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [searchTab, setSearchTab] = useState("companies"); // 'companies' | 'professionals'
+  const [isShowingResults, setIsShowingResults] = useState(false);
+
+  const productRef = useRef(null);
+  const serviceRef = useRef(null);
+  const searchResultsRef = useRef(null);
 
   const { data: allProducts, isLoading: productsLoading } = useGetAllProductsQuery();
   const { data: allServices, isLoading: servicesLoading } = useGetAllServicesQuery();
@@ -1024,86 +1136,104 @@ const Home = () => {
     navigate("/auth/login");
   };
 
+  const handleAction = (type) => {
+    if (type === 'home') {
+      setIsShowingResults(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (type === 'products' && productRef.current) {
+      productRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else if (type === 'services' && serviceRef.current) {
+      serviceRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else if (type === 'professionals') {
+      setSearchTab('professionals');
+      setIsShowingResults(true);
+      setTimeout(() => {
+        if (searchResultsRef.current) searchResultsRef.current.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else if (type === 'companies') {
+      setSearchTab('companies');
+      setIsShowingResults(true);
+      setTimeout(() => {
+        if (searchResultsRef.current) searchResultsRef.current.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else if (type === 'join') {
+      navigate("/auth/signup");
+    }
+  };
+
   return (
     <div style={p.root}>
-      <Header user={user} onProfileClick={() => navigate("/profile")} onLogout={handleLogout} />
+      <Header 
+        user={user} 
+        onProfileClick={() => navigate("/profile")} 
+        onLogout={handleLogout} 
+        onAction={handleAction}
+        activeTab={isShowingResults ? searchTab : null}
+      />
       <div style={p.layout}>
         <div style={p.searchWrap}>
-          <GlobalSearchBar onFilterChange={(f) => setFilters(f)} />
+          <GlobalSearchBar onFilterChange={(f) => { setFilters(f); setIsShowingResults(true); }} onAction={handleAction} />
         </div>
 
         <div style={p.contentWrapper}>
           <main style={p.main}>
-            <ProductCarousel
-              title="Produits des entreprises"
-              products={allProducts}
-              isLoading={productsLoading}
-              onProductClick={(p) => setSelectedProduct(p)}
-            />
+            {!isShowingResults ? (
+              <>
+                <div ref={productRef}>
+                  <ProductCarousel
+                    title="Produits des entreprises"
+                    products={allProducts}
+                    isLoading={productsLoading}
+                    onProductClick={(p) => setSelectedProduct(p)}
+                  />
+                </div>
 
-            <ServiceCarousel
-              title="Services recommandés"
-              services={allServices}
-              isLoading={servicesLoading}
-              onServiceClick={(s) => setSelectedService(s)}
-            />
+                <div ref={serviceRef}>
+                  <ServiceCarousel
+                    title="Services recommandés"
+                    services={allServices}
+                    isLoading={servicesLoading}
+                    onServiceClick={(s) => setSelectedService(s)}
+                  />
+                </div>
+              </>
+            ) : (
+              <div ref={searchResultsRef}>
+                <div style={p.feedHeader}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Search size={18} color="#1E3A5F" />
+                    <h2 style={p.feedTitle}>Résultats pour {searchTab === 'companies' ? 'Sociétés' : 'Professionnels'}</h2>
+                  </div>
+                  <button 
+                    onClick={() => setIsShowingResults(false)}
+                    style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    Retour à l'accueil
+                  </button>
+                </div>
 
-            <div style={p.feedHeader}>
-              <Search size={18} color="#1E3A5F" />
-              <h2 style={p.feedTitle}>Résultats de Recherche</h2>
-            </div>
+                <div style={r.tabToggle}>
+                  <button 
+                    style={{ ...r.tabBtn, ...(searchTab === 'companies' ? r.tabBtnActive : {}) }}
+                    onClick={() => setSearchTab('companies')}
+                  >
+                    Entreprises
+                  </button>
+                  <button 
+                    style={{ ...r.tabBtn, ...(searchTab === 'professionals' ? r.tabBtnActive : {}) }}
+                    onClick={() => setSearchTab('professionals')}
+                  >
+                    Professionnels
+                  </button>
+                </div>
 
-            {/* Toggle tabs */}
-            <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '2px solid #e2e8f0' }}>
-              <button
-                type="button"
-                onClick={() => setSearchTab('companies')}
-                style={{
-                  padding: '12px 24px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: searchTab === 'companies' ? '3px solid #1E3A5F' : '3px solid transparent',
-                  color: searchTab === 'companies' ? '#1E3A5F' : '#94a3b8',
-                  fontWeight: '700',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: '0.2s'
-                }}
-              >
-                <Building2 size={16} /> Entreprises
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchTab('professionals')}
-                style={{
-                  padding: '12px 24px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: searchTab === 'professionals' ? '3px solid #3b82f6' : '3px solid transparent',
-                  color: searchTab === 'professionals' ? '#3b82f6' : '#94a3b8',
-                  fontWeight: '700',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: '0.2s'
-                }}
-              >
-                <User size={16} /> Professionnels
-              </button>
-            </div>
-
-            <div style={p.feedScroll}>
-              {searchTab === 'companies' ? (
-                <CompanyFeed filters={filters} />
-              ) : (
-                <ProfessionalFeed filters={filters} />
-              )}
-            </div>
+                {searchTab === "companies" ? (
+                  <CompanyFeed filters={filters} />
+                ) : (
+                  <ProfessionalFeed filters={filters} />
+                )}
+              </div>
+            )}
           </main>
           <aside style={p.rightSidebar}>
             <RecommendedCompanies />
@@ -1128,7 +1258,10 @@ const Home = () => {
         />
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .showcase-card:hover { transform: translateY(-5px); }
+      `}</style>
     </div>
   );
 };
@@ -1256,22 +1389,87 @@ const r = {
   ratingRow: { display: 'flex', alignItems: 'center', gap: 8 },
   stars: { display: 'flex', gap: 2 },
   cityText: { fontSize: 12, color: '#64748b', fontWeight: 500 },
+  tabToggle: { 
+    display: 'flex', 
+    background: '#f1f5f9', 
+    padding: '4px', 
+    borderRadius: '12px', 
+    marginBottom: '20px',
+    width: 'fit-content'
+  },
+  tabBtn: {
+    padding: '10px 24px',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    background: 'transparent',
+    color: '#64748b',
+    transition: 'all 0.2s'
+  },
+  tabBtnActive: {
+    background: '#fff',
+    color: '#1E3A5F',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+  }
 };
 
 const c = {
-  listCard: { background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  listHeader: { display: 'flex', padding: 20, gap: 20, alignItems: 'center' },
-  listLogoWrap: { width: 80, height: 80, borderRadius: 14, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', border: '1px solid #f1f5f9' },
+  listCard: { 
+    background: '#fff', 
+    borderRadius: '20px', 
+    border: '1px solid #e2e8f0', 
+    overflow: 'hidden', 
+    boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    cursor: 'pointer'
+  },
+  listHeader: { display: 'flex', padding: '24px', gap: '24px', alignItems: 'center' },
+  listLogoWrap: { 
+    width: '100px', 
+    height: '100px', 
+    borderRadius: '18px', 
+    background: '#f8fafc', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    flexShrink: 0, 
+    overflow: 'hidden', 
+    border: '1px solid #f1f5f9',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.02)'
+  },
   listLogo: { width: '100%', height: '100%', objectFit: 'cover' },
   listLogoFallback: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   listInfo: { flex: 1, minWidth: 0 },
-  listName: { fontSize: 18, fontWeight: 800, color: '#1e293b', margin: '0 0 4px' },
-  listMeta: { fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4, margin: 0 },
+  listName: { fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: '0 0 6px' },
+  listMeta: { fontSize: '14px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 },
   listRating: { textAlign: 'right' },
-  listStars: { display: 'flex', gap: 2, marginBottom: 4, justifyContent: 'flex-end' },
-  listReviewCount: { fontSize: 12, color: '#fbbf24', fontWeight: 700, background: '#fef3c7', padding: '2px 8px', borderRadius: 10 },
-  listActions: { paddingLeft: 20, borderLeft: '1px solid #f1f5f9' },
-  listBtn: { display: 'inline-flex', alignItems: 'center', background: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' },
+  listStars: { display: 'flex', gap: 2, marginBottom: '6px', justifyContent: 'flex-end' },
+  listReviewCount: { 
+    fontSize: '12px', 
+    color: '#fbbf24', 
+    fontWeight: '800', 
+    background: '#fef3c7', 
+    padding: '4px 10px', 
+    borderRadius: '12px',
+    display: 'inline-block'
+  },
+  listActions: { paddingLeft: '24px', borderLeft: '1px solid #f1f5f9' },
+  listBtn: { 
+    display: 'inline-flex', 
+    alignItems: 'center', 
+    background: '#1E3A5F', 
+    color: '#fff', 
+    padding: '12px 24px', 
+    borderRadius: '14px', 
+    fontSize: '14px', 
+    fontWeight: '700', 
+    textDecoration: 'none', 
+    whiteSpace: 'nowrap',
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 10px rgba(30, 58, 95, 0.15)'
+  },
 };
 
 const p = {
@@ -1301,50 +1499,69 @@ const p = {
 };
 
 const sr = {
-  heroContainer: {
-    padding: '40px 0',
-    textAlign: 'center',
+  heroSection: {
+    padding: '60px 20px',
+    background: 'linear-gradient(135deg, #1E3A5F 0%, #24416b 100%)',
+    borderRadius: '0 0 40px 40px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '30px'
+    gap: '40px',
+    marginBottom: '40px'
+  },
+  heroContent: {
+    textAlign: 'center',
+    maxWidth: '900px',
+    color: '#fff'
   },
   heroTitle: {
-    fontSize: '32px',
-    fontWeight: '800',
-    color: '#1E3A5F',
-    margin: 0,
-    letterSpacing: '-0.5px'
+    fontSize: '36px',
+    fontWeight: '900',
+    marginBottom: '16px',
+    letterSpacing: '-1px'
+  },
+  heroSubtitle: {
+    fontSize: '18px',
+    opacity: 0.9,
+    marginBottom: '30px'
   },
   searchContainer: {
+    maxWidth: '900px',
+    margin: '0 auto',
+    background: '#fff',
+    borderRadius: '24px',
+    padding: '10px',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
-    width: '100%',
-    maxWidth: '900px',
-    margin: '0 auto'
+    gap: '10px',
+    border: '1px solid #f1f5f9'
   },
   searchBarRow: {
     display: 'flex',
     alignItems: 'center',
-    background: '#fff',
-    borderRadius: '14px',
-    padding: '6px 10px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-    border: '1px solid #e2e8f0',
-    width: '100%',
-    minHeight: '54px'
+    gap: '5px',
+    padding: '5px'
   },
   filterGroup: {
-    flex: 1,
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    padding: '0 12px',
-    position: 'relative',
+    gap: '10px',
+    padding: '0 15px',
+    flex: 1,
     minWidth: 0
   },
-  select: {
+  inputOld: {
+    flex: 1,
+    border: 'none',
+    outline: 'none',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1E3A5F',
+    background: 'transparent',
+    padding: '10px 0'
+  },
+  selectOld: {
     flex: 1,
     border: 'none',
     outline: 'none',
@@ -1354,11 +1571,8 @@ const sr = {
     background: 'transparent',
     cursor: 'pointer',
     appearance: 'none',
-    paddingRight: '15px',
     width: '100%',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    padding: '10px 0'
   },
   divider: {
     width: '1px',
@@ -1366,17 +1580,17 @@ const sr = {
     background: '#e2e8f0',
     flexShrink: 0
   },
-  searchBtn: {
-    background: '#ef4444',
+  searchBtnOld: {
+    background: '#3b82f6',
     color: '#fff',
     border: 'none',
-    borderRadius: '10px',
-    padding: '10px 24px',
+    borderRadius: '12px',
+    padding: '12px 30px',
     fontSize: '15px',
-    fontWeight: '700',
+    fontWeight: '800',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.2)',
+    boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)',
     marginLeft: '5px',
     flexShrink: 0
   },
@@ -1385,7 +1599,7 @@ const sr = {
     justifyContent: 'center',
     flexWrap: 'wrap',
     gap: '12px',
-    marginTop: '10px'
+    marginTop: '25px'
   },
   tagBtn: {
     display: 'flex',
@@ -1393,14 +1607,61 @@ const sr = {
     gap: '8px',
     padding: '10px 20px',
     borderRadius: '12px',
-    background: '#24416b',
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
     color: '#fff',
     fontSize: '14px',
     fontWeight: '700',
-    border: 'none',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
     cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: '0 4px 10px rgba(36, 65, 107, 0.2)'
+    transition: 'all 0.2s'
+  },
+  showcaseGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '20px',
+    width: '100%',
+    maxWidth: '1100px'
+  },
+  showcaseCard: {
+    height: '240px',
+    borderRadius: '24px',
+    padding: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    cursor: 'pointer',
+    transition: 'transform 0.3s ease'
+  },
+  cardContent: {
+    position: 'relative',
+    zIndex: 2,
+    color: '#fff'
+  },
+  cardTag: {
+    background: '#3b82f6',
+    padding: '4px 12px',
+    borderRadius: '8px',
+    fontSize: '12px',
+    fontWeight: '800',
+    marginBottom: '10px',
+    display: 'inline-block'
+  },
+  cardBtn: {
+    marginTop: '15px',
+    background: '#fff',
+    color: '#1e293b',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '10px',
+    fontSize: '13px',
+    fontWeight: '800',
+    cursor: 'pointer'
   }
 };
 

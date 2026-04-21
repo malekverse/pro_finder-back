@@ -31,7 +31,9 @@ const AllProducts = ({ onAction }) => {
             </div>
           </div>
           <div style={g.content}>
-            <div style={g.companyName}><Building2 size={12} /> {p.companyId?.companyName}</div>
+            <div style={g.companyName}>
+              <Building2 size={12} /> {p.companyId?.companyName || p.professionalId?.fullName || "Vendeur"}
+            </div>
             <h3 style={g.title}>{p.name}</h3>
             <div style={g.footer}>
               <span style={g.price}>{p.price} TND</span>

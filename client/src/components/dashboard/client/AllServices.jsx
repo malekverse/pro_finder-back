@@ -31,7 +31,9 @@ const AllServices = ({ onAction }) => {
             </div>
           </div>
           <div style={g.content}>
-            <div style={g.companyName}><Building2 size={12} /> {s.companyId?.companyName}</div>
+            <div style={g.companyName}>
+              <Building2 size={12} /> {s.companyId?.companyName || s.professionalId?.fullName || "Prestataire"}
+            </div>
             <h3 style={g.title}>{s.name}</h3>
             <div style={g.footer}>
               <span style={g.price}>{s.price} TND</span>

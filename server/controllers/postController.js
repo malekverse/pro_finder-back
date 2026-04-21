@@ -347,7 +347,7 @@ const getPostsByCompany = async (req, res) => {
 
     const query = {
       author_id:  companyId,
-      authorType: "Company",
+      authorType: { $in: ["Company", "Professional"] },
       isDeleted:  false,
     };
 

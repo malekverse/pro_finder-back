@@ -124,7 +124,11 @@ export const companyApiSlice = apiSlice.injectEndpoints({
     }),
 
     getCategories: builder.query({
-      query: () => "categories/categories",
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params?.type) searchParams.append('type', params.type);
+        return `categories/categories?${searchParams.toString()}`;
+      },
     }),
 
     getSubCategories: builder.query({

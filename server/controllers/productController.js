@@ -6,23 +6,24 @@ const Product = require("../models/Product");
 const createProduct = async (req, res) => {
   try {
     const { name, category, price, description, stock } = req.body;
-    const companyId = req.companyId || req.user;
-
-    if (!name || !category || !price) {
-      return res.status(400).json({ message: "Nom, catégorie et prix sont obligatoires" });
-    }
-
     const imagesProduct = req.files ? req.files.filter(f => f.fieldname === 'imagesProduct').map((f) => f.path.replace(/\\/g, '/')) : [];
 
-    const product = await Product.create({
+    let productData = {
       name,
       category,
       price,
       description,
       stock: stock || 0,
       imagesProduct,
-      companyId,
-    });
+    };
+
+    if (req.roles.includes("professional")) {
+      productData.professionalId = req.user;
+    } else {
+      productData.companyId = req.companyId || req.user;
+    }
+
+    const product = await Product.create(productData);
 
     res.status(201).json(product);
   } catch (err) {
@@ -34,8 +35,13 @@ const createProduct = async (req, res) => {
 // GET BY COMPANY
 const getCompanyProducts = async (req, res) => {
   try {
-    const companyId = req.params.companyId || req.companyId || req.user;
-    const products = await Product.find({ companyId }).sort({ createdAt: -1 });
+    const id = req.params.companyId || req.companyId || req.user;
+    const products = await Product.find({
+      $or: [
+        { companyId: id },
+        { professionalId: id }
+      ]
+    }).sort({ createdAt: -1 });
     res.json(products);
   } catch (err) {
     console.error("[getCompanyProducts]", err);
@@ -48,9 +54,11 @@ const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, category, price, description, stock, existingImages } = req.body;
-    const companyId = req.companyId || req.user;
+    const ownerId = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 
-    const product = await Product.findOne({ _id: id, companyId });
+    const product = await Product.findOne(query);
     if (!product) {
       return res.status(404).json({ message: "Produit non trouvé ou non autorisé" });
     }
@@ -85,9 +93,11 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const companyId = req.companyId || req.user;
+    const ownerId = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 
-    const product = await Product.findOne({ _id: id, companyId });
+    const product = await Product.findOne(query);
     if (!product) {
       return res.status(404).json({ message: "Produit non trouvé ou non autorisé" });
     }
@@ -112,7 +122,10 @@ const deleteProduct = async (req, res) => {
 // GET ALL (Global search)
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate("companyId", "companyName logoUrl").sort({ createdAt: -1 });
+    const products = await Product.find()
+      .populate("companyId", "companyName logoUrl")
+      .populate("professionalId", "fullName photoProfessional")
+      .sort({ createdAt: -1 });
     res.json(products);
   } catch (err) {
     console.error("[getAllProducts]", err);
@@ -126,11 +139,18 @@ const getFollowedProducts = async (req, res) => {
     const Follow = require("../models/follow");
     const userId = req.user;
 
-    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } }).select("company_id");
-    const companyIds = follows.map(f => f.company_id);
+    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } });
+    const companyIds = follows.filter(f => f.company_id).map(f => f.company_id);
+    const professionalIds = follows.filter(f => f.professional_id).map(f => f.professional_id);
 
-    const products = await Product.find({ companyId: { $in: companyIds } })
+    const products = await Product.find({ 
+      $or: [
+        { companyId: { $in: companyIds } },
+        { professionalId: { $in: professionalIds } }
+      ]
+    })
       .populate("companyId", "companyName logoUrl")
+      .populate("professionalId", "fullName photoProfessional")
       .sort({ createdAt: -1 })
       .limit(20);
 

@@ -5,17 +5,22 @@ const reservationSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
+      required: false,
+    },
+    professionalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Professional",
+      required: false,
     },
     serviceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CompanyService",
-      required: true,
+      required: false,
     },
     date: {
       type: Date,
@@ -27,8 +32,12 @@ const reservationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed"],
+      enum: ["pending", "confirmed", "cancelled", "completed", "blocked"],
       default: "pending",
+    },
+    isManualBlock: {
+      type: Boolean,
+      default: false
     },
     notes: {
       type: String,

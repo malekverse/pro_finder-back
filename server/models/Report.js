@@ -10,7 +10,12 @@ const reportSchema = new mongoose.Schema(
     company_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
+      required: false,
+    },
+    professional_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Professional",
+      required: false,
     },
     reason: {
       type: String,

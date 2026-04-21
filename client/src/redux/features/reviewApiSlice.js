@@ -16,15 +16,29 @@ export const reviewApiSlice = apiSlice.injectEndpoints({
       query: (companyId) => `reviews/average/${companyId}`,
       providesTags: (result, error, companyId) => [{ type: "Review", id: `AVG-${companyId}` }],
     }),
+    getProfessionalReviews: builder.query({
+      query: (professionalId) => `reviews/professional/${professionalId}`,
+      providesTags: (result, error, professionalId) =>
+        result
+          ? [
+              ...result.map(({ _id }) => ({ type: "Review", id: _id })),
+              { type: "Review", id: "LIST" },
+            ]
+          : [{ type: "Review", id: "LIST" }],
+    }),
+    getProfessionalAverageRating: builder.query({
+      query: (professionalId) => `reviews/average-pro/${professionalId}`,
+      providesTags: (result, error, professionalId) => [{ type: "Review", id: `AVG-${professionalId}` }],
+    }),
     createReview: builder.mutation({
       query: (data) => ({
         url: "reviews/create",
         method: "POST",
         body: data,
       }),
-      invalidatesTags: (result, error, { company_id }) => [
+      invalidatesTags: (result, error, { company_id, professional_id }) => [
         { type: "Review", id: "LIST" },
-        { type: "Review", id: `AVG-${company_id}` },
+        company_id ? { type: "Review", id: `AVG-${company_id}` } : { type: "Review", id: `AVG-${professional_id}` },
       ],
     }),
     deleteReview: builder.mutation({
@@ -40,9 +54,9 @@ export const reviewApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: (result, error, { company_id }) => [
+      invalidatesTags: (result, error, { company_id, professional_id }) => [
         { type: "Review", id: "LIST" },
-        { type: "Review", id: `AVG-${company_id}` },
+        company_id ? { type: "Review", id: `AVG-${company_id}` } : { type: "Review", id: `AVG-${professional_id}` },
       ],
     }),
   }),
@@ -51,6 +65,8 @@ export const reviewApiSlice = apiSlice.injectEndpoints({
 export const {
   useGetCompanyReviewsQuery,
   useGetAverageRatingQuery,
+  useGetProfessionalReviewsQuery,
+  useGetProfessionalAverageRatingQuery,
   useCreateReviewMutation,
   useDeleteReviewMutation,
   useUpdateReviewMutation,

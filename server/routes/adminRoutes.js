@@ -24,6 +24,7 @@ router.post("/contact/:companyId", verifyJWT, authorizeRoles("admin"), adminCont
 router.get("/pending-professionals", verifyJWT, authorizeRoles("admin"), adminController.getPendingProfessionals);
 router.put("/verify-professional/:professionalId", verifyJWT, authorizeRoles("admin"), adminController.verifyProfessional);
 router.delete("/reject-professional/:professionalId", verifyJWT, authorizeRoles("admin"), adminController.rejectProfessional);
+router.post("/contact-professional/:professionalId", verifyJWT, authorizeRoles("admin"), adminController.contactProfessional);
 
 module.exports = router;
 

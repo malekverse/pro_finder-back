@@ -295,6 +295,36 @@ const contactCompany = async (req, res) => {
   }
 };
 
+const contactProfessional = async (req, res) => {
+  try {
+    const { professionalId } = req.params;
+    const { message, type } = req.body;
+
+    const professional = await Professional.findById(professionalId);
+    if (!professional) return res.status(404).json({ message: "Professionnel non trouvé" });
+
+    if (!professional.email) return res.status(400).json({ message: "Le professionnel n'a pas d'adresse email enregistrée." });
+
+    try {
+      await sendStatusEmail(professional.email, professional.fullName, type || "manual", message);
+    } catch (emailError) {
+      console.error("[contactProfessional] Erreur Nodemailer:", emailError.message);
+      return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
+    }
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Envoi d'email au professionnel",
+      target: professional.fullName,
+      status: "success"
+    });
+
+    res.json({ message: "Email envoyé avec succès" });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
+  }
+};
+
 const getPendingProfessionals = async (req, res) => {
   try {
     const pending = await Professional.find({ Status: "pending" });
@@ -376,6 +406,7 @@ module.exports = {
   changePassword,
   resolveCompany,
   contactCompany,
+  contactProfessional,
   getPendingProfessionals,
   verifyProfessional,
   rejectProfessional

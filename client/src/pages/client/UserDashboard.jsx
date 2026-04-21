@@ -61,6 +61,24 @@ const UserDashboard = () => {
     setProductForDetail(null);
   };
 
+  const handleServiceReserve = async (data) => {
+    try {
+      const isPro = !!data.professionalId;
+      await createReservation({
+        companyId: !isPro ? (data.companyId?._id || data.companyId) : null,
+        professionalId: isPro ? (data.professionalId?._id || data.professionalId) : null,
+        serviceId: data._id,
+        date: data.bookingDate,
+        timeSlot: data.bookingSlot,
+        notes: "" 
+      }).unwrap();
+      alert("Réservation effectuée avec succès !");
+      setServiceForDetail(null);
+    } catch (err) {
+      alert(err.data?.message || "Une erreur est survenue");
+    }
+  };
+
   const handleSubmitAction = async (data) => {
     try {
       if (actionType === 'product') {
@@ -68,8 +86,10 @@ const UserDashboard = () => {
           alert("Désolé, le stock est insuffisant pour cette quantité.");
           return;
         }
+        const isPro = !!selectedItem.professionalId;
         await createOrder({
-          companyId: selectedItem.companyId?._id || selectedItem.companyId,
+          companyId: !isPro ? (selectedItem.companyId?._id || selectedItem.companyId) : null,
+          professionalId: isPro ? (selectedItem.professionalId?._id || selectedItem.professionalId) : null,
           items: [{ productId: selectedItem._id, quantity: data.quantity, price: selectedItem.price }],
           totalPrice: selectedItem.price * data.quantity,
           shippingAddress: {
@@ -81,8 +101,10 @@ const UserDashboard = () => {
         }).unwrap();
         alert("Commande effectuée avec succès !");
       } else {
+        const isPro = !!selectedItem.professionalId;
         await createReservation({
-          companyId: selectedItem.companyId?._id || selectedItem.companyId,
+          companyId: !isPro ? (selectedItem.companyId?._id || selectedItem.companyId) : null,
+          professionalId: isPro ? (selectedItem.professionalId?._id || selectedItem.professionalId) : null,
           serviceId: selectedItem._id,
           date: data.date,
           timeSlot: data.time,
@@ -115,42 +137,12 @@ const UserDashboard = () => {
         }}
         onCartClick={() => setIsCartOpen(true)}
         cartItemsCount={cartItemsCount}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
       {isCartOpen && <Cart onClose={() => setIsCartOpen(false)} />}
       <div style={p.layout}>
         <main style={p.main}>
-          <div style={p.tabs}>
-            <button
-              onClick={() => setActiveTab("feed")}
-              style={activeTab === "feed" ? p.tabActive : p.tab}
-            >
-              <Newspaper size={18} /> Fil d'actualité
-            </button>
-            <button
-              onClick={() => setActiveTab("services")}
-              style={activeTab === "services" ? p.tabActive : p.tab}
-            >
-              <Wrench size={18} /> Services
-            </button>
-            <button
-              onClick={() => setActiveTab("products")}
-              style={activeTab === "products" ? p.tabActive : p.tab}
-            >
-              <Package size={18} /> Produits
-            </button>
-            <button
-              onClick={() => setActiveTab("societes")}
-              style={activeTab === "societes" ? p.tabActive : p.tab}
-            >
-              <Building2 size={18} /> Sociétés
-            </button>
-            <button
-              onClick={() => setActiveTab("pros")}
-              style={activeTab === "pros" ? p.tabActive : p.tab}
-            >
-              <User size={18} /> Professionnels
-            </button>
-          </div>
 
           <div style={p.feedScroll}>
             {activeTab === "feed" && (
@@ -207,90 +199,11 @@ const UserDashboard = () => {
       )}
 
       {serviceForDetail && (
-        <div style={pd.overlay} onClick={() => setServiceForDetail(null)}>
-          <div style={pd.modal} onClick={e => e.stopPropagation()}>
-            <button type="button" style={pd.closeBtn} onClick={() => setServiceForDetail(null)}><X size={24} /></button>
-
-            <div style={pd.container}>
-              <div style={pd.leftCol}>
-                <div style={pd.mainImgBox}>
-                  {selectedImg ? (
-                    <img src={toImageUrl(selectedImg)} alt={serviceForDetail.name} style={pd.mainImg} />
-                  ) : (
-                    <ShoppingBag size={100} color="#cbd5e1" />
-                  )}
-                </div>
-                <div style={pd.thumbList}>
-                  {serviceForDetail.imagesServices?.map((img, i) => (
-                    <div
-                      key={i}
-                      style={{ ...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0' }}
-                      onMouseEnter={() => setSelectedImg(img)}
-                    >
-                      <img src={toImageUrl(img)} alt="" style={pd.thumb} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={pd.midCol}>
-                <h1 style={pd.title}>{serviceForDetail.name}</h1>
-                <div style={pd.priceRow}>
-                  <span style={pd.currentPrice}>{serviceForDetail.price?.toLocaleString() || 'À disc.'} DT</span>
-                </div>
-
-                <div style={pd.statusRow}>
-                  <span style={{ ...pd.status, color: '#10b981' }}>
-                    <Clock size={16} /> DURÉE: {serviceForDetail.duration} min
-                  </span>
-                  <span style={pd.sku}>SKU: {serviceForDetail._id.slice(-8).toUpperCase()}</span>
-                </div>
-
-                <div style={pd.divider} />
-
-                <div style={pd.actionRow}>
-                  <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleAction(serviceForDetail, 'service'); }}>RÉSERVER MAINTENANT</button>
-                  <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
-                </div>
-
-                <div style={pd.overview}>
-                  <h3 style={pd.overviewTitle}>DESCRIPTION DU SERVICE</h3>
-                  <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-                    {serviceForDetail.description || 'Aucune description disponible'}
-                  </p>
-                </div>
-              </div>
-
-              <div style={pd.rightCol}>
-                <div style={pd.sellerCard}>
-                  <div style={pd.sellerHeader}>
-                    <div style={pd.sellerLogo}>
-                      {serviceForDetail.companyId?.logoUrl ? (
-                        <img src={toImageUrl(serviceForDetail.companyId.logoUrl)} alt="" style={pd.logo} />
-                      ) : (
-                        <Building2 size={24} color="#94a3b8" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 style={pd.sellerName}>{serviceForDetail.companyId?.companyName || 'Boutique'}</h4>
-                      <div style={pd.sellerRating}>
-                        <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                        <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                        <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                        <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                        <Star size={12} color="#cbd5e1" />
-                        <span style={pd.ratingCount}>5</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button type="button" style={pd.visitBtn} onClick={(e) => { e.preventDefault(); navigate(`/user/company/${serviceForDetail.companyId?._id}`); }}>
-                    VISITER L'ENTREPRISE
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ServiceDetail
+          service={serviceForDetail}
+          onClose={() => setServiceForDetail(null)}
+          onReserve={handleServiceReserve}
+        />
       )}
 
       {selectedItem && (

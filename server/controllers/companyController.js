@@ -45,12 +45,12 @@ const getCompanyFollowers = async (req, res) => {
 const getBlockedUsers = async (req, res) => {
   try {
     const idToUse = req.companyId || req.user;
-    const companyId = new mongoose.Types.ObjectId(idToUse);
+    const isProfessional = req.roles?.includes("professional");
+    const id = new mongoose.Types.ObjectId(idToUse);
     
-    const blocked = await Follow.find({ 
-      company_id: companyId, 
-      is_blocked: true 
-    })
+    const query = isProfessional ? { professional_id: id, is_blocked: true } : { company_id: id, is_blocked: true };
+    
+    const blocked = await Follow.find(query)
       .populate("user_id", "fullName email avatarUrl phone")
       .sort({ updatedAt: -1 });
       
@@ -65,9 +65,12 @@ const toggleBlockFollower = async (req, res) => {
   try {
     const { followId } = req.params;
     const idToUse = req.companyId || req.user;
-    const companyId = new mongoose.Types.ObjectId(idToUse);
+    const isProfessional = req.roles?.includes("professional");
+    const id = new mongoose.Types.ObjectId(idToUse);
 
-    const follow = await Follow.findOne({ _id: followId, company_id: companyId });
+    const query = isProfessional ? { _id: followId, professional_id: id } : { _id: followId, company_id: id };
+
+    const follow = await Follow.findOne(query);
     if (!follow) {
       return res.status(404).json({ message: "Relation d'abonnement non trouvée" });
     }
@@ -441,26 +444,70 @@ const searchCompanies = async (req, res) => {
     const activeCompanies = await Company.countDocuments({ Status: "active" });
     const pendingCompanies = await Company.countDocuments({ Status: "pending" });
 
-    // Filtre texte
+    // Filtre texte amélioré (Recherche multi-critères)
     if (q && q.trim() !== "") {
-      query.companyName = { $regex: q, $options: "i" };
+      const keywords = q.trim().split(/\s+/);
+      
+      // On prépare des recherches pour chaque mot-clé
+      const Category = mongoose.model("Category");
+      const SubCategory = mongoose.model("SubCategory");
+      const Service = mongoose.model("Service");
+      const Country = mongoose.model("Country");
+      const Region = mongoose.model("Region");
+      const City = mongoose.model("City");
+
+      const keywordFilters = await Promise.all(keywords.map(async (kw) => {
+        // Pour chaque mot-clé, on trouve les IDs correspondants
+        const cats = await Category.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+        const subs = await SubCategory.find({ 
+          $or: [{ name: { $regex: kw, $options: "i" } }, { category_id: { $in: cats.map(c => c._id) } }] 
+        }).select("_id");
+        const servs = await Service.find({ 
+          $or: [{ name: { $regex: kw, $options: "i" } }, { subcategory_id: { $in: subs.map(s => s._id) } }] 
+        }).select("_id");
+        
+        const countries = await Country.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+        const regions = await Region.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+        const cities = await City.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+
+        return {
+          $or: [
+            { companyName: { $regex: kw, $options: "i" } },
+            { description: { $regex: kw, $options: "i" } },
+            { services: { $in: servs.map(s => s._id) } },
+            { country: { $in: countries.map(c => c._id) } },
+            { region: { $in: regions.map(r => r._id) } },
+            { city: { $in: cities.map(c => c._id) } }
+          ]
+        };
+      }));
+
+      // On veut que l'entreprise matche TOUS les mots-clés (mais chaque mot-clé peut matcher n'importe quel champ)
+      // Exemple: "sante tunis" -> (champ1 ou champ2 contient "sante") ET (champ1 ou champ2 contient "tunis")
+      query.$and = keywordFilters;
     }
 
-    // Filtres Géo - Support flexible pour IDs en String ou ObjectId
+    // Filtres Géo
     if (country && country !== "") {
-      query.country = mongoose.isValidObjectId(country) 
-        ? { $in: [country, new mongoose.Types.ObjectId(country)] } 
-        : country;
+      if (mongoose.isValidObjectId(country)) {
+        query.country = new mongoose.Types.ObjectId(country);
+      } else {
+        query.country = country;
+      }
     }
     if (region && region !== "") {
-      query.region = mongoose.isValidObjectId(region) 
-        ? { $in: [region, new mongoose.Types.ObjectId(region)] } 
-        : region;
+      if (mongoose.isValidObjectId(region)) {
+        query.region = new mongoose.Types.ObjectId(region);
+      } else {
+        query.region = region;
+      }
     }
     if (city && city !== "") {
-      query.city = mongoose.isValidObjectId(city) 
-        ? { $in: [city, new mongoose.Types.ObjectId(city)] } 
-        : city;
+      if (mongoose.isValidObjectId(city)) {
+        query.city = new mongoose.Types.ObjectId(city);
+      } else {
+        query.city = city;
+      }
     }
 
     // Filtres Taxonomie

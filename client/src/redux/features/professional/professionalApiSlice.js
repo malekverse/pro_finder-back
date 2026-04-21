@@ -12,6 +12,16 @@ export const professionalApiSlice = apiSlice.injectEndpoints({
       query: (professionalId) => `professional/public/${professionalId}`,
       providesTags: (result, error, professionalId) => [{ type: "Professional", id: professionalId }],
     }),
+    
+    getProfessionalFollowers: builder.query({
+      query: () => "professional/followers",
+      providesTags: ["Followers"],
+    }),
+    
+    getFollowersStats: builder.query({
+      query: (period = "annual") => `followers/followers-stats?period=${period}`,
+      providesTags: ["Followers"]
+    }),
 
     updateProfessionalProfile: builder.mutation({
       query: (formData) => ({
@@ -71,6 +81,19 @@ export const professionalApiSlice = apiSlice.injectEndpoints({
       query: (professionalId) => `followers/check-pro/${professionalId}`,
       providesTags: (result, error, professionalId) => [{ type: "Professional", id: professionalId }],
     }),
+
+    getBlockedProfessionalUsers: builder.query({
+      query: () => "professional/blocked",
+      providesTags: ["Followers"],
+    }),
+
+    toggleBlockProfessionalFollower: builder.mutation({
+      query: (followId) => ({
+        url: `professional/followers/${followId}/block`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["Followers", "Professional"],
+    }),
   }),
 });
 
@@ -78,10 +101,14 @@ export const {
   useGetProfessionalProfileQuery,
   useGetPublicProfessionalProfileQuery,
   useUpdateProfessionalProfileMutation,
+  useGetProfessionalFollowersQuery,
+  useGetFollowersStatsQuery,
   useSearchProfessionalsQuery,
   useGetSuggestedProfessionalsQuery,
   useGetRecommendedProfessionalsQuery,
   useFollowProfessionalMutation,
   useUnfollowProfessionalMutation,
   useCheckFollowProStatusQuery,
+  useGetBlockedProfessionalUsersQuery,
+  useToggleBlockProfessionalFollowerMutation,
 } = professionalApiSlice;

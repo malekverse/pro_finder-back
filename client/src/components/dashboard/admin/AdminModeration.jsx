@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation, useGetPendingProfessionalsQuery, useVerifyProfessionalMutation, useRejectProfessionalMutation } from "../../../redux/features/profileApiSlice";
+import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation, useGetPendingProfessionalsQuery, useVerifyProfessionalMutation, useRejectProfessionalMutation, useContactProfessionalMutation } from "../../../redux/features/profileApiSlice";
 import { useGetAllReportsQuery, useUpdateReportStatusMutation } from "../../../redux/features/reportApiSlice";
 import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2, Info, User } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -35,9 +35,13 @@ const AdminModeration = () => {
     const { data: professionals = [], isLoading: loadingProfessionals } = useGetPendingProfessionalsQuery(undefined, { pollingInterval: 3000 });
     const [verifyProfessional, { isLoading: isVerifyingPro }] = useVerifyProfessionalMutation();
     const [rejectProfessional, { isLoading: isRejectingPro }] = useRejectProfessionalMutation();
+    const [contactProfessional, { isLoading: isContactingPro }] = useContactProfessionalMutation();
     const [selectedProfessional, setSelectedProfessional] = useState(null);
     const [proRefusalReason, setProRefusalReason] = useState("");
     const [isProModalOpen, setIsProModalOpen] = useState(false);
+    const [isContactProModalOpen, setIsContactProModalOpen] = useState(false);
+    const [contactProMessage, setContactProMessage] = useState("");
+    const [contactProType, setContactProType] = useState("manual");
 
     const handleApprove = async (id) => {
         try {
@@ -129,6 +133,40 @@ const AdminModeration = () => {
         }
     };
 
+    const handleContactProClick = (pro) => {
+        setSelectedProfessional(pro);
+        setContactProMessage("");
+        setContactProType("manual");
+        setIsContactProModalOpen(true);
+    };
+
+    const handleConfirmContactPro = async () => {
+        if (!selectedProfessional) return;
+        try {
+            const finalMessage = contactProType === "pending" 
+                ? "Votre dossier est actuellement en cours d'examen par notre équipe de modération. Nous vous contacterons prochainement."
+                : contactProMessage;
+
+            if (!finalMessage && contactProType === "manual") {
+                alert("Veuillez saisir un message.");
+                return;
+            }
+
+            await contactProfessional({
+                professionalId: selectedProfessional._id,
+                message: finalMessage,
+                type: contactProType
+            }).unwrap();
+            
+            setIsContactProModalOpen(false);
+            setSelectedProfessional(null);
+            alert("Email envoyé avec succès !");
+        } catch (err) {
+            console.error("Failed to contact professional:", err);
+            alert("L'envoi de l'email a échoué.");
+        }
+    };
+
     if (loadingCompanies || loadingReports || loadingProfessionals) {
         return (
             <div className={styles.container} style={{ textAlign: 'center', paddingTop: '50px' }}>
@@ -194,7 +232,7 @@ const AdminModeration = () => {
                 </button>
             </div>
 
-            {activeTab === 'companies' ? (
+            {activeTab === 'companies' && (
                 <>
                     <p style={{ color: '#64748b', marginBottom: '20px' }}>
                         Validez les nouvelles entreprises pour leur donner accès à la plateforme.
@@ -316,7 +354,9 @@ const AdminModeration = () => {
                         </table>
                     </div>
                 </>
-            ) : (
+            )}
+
+            {activeTab === 'reports' && (
                 <>
                     <p style={{ color: '#64748b', marginBottom: '20px' }}>
                         Gérez les signalements effectués par les utilisateurs concernant les entreprises.
@@ -455,20 +495,25 @@ const AdminModeration = () => {
                                         <tr key={pro._id} className={styles.tr}>
                                             <td className={styles.td}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    {pro.photoProfessional ? (
-                                                        <img 
-                                                            src={`${SERVER_URL}/${pro.photoProfessional}`} 
-                                                            alt="photo" 
-                                                            style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }} 
-                                                        />
-                                                    ) : (
-                                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <User size={20} color="#94a3b8" />
-                                                        </div>
-                                                    )}
+                                                    <Link to={`/user/professional/${pro._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
+                                                        {pro.photoProfessional ? (
+                                                            <img 
+                                                                src={`${SERVER_URL}/${pro.photoProfessional}`} 
+                                                                alt="photo" 
+                                                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }} 
+                                                            />
+                                                        ) : (
+                                                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <User size={20} color="#94a3b8" />
+                                                            </div>
+                                                        )}
+                                                    </Link>
                                                     <div>
-                                                        <div style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                        <div style={{ fontWeight: '600', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                             {pro.fullName || "Nom inconnu"}
+                                                            <Link to={`/user/professional/${pro._id}`} style={{ color: '#24416b' }} title="Voir le profil">
+                                                                <ExternalLink size={14} />
+                                                            </Link>
                                                         </div>
                                                         <div style={{ fontSize: '12px', color: '#64748b' }}>{pro.phone}</div>
                                                     </div>
@@ -508,6 +553,25 @@ const AdminModeration = () => {
                                                         style={{ padding: '6px 12px', fontSize: '12px' }}
                                                     >
                                                         <CheckCircle size={14} /> Approuver
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleContactProClick(pro)}
+                                                        disabled={isContactingPro}
+                                                        style={{ 
+                                                            padding: '6px 12px', 
+                                                            fontSize: '12px', 
+                                                            backgroundColor: '#f1f5f9', 
+                                                            color: '#475569',
+                                                            border: '1.5px solid #e2e8f0',
+                                                            borderRadius: '8px',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '5px'
+                                                        }}
+                                                    >
+                                                        <Mail size={14} /> Contacter
                                                     </button>
                                                     <button 
                                                         className={styles.deleteBtn} 
@@ -856,6 +920,104 @@ const AdminModeration = () => {
                                 className={styles.button} 
                                 style={{ flex: 1, background: '#f1f5f9', color: '#334155', boxShadow: 'none' }}
                                 onClick={() => setIsProModalOpen(false)}
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de contact professionnel */}
+            {isContactProModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+                        <div className={styles.modalHeader}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Mail size={20} color="#24416b" />
+                                <h3>Contacter le professionnel</h3>
+                            </div>
+                            <button onClick={() => setIsContactProModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '15px' }}>
+                                Destinataire : <strong>{selectedProfessional?.fullName}</strong> ({selectedProfessional?.email})
+                            </p>
+
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                <button 
+                                    onClick={() => setContactProType("pending")}
+                                    style={{ 
+                                        flex: 1, 
+                                        padding: '10px', 
+                                        borderRadius: '8px', 
+                                        border: contactProType === 'pending' ? '2px solid #24416b' : '1px solid #e2e8f0',
+                                        backgroundColor: contactProType === 'pending' ? '#eff6ff' : 'white',
+                                        color: contactProType === 'pending' ? '#24416b' : '#64748b',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+                                    }}
+                                >
+                                    <Info size={16} /> En attente
+                                </button>
+                                <button 
+                                    onClick={() => setContactProType("manual")}
+                                    style={{ 
+                                        flex: 1, 
+                                        padding: '10px', 
+                                        borderRadius: '8px', 
+                                        border: contactProType === 'manual' ? '2px solid #24416b' : '1px solid #e2e8f0',
+                                        backgroundColor: contactProType === 'manual' ? '#eff6ff' : 'white',
+                                        color: contactProType === 'manual' ? '#24416b' : '#64748b',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+                                    }}
+                                >
+                                    <Send size={16} /> Manuel
+                                </button>
+                            </div>
+
+                            {contactProType === "pending" ? (
+                                <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>
+                                    <strong>Message pré-défini :</strong><br />
+                                    "Votre dossier est actuellement en cours d'examen par notre équipe de modération. Nous vous contacterons prochainement."
+                                </div>
+                            ) : (
+                                <textarea 
+                                    value={contactProMessage}
+                                    onChange={(e) => setContactProMessage(e.target.value)}
+                                    placeholder="Saisissez votre message ici..."
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '150px', 
+                                        padding: '12px', 
+                                        borderRadius: '12px', 
+                                        border: '1.5px solid #e2e8f0',
+                                        outline: 'none',
+                                        fontSize: '14px',
+                                        resize: 'none'
+                                    }}
+                                />
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button 
+                                className={styles.button} 
+                                style={{ flex: 1, background: '#24416b' }}
+                                onClick={handleConfirmContactPro}
+                                disabled={isContactingPro}
+                            >
+                                {isContactingPro ? <Loader2 className="animate-spin" size={18} /> : "Envoyer l'email"}
+                            </button>
+                            <button 
+                                className={styles.button} 
+                                style={{ flex: 1, background: '#f1f5f9', color: '#334155', boxShadow: 'none' }}
+                                onClick={() => setIsContactProModalOpen(false)}
                             >
                                 Annuler
                             </button>

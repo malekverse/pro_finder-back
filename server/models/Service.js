@@ -15,7 +15,7 @@ const serviceSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["Actif", "Inactif"],
-    default: "Inactif"
+    default: "Actif"
   }
 
 }, { timestamps: true });

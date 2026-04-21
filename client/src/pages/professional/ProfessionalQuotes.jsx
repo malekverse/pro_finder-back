@@ -1,56 +1,68 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   useGetCompanyQuotesQuery, 
   useCreateQuoteMutation, 
   useUpdateQuoteStatusMutation 
 } from "../../redux/features/company/quoteApiSlice";
-import { useGetCompanyFollowersQuery } from "../../redux/features/company/companyApiSlice";
+import { useGetProfessionalFollowersQuery, useGetProfessionalProfileQuery } from "../../redux/features/professional/professionalApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
 import { useGetCompanyServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
 import { 
-  FileSpreadsheet, Plus, Search, X, Loader2, AlertCircle, 
-  User, Calendar, DollarSign, FileText, CheckCircle2, Clock, Trash2,
-  ChevronDown, Package, Wrench, Eye, Download, Send, Edit, RefreshCw, FileSignature
+  FileSpreadsheet, Plus, Search, X, Loader2, 
+  User, Calendar, FileText, Package, Wrench, Eye, Download, Send, RefreshCw, FileSignature
 } from "lucide-react";
 import { generateQuotePDF } from "../../utils/pdfGenerator";
-import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
 
-const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = null }) => {
+const ProfessionalQuotes = ({ isEmbedded = false }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useSelector((state) => state.auth.user);
-  const companyId = user?.companyId || user?.id;
+  const professionalId = user?.id;
 
-  const { data: companyProfile } = useGetCompanyProfileQuery(companyId, { skip: !companyId });
+  const prefillData = location.state?.prefill || null;
+  const openModalOnLoad = location.state?.openModal && location.state?.tab === "quotes";
+
+  const { data: proProfile } = useGetProfessionalProfileQuery();
   const [isModalOpen, setIsModalOpen] = useState(openModalOnLoad);
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: quotes = [], isLoading, isError, refetch } = useGetCompanyQuotesQuery(undefined, { pollingInterval: 3000 });
-  const { data: followers = [] } = useGetCompanyFollowersQuery();
-  const { data: products = [] } = useGetCompanyProductsQuery(companyId, { skip: !companyId });
-  const { data: services = [] } = useGetCompanyServicesQuery(companyId, { skip: !companyId });
+  const { data: quotes = [], isLoading, refetch } = useGetCompanyQuotesQuery(undefined, { pollingInterval: 3000 });
+  const { data: followers = [] } = useGetProfessionalFollowersQuery();
+  
+  // For professionals, we might need to fetch products/services differently if they are not shared
+  // But based on the file structure, they seem to use common queries
+  const { data: products = [] } = useGetCompanyProductsQuery(professionalId, { skip: !professionalId });
+  const { data: services = [] } = useGetCompanyServicesQuery(professionalId, { skip: !professionalId });
   
   const [createQuote, { isLoading: isCreating }] = useCreateQuoteMutation();
   const [updateStatus] = useUpdateQuoteStatusMutation();
 
   const handleDownloadPDF = (quote) => {
-    generateQuotePDF(quote, companyProfile);
+    const profileForPdf = {
+       companyName: proProfile?.fullName,
+       phone: proProfile?.phone,
+       email: proProfile?.email,
+       logoUrl: proProfile?.photoProfessional,
+       website: proProfile?.website,
+       address: `${proProfile?.city || ""}, ${proProfile?.region || ""}`
+    };
+    generateQuotePDF(quote, profileForPdf);
   };
 
   const [formData, setFormData] = useState({
     userId: prefillData?.userId || "",
     reservationId: prefillData?.reservationId || "",
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours par défaut
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: prefillData?.notes || "",
     items: prefillData?.serviceId ? [
       { description: `Service: ${prefillData.serviceName}`, quantity: 1, unitPrice: prefillData.price, duration: prefillData.duration || "60 min" }
     ] : [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
   });
 
-  // Mettre à jour le formulaire si les données de pré-remplissage changent
   useEffect(() => {
-    if (prefillData) {
+    if (prefillData && openModalOnLoad) {
       setFormData({
         userId: prefillData.userId || "",
         reservationId: prefillData.reservationId || "",
@@ -62,10 +74,9 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
       });
       setIsModalOpen(true);
     }
-  }, [prefillData]);
+  }, [prefillData, openModalOnLoad]);
 
-  // State for search/select dropdowns
-  const [activeDropdown, setActiveDropdown] = useState(null); // { index, type: 'prestation' }
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -88,7 +99,8 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
     const newItems = [{
       description: item.name,
       quantity: 1,
-      unitPrice: item.price
+      unitPrice: item.price,
+      duration: item.duration || ""
     }];
     setFormData({ ...formData, items: newItems });
     setActiveDropdown(null);
@@ -102,7 +114,7 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
       setFormData({
         userId: "",
         reservationId: "",
-        validUntil: "",
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: "",
         items: [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
       });
@@ -126,18 +138,17 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
     q.userId?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Combine products and services for the selection
   const allPrestations = [
     ...products.map(p => ({ ...p, type: 'product' })),
     ...services.map(s => ({ ...s, type: 'service' }))
   ];
 
   return (
-    <div style={{ padding: isEmbedded ? "40px" : "40px", backgroundColor: "#f8fafc", minHeight: isEmbedded ? "auto" : "100vh" }}>
+    <div style={{ padding: "40px", backgroundColor: "#f8fafc", minHeight: isEmbedded ? "auto" : "100vh" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
         <div>
           <h1 style={{ fontSize: "28px", fontWeight: "800", color: "#1e293b", margin: 0 }}>Gestion des Devis</h1>
-          <p style={{ color: "#64748b", marginTop: "5px" }}>Créez et suivez vos propositions commerciales.</p>
+          <p style={{ color: "#64748b", marginTop: "5px" }}>Créez et suivez vos propositions commerciales en tant que professionnel.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -180,27 +191,14 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
               padding: '16px 24px',
               transition: 'background-color 0.2s'
             }}>
-              {/* Icon */}
               <div style={{ width: '40px', height: '40px', backgroundColor: '#eff6ff', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <FileText size={20} color="#24416b" />
               </div>
-
-              {/* Type Label */}
               <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>Devis</div>
-
-              {/* Number */}
               <div style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>{quote.quoteNumber}</div>
-
-              {/* Client Name */}
               <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{quote.userId?.fullName}</div>
-
-              {/* Date */}
               <div style={{ fontSize: '14px', color: '#64748b' }}>{new Date(quote.createdAt).toLocaleDateString()}</div>
-
-              {/* Amount */}
               <div style={{ fontSize: '15px', fontWeight: '800', color: '#1e293b' }}>{quote.totalAmount.toFixed(2)} TND</div>
-
-              {/* Status Badge */}
               <div>
                 <span style={{ 
                   padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
@@ -210,27 +208,11 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                   {quote.status === 'draft' ? 'Brouillon' : quote.status === 'sent' ? 'Envoyé' : quote.status === 'accepted' ? 'Accepté' : quote.status === 'rejected' ? 'Refusé' : quote.status}
                 </span>
               </div>
-
-              {/* Actions */}
               <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
-                <button 
-                  onClick={() => handleDownloadPDF(quote)}
-                  title="Télécharger PDF"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: '5px' }}
-                >
-                  <Download size={18} />
-                </button>
-                
+                <button onClick={() => handleDownloadPDF(quote)} title="Télécharger PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: '5px' }}><Download size={18} /></button>
                 {quote.status === 'draft' && (
-                  <button 
-                    onClick={() => handleStatusChange(quote._id, 'sent')}
-                    title="Envoyer au client"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: '5px' }}
-                  >
-                    <Send size={18} />
-                  </button>
+                  <button onClick={() => handleStatusChange(quote._id, 'sent')} title="Envoyer au client" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: '5px' }}><Send size={18} /></button>
                 )}
-
                 {quote.status === 'rejected' && (
                   <button 
                     onClick={() => {
@@ -242,7 +224,8 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                         items: quote.items.map(item => ({
                           description: item.description,
                           quantity: item.quantity,
-                          unitPrice: item.unitPrice
+                          unitPrice: item.unitPrice,
+                          duration: item.duration || ""
                         }))
                       });
                       setIsModalOpen(true);
@@ -253,23 +236,22 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                     <RefreshCw size={18} />
                   </button>
                 )}
-
                 {quote.status === 'accepted' && (
                   <button 
                     onClick={() => {
-                      navigate("/company/documents", { 
-                        state: { 
-                          tab: "contracts",
-                          openModal: true,
-                          prefill: {
-                            quoteId: quote._id,
-                            userId: quote.userId?._id || quote.userId,
-                            totalValue: quote.totalAmount,
-                            title: `Contrat - ${quote.userId?.fullName || 'Client'}`,
-                            content: `Basé sur le devis ${quote.quoteNumber}.\nPrestations : \n${quote.items.map(i => `- ${i.description} (x${i.quantity})`).join('\n')}`
-                          }
-                        } 
-                      });
+                        navigate("/professional/documents", { 
+                            state: { 
+                              tab: "contracts",
+                              openModal: true,
+                              prefill: {
+                                quoteId: quote._id,
+                                userId: quote.userId?._id || quote.userId,
+                                totalValue: quote.totalAmount,
+                                title: `Contrat - ${quote.userId?.fullName || 'Client'}`,
+                                content: `Basé sur le devis ${quote.quoteNumber}.\nPrestations : \n${quote.items.map(i => `- ${i.description} (x${i.quantity})`).join('\n')}`
+                              }
+                            } 
+                        });
                     }}
                     title="Créer le contrat"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: '5px' }}
@@ -277,14 +259,7 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                     <FileSignature size={18} />
                   </button>
                 )}
-
-                <button 
-                  onClick={() => setSelectedQuote(quote)}
-                  title="Détails"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '5px' }}
-                >
-                  <Eye size={18} />
-                </button>
+                <button onClick={() => setSelectedQuote(quote)} title="Détails" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '5px' }}><Eye size={18} /></button>
               </div>
             </div>
           ))}
@@ -362,7 +337,7 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
             <div style={qs.modalHeader}>
               <div>
                 <h2 style={qs.modalTitle}>Nouveau Devis</h2>
-                <p style={qs.modalSub}>Configurez votre proposition commerciale pour ce client.</p>
+                <p style={qs.modalSub}>Configurez votre proposition commerciale en tant que professionnel.</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} style={qs.closeBtn}><X size={24} /></button>
             </div>
@@ -379,9 +354,7 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                         style={{ 
                             ...qs.select, 
                             cursor: formData.reservationId ? 'not-allowed' : 'pointer', 
-                            backgroundColor: formData.reservationId ? '#f1f5f9' : '#fff',
-                            color: formData.reservationId ? '#1e293b' : '#1e293b',
-                            fontWeight: formData.reservationId ? '600' : '500'
+                            backgroundColor: formData.reservationId ? '#f1f5f9' : '#fff'
                         }}
                         value={formData.userId}
                         onChange={(e) => setFormData({...formData, userId: e.target.value})}
@@ -426,8 +399,7 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                             style={{ 
                                 ...qs.itemInput, 
                                 cursor: formData.reservationId ? 'not-allowed' : 'text', 
-                                backgroundColor: formData.reservationId ? '#f1f5f9' : '#fff',
-                                color: formData.reservationId ? '#475569' : '#1e293b'
+                                backgroundColor: formData.reservationId ? '#f1f5f9' : '#fff'
                             }} 
                             value={formData.items[0].description} 
                             onChange={(e) => handleItemChange('description', e.target.value)}
@@ -442,8 +414,6 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                                     key={i} 
                                     onClick={() => selectPrestation(p)}
                                     style={qs.dropdownItem}
-                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f8fafc'}
-                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                 >
                                     {p.type === 'product' ? <Package size={14} color="#24416b" /> : <Wrench size={14} color="#8b5cf6" />}
                                     <div style={{ flex: 1 }}>
@@ -527,4 +497,4 @@ const qs = {
   btnPrimary: { flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: '#24416b', color: 'white', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 };
 
-export default Quotes;
+export default ProfessionalQuotes;

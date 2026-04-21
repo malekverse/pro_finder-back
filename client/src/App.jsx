@@ -38,6 +38,12 @@ import Reviews from './pages/company/Reviews';
 import ProfessionalDashboardLayout from './pages/professional/ProfessionalDashboardLayout';
 import ProfessionalProfile from './pages/professional/ProfessionalProfile';
 import ProfessionalStats from './pages/professional/ProfessionalStats';
+import ProfessionalProduits from './pages/professional/ProfessionalProduits';
+import ProfessionalServices from './pages/professional/ProfessionalServices';
+import ProfessionalCommandes from './pages/professional/ProfessionalCommandes';
+import ProfessionalDocuments from './pages/professional/ProfessionalDocuments';
+import ProfessionalReviews from './pages/professional/ProfessionalReviews';
+import ProfessionalUserManagement from './pages/professional/ProfessionalUserManagement';
 
 // Pages Admin
 import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
@@ -173,10 +179,15 @@ function App() {
           }
         >
           <Route index element={<ProfessionalStats />} />
-          <Route path="stats"   element={<ProfessionalStats />} />
-          <Route path="posts"   element={<Publication />} />
-          <Route path="profile" element={<ProfessionalProfile />} />
-          <Route path="reviews" element={<div style={{ padding: '30px', color: '#64748b' }}>Avis clients — à venir</div>} />
+          <Route path="stats"      element={<ProfessionalStats />} />
+          <Route path="produits"   element={<ProfessionalProduits />} />
+          <Route path="services"   element={<ProfessionalServices />} />
+          <Route path="commandes"  element={<ProfessionalCommandes />} />
+          <Route path="documents"  element={<ProfessionalDocuments />} />
+          <Route path="posts"      element={<Publication />} />
+          <Route path="profile"    element={<ProfessionalProfile />} />
+          <Route path="reviews"    element={<ProfessionalReviews />} />
+          <Route path="users"      element={<ProfessionalUserManagement />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

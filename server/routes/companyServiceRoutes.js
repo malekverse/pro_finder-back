@@ -9,7 +9,7 @@ const upload = require("../config/multer");
 router.post(
   "/create",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner"),
+  authorizeRoles("company", "admin", "owner", "professional"),
   upload.any(),
   companyServiceController.createService
 );
@@ -19,7 +19,7 @@ router.get("/company/:companyId", companyServiceController.getCompanyServices);
 router.put(
   "/update/:id",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner"),
+  authorizeRoles("company", "admin", "owner", "professional"),
   upload.any(),
   companyServiceController.updateService
 );
@@ -27,7 +27,7 @@ router.put(
 router.delete(
   "/delete/:id",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner"),
+  authorizeRoles("company", "admin", "owner", "professional"),
   companyServiceController.deleteService
 );
 

@@ -19,5 +19,6 @@ router.get("/my-follows", followerController.getUserFollowedCompanies);
 router.get("/my-managed", followerController.getUserManagedCompanies);
 router.get("/count", followerController.getFollowerCount);
 router.get("/feed", followerController.getFollowedFeed);
-router.get("/followers-stats", authorizeRoles("company", "admin", "owner"), followerController.getFollowersStats);
+router.get("/followers-stats", authorizeRoles("company", "admin", "owner", "professional"), followerController.getFollowersStats);
+router.get("/followers_stats", authorizeRoles("company", "admin", "owner", "professional"), followerController.getFollowersStats);
 module.exports = router;

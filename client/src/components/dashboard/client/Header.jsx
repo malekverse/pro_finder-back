@@ -1,19 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, User, ShoppingBag, Building2, LogOut, Home, FileText, ShoppingCart } from "lucide-react";
+import { 
+  ChevronDown, User, ShoppingBag, Building2, LogOut, Home, 
+  FileText, ShoppingCart, Newspaper, Package, Wrench, ShoppingBasket,
+  CreditCard
+} from "lucide-react";
 import NotificationBell from "../company/NotificationBell";
 import GlobalSearchBar from "./CompanySearchBar";
 import { toImageUrl } from "../../../utils/imageUtils";
 
-const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, onCartClick, cartItemsCount = 0 }) => {
+const Header = ({ 
+  user, onProfileClick, onLogout, onCompanyClick, onHomeClick, 
+  onCartClick, cartItemsCount = 0, activeTab, setActiveTab 
+}) => {
   const navigate = useNavigate();
-  // État pour gérer l'ouverture/fermeture du menu déroulant du profil
   const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Génération des initiales si l'utilisateur n'a pas de photo
   const initials = user?.fullName
     ? user.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "?";
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const tabs = [
+    { id: "feed", label: "Fil d'actualité", icon: <Newspaper size={18} /> },
+    { id: "services", label: "Services", icon: <Wrench size={18} /> },
+    { id: "products", label: "Produits", icon: <Package size={18} /> },
+    { id: "societes", label: "Sociétés", icon: <Building2 size={18} /> },
+    { id: "pros", label: "Professionnels", icon: <User size={18} /> },
+  ];
 
   return (
     <div style={h.bar}>
@@ -23,198 +47,215 @@ const Header = ({ user, onProfileClick, onLogout, onCompanyClick, onHomeClick, o
         <span style={h.brandName}>ProFinder</span>
       </div>
 
-      {/* Zone Centrale : Barre de recherche */}
+      {/* Zone Centrale : Barre de recherche + Tabs */}
       <div style={h.centerArea}>
         <div style={h.searchWrapper}>
           <GlobalSearchBar />
         </div>
-        <div style={h.nav}>
-          {/* Bouton Accueil */}
-          <button
-            className="nav-btn"
-            style={{ ...h.navBtn, color: "#1E3A5F", borderBottom: "2px solid #1E3A5F" }}
-            onClick={onHomeClick}
-          >
-            <Home size={18} /><span style={h.navLabel}>Accueil</span>
-          </button>
+        
+        {setActiveTab && (
+          <div style={h.tabsContainer}>
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={activeTab === tab.id ? h.tabActive : h.tab}
+                className="nav-tab"
+              >
+                {tab.icon}
+                <span style={h.tabLabel}>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-          {/* Bouton Documents (Accès direct) */}
-          <button
-            className="nav-btn"
-            style={h.navBtn}
-            onClick={() => navigate("/documents")}
-          >
-            <FileText size={18} /><span style={h.navLabel}>Documents</span>
-          </button>
-
-          {/* Bouton Mes Achats (Accès direct) */}
-          <button
-            className="nav-btn"
-            style={h.navBtn}
-            onClick={() => navigate("/purchases")}
-          >
-            <ShoppingBag size={18} /><span style={h.navLabel}>Achats</span>
-          </button>
-
-          {/* Bouton Espace Fournisseur (Accès direct) */}
-          {onCompanyClick && (
-            <button
-              className="nav-btn"
-              style={h.navBtn}
-              onClick={onCompanyClick}
-            >
-              <Building2 size={18} /><span style={h.navLabel}>Entreprise</span>
-            </button>
-          )}
-
+      {/* Section Droite : Panier, Notifs, Profil */}
+      <div style={h.rightSection}>
+        <div style={h.actionIcons}>
           {/* Bouton Panier */}
           <button
             onClick={onCartClick}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer', position: 'relative',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1E3A5F',
-              padding: '8px'
-            }}
+            className="action-icon-btn"
+            style={h.actionBtn}
           >
             <ShoppingCart size={22} />
             {cartItemsCount > 0 && (
-              <span style={{
-                position: 'absolute', top: '0px', right: '0px', background: '#ef4444',
-                color: '#fff', fontSize: '9px', fontWeight: '800', width: '16px', height: '16px',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '2px solid #fff'
-              }}>
+              <span style={h.badge}>
                 {cartItemsCount}
               </span>
             )}
           </button>
 
           {/* Composant de cloche de notifications */}
-          <NotificationBell type="User" />
-        </div>
-      </div>
-
-      {/* Section Profil et Menu Déroulant */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Accès direct profil (au clic sur l'image/nom) */}
-        <div
-          className="profile-btn"
-          style={{ ...h.profileBtn, padding: '6px 4px' }}
-          onClick={onProfileClick}
-        >
-          {user?.avatarUrl
-            ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
-            : <div style={h.avatarFallback}>{initials}</div>}
-
-          <div style={h.profileInfo}>
-            <span style={h.profileName}>{user?.fullName || "Mon profil"}</span>
-            <span style={h.profileSub}>Voir mon profil</span>
+          <div className="action-icon-btn" style={h.actionBtn}>
+            <NotificationBell type="User" />
           </div>
         </div>
 
-        {/* Bouton pour le menu déroulant (actions secondaires) */}
-        <div style={{ position: "relative" }}>
+        <div style={h.divider} />
+
+        {/* Profil avec Dropdown */}
+        <div style={{ position: "relative" }} ref={dropdownRef}>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 5px' }}
-            onClick={() => setMenuOpen((v) => !v)}
+            className="profile-btn"
+            style={h.profileBtn}
+            onClick={() => setMenuOpen(!menuOpen)}
           >
-            <ChevronDown size={16} color="#94a3b8"
-              style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+            {user?.avatarUrl
+              ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
+              : <div style={h.avatarFallback}>{initials}</div>}
+            <ChevronDown size={14} color="#64748b" style={{ transform: menuOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
           </button>
 
-          {/* Menu Déroulant (Dropdown) */}
           {menuOpen && (
-            <>
-              {/* Overlay invisible pour fermer le menu en cliquant n'importe où ailleurs */}
-              <div style={h.overlay} onClick={() => setMenuOpen(false)} />
-
-              <div style={h.dropdown}>
-                {/* Bouton de déconnexion avec style d'alerte (rouge) */}
-                <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
-                  <LogOut size={15} color="#dc2626" /> Déconnexion
-                </button>
+            <div style={h.dropdown}>
+              <div style={h.dropdownHeader}>
+                <span style={h.dropName}>{user?.fullName || "Mon compte"}</span>
+                <span style={h.dropEmail}>{user?.email || "Client"}</span>
               </div>
-            </>
+              <div style={h.dropDivider} />
+              
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); onProfileClick(); }}>
+                <User size={16} /> Mon profil
+              </button>
+              
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/purchases"); }}>
+                <CreditCard size={16} /> Mes achats
+              </button>
+              
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/documents"); }}>
+                <FileText size={16} /> Mes documents
+              </button>
+              
+              <div style={h.dropDivider} />
+              
+              <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
+                <LogOut size={16} /> Déconnexion
+              </button>
+            </div>
           )}
         </div>
       </div>
+
       <style>{`
-        .nav-btn:hover { background: rgba(241, 245, 249, 0.8) !important; color: #1E3A5F !important; transform: translateY(-2px); }
-        .brand-logo:hover { transform: scale(1.02); }
-        .profile-btn:hover { background: rgba(241, 245, 249, 0.8) !important; border-color: #cbd5e1 !important; }
+        .nav-tab {
+          transition: all 0.2s ease;
+          border: 1px solid transparent;
+        }
+        .nav-tab:hover {
+          background: rgba(30, 58, 95, 0.05);
+          color: #1E3A5F !important;
+        }
+        .action-icon-btn {
+          transition: all 0.2s ease;
+          border-radius: 12px;
+        }
+        .action-icon-btn:hover {
+          background: #f1f5f9;
+          transform: translateY(-1px);
+        }
+        .profile-btn:hover {
+          background: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+        }
       `}</style>
     </div>
   );
 };
 
-// Styles CSS-in-JS avec une esthétique premium
 const h = {
   bar: {
     position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-    height: 70, background: "rgba(255, 255, 255, 0.8)",
+    height: 70, background: "rgba(255, 255, 255, 0.95)",
     backdropFilter: "blur(12px)",
-    borderBottom: "1px solid rgba(226, 232, 240, 0.8)",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+    borderBottom: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
     display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "0 40px",
+    padding: "0 30px",
   },
   brand: { display: "flex", alignItems: "center", gap: 10, transition: "transform 0.2s ease" },
-  brandDot: { width: 12, height: 12, borderRadius: "50%", background: "linear-gradient(135deg, #1E3A5F 0%, #3b82f6 100%)", boxShadow: "0 0 10px rgba(59, 130, 246, 0.5)" },
-  brandName: { fontWeight: 900, fontSize: 22, color: "#1E3A5F", letterSpacing: "-0.8px" },
+  brandDot: { width: 10, height: 10, borderRadius: "50%", background: "linear-gradient(135deg, #1E3A5F 0%, #3b82f6 100%)" },
+  brandName: { fontWeight: 800, fontSize: 20, color: "#1E3A5F", letterSpacing: "-0.5px" },
   centerArea: {
     display: "flex",
     alignItems: "center",
-    gap: 40,
+    gap: 20,
     flex: 1,
     justifyContent: "center",
-    marginLeft: 20,
-    marginRight: 20,
+    padding: "0 20px",
   },
   searchWrapper: {
     width: "100%",
-    maxWidth: 450,
+    maxWidth: 320,
   },
-  nav: { display: "flex", gap: 8 },
-  navBtn: {
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-    background: "none", border: "none", cursor: "pointer",
-    color: "#64748b", padding: "10px 20px", borderRadius: "12px",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative",
+  tabsContainer: {
+    display: "flex",
+    gap: "4px",
+    background: "#f8fafc",
+    padding: "4px",
+    borderRadius: "12px",
+    border: "1px solid #f1f5f9",
   },
-  navLabel: { fontSize: 12, fontWeight: "600" },
+  tab: {
+    display: "flex", alignItems: "center", gap: "8px",
+    padding: "8px 12px", border: "none", background: "none",
+    color: "#64748b", fontWeight: "600", fontSize: "13px",
+    cursor: "pointer", borderRadius: "8px",
+  },
+  tabActive: {
+    display: "flex", alignItems: "center", gap: "8px",
+    padding: "8px 12px", border: "none", background: "#fff",
+    color: "#1E3A5F", fontWeight: "700", fontSize: "13px",
+    cursor: "pointer", borderRadius: "8px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+  },
+  tabLabel: { whiteSpace: "nowrap" },
+  rightSection: { display: "flex", alignItems: "center", gap: "16px" },
+  actionIcons: { display: "flex", gap: "8px" },
+  actionBtn: {
+    background: 'none', border: 'none', cursor: 'pointer', position: 'relative',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b',
+    padding: '10px',
+  },
+  badge: {
+    position: 'absolute', top: '4px', right: '4px', background: '#ef4444',
+    color: '#fff', fontSize: '9px', fontWeight: '800', width: '16px', height: '16px',
+    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    border: '2px solid #fff'
+  },
+  divider: { width: "1px", height: "24px", background: "#e2e8f0" },
   profileBtn: {
-    display: "flex", alignItems: "center", gap: 12,
-    background: "rgba(241, 245, 249, 0.5)", border: "1px solid #f1f5f9", cursor: "pointer",
-    padding: "6px 14px", borderRadius: 14,
+    display: "flex", alignItems: "center", gap: "8px",
+    background: "none", border: "1px solid transparent", cursor: "pointer",
+    padding: "4px", borderRadius: "50% 12px 12px 50%",
     transition: "all 0.2s ease",
   },
-  avatar: { width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" },
+  avatar: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover" },
   avatarFallback: {
-    width: 38, height: 38, borderRadius: "50%",
-    background: "linear-gradient(135deg, #1E3A5F 0%, #0f172a 100%)", color: "#fff",
+    width: 34, height: 34, borderRadius: "50%",
+    background: "#1E3A5F", color: "#fff",
     display: "flex", alignItems: "center", justifyContent: "center",
-    fontWeight: 800, fontSize: 14, boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    fontWeight: 700, fontSize: "12px"
   },
-  profileInfo: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-  profileName: { fontSize: 13, fontWeight: "800", color: "#0f172a" },
-  profileSub: { fontSize: 11, color: "#64748b", fontWeight: "500" },
-  overlay: { position: "fixed", inset: 0, zIndex: 10 },
   dropdown: {
-    position: "absolute", right: 0, top: 55,
-    background: "#fff", border: "1px solid #f1f5f9",
-    borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-    zIndex: 11, minWidth: 220, overflow: "hidden",
+    position: "absolute", right: 0, top: "120%",
+    background: "#fff", border: "1px solid #e2e8f0",
+    borderRadius: "16px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+    zIndex: 1000, minWidth: "220px", overflow: "hidden",
     padding: "8px",
   },
+  dropdownHeader: { padding: "12px 16px", display: "flex", flexDirection: "column" },
+  dropName: { fontSize: "14px", fontWeight: "700", color: "#1e293b" },
+  dropEmail: { fontSize: "12px", color: "#64748b" },
   dropItem: {
-    display: "flex", alignItems: "center", gap: 12,
-    padding: "12px 16px", width: "100%",
+    display: "flex", alignItems: "center", gap: "12px",
+    padding: "10px 16px", width: "100%",
     background: "none", border: "none", cursor: "pointer",
-    color: "#334155", fontSize: 14, fontWeight: "600", textAlign: "left",
+    color: "#475569", fontSize: "13px", fontWeight: "600", textAlign: "left",
     borderRadius: "10px", transition: "all 0.2s",
   },
-  dropDivider: { height: 1, background: "#f1f5f9", margin: "8px 0" },
+  dropDivider: { height: "1px", background: "#f1f5f9", margin: "4px 0" },
 };
 
 export default Header;

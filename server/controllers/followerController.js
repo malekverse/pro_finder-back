@@ -149,8 +149,11 @@ const unfollowProfessional = async (req, res) => {
 const getFollowerCount = async (req, res) => {
   try {
     const idToUse = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { professional_id: idToUse, is_blocked: { $ne: true } } : { company_id: idToUse, is_blocked: { $ne: true } };
+    
     // On ne compte que les abonnés non bloqués
-    const followers = await Follow.countDocuments({ company_id: idToUse, is_blocked: { $ne: true } });
+    const followers = await Follow.countDocuments(query);
     res.json({ followers });
   } catch (err) {
     console.error(err);
@@ -162,6 +165,7 @@ const getFollowersStats = async (req, res) => {
   try {
     const Post = mongoose.model("Post");
     const idToUse = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
     const companyId = new mongoose.Types.ObjectId(idToUse);
     const { period = "annual" } = req.query; // annual ou monthly
 
@@ -170,8 +174,15 @@ const getFollowersStats = async (req, res) => {
     const currentMonth = now.getMonth() + 1;
 
     let groupField;
-    let matchStage = { company_id: companyId, is_blocked: { $ne: true } };
-    let postMatchStage = { author_id: companyId, authorType: "Company", isDeleted: false };
+    let matchStage = isProfessional 
+      ? { professional_id: companyId, is_blocked: { $ne: true } }
+      : { company_id: companyId, is_blocked: { $ne: true } };
+
+    let postMatchStage = { 
+      author_id: companyId, 
+      authorType: isProfessional ? "Professional" : "Company", 
+      isDeleted: false 
+    };
 
     if (period === "monthly") {
       // Filtrer pour le mois en cours et grouper par jour
@@ -214,21 +225,24 @@ const getFollowersStats = async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    // Engagement total (Likes & Comments) - Toujours global ou filtré ? 
-    // Gardons global pour les KPIs du haut si on veut le total absolu, 
-    // mais on pourrait aussi filtrer selon la période.
-    const posts = await Post.find({ author_id: companyId, authorType: "Company", isDeleted: false });
-    const totalLikes = posts.reduce((sum, p) => sum + (p.likes?.length || 0), 0);
-    const totalComments = posts.reduce((sum, p) => sum + (p.comments?.length || 0), 0);
+    // Engagement total
+    const totalLikes = (await Post.aggregate([
+      { $match: postMatchStage },
+      { $group: { _id: null, total: { $sum: { $size: { $ifNull: ["$likes", []] } } } } }
+    ]))[0]?.total || 0;
 
-    const totalFollowers = await Follow.countDocuments({ company_id: companyId, is_blocked: { $ne: true } });
-    const teamMembers = await Follow.countDocuments({ company_id: companyId, role_id: { $ne: null } });
-    const totalPosts = await Post.countDocuments({ author_id: companyId, authorType: "Company", isDeleted: false });
+    const totalComments = (await Post.aggregate([
+      { $match: postMatchStage },
+      { $group: { _id: null, total: { $sum: { $size: { $ifNull: ["$comments", []] } } } } }
+    ]))[0]?.total || 0;
+
+    const totalFollowers = await Follow.countDocuments(matchStage);
+    const teamMembers = isProfessional ? 0 : await Follow.countDocuments({ ...matchStage, role_id: { $ne: null } });
+    const totalPosts = await Post.countDocuments(postMatchStage);
     
     const firstDayOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const newFollowersThisMonth = await Follow.countDocuments({
-      company_id: companyId,
-      is_blocked: { $ne: true },
+      ...matchStage,
       createdAt: { $gte: firstDayOfThisMonth }
     });
 

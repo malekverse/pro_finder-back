@@ -59,32 +59,76 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
   }
   return (
     <div>
-      {/* Section Carrousel des Produits */}
-      <ItemsCarousel
-        title="Produits des entreprises suivies"
-        items={followedProducts}
-        type="product"
-        onSeeMore={() => setActiveTab("products")}
-        onAction={(item) => onAction(item, 'product')}
-      />
-      {/* Section Carrousel des Services */}
-      <ItemsCarousel
-        title="Services recommandés"
-        items={followedServices}
-        type="service"
-        onSeeMore={() => setActiveTab("services")}
-        onAction={(item) => onAction(item, 'service')}
-      />
       {/* Section Fil d'actualité Principal */}
-      <div style={{ marginTop: '24px', paddingTop: '0' }}>
+      <div style={{ marginTop: '0', paddingTop: '0' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Newspaper size={20} color="#1E3A5F" /> Fil d'actualité
         </h3>
-        {/* Rendu de la liste des publications accumulées */}
+        {/* Rendu de la liste des publications accumulées avec suggestions mixées */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {allPosts.map((post) => (
-            <PostCard key={post._id} post={post} onDeleted={refetchFeed} />
-          ))}
+          {allPosts.length === 0 && !isLoadingFeed && (
+            <>
+              {followedProducts.length > 0 && (
+                <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
+                  <ItemsCarousel
+                    title="Produits suggérés pour vous"
+                    items={followedProducts}
+                    type="product"
+                    onSeeMore={() => setActiveTab("products")}
+                    onAction={(item) => onAction(item, 'product')}
+                  />
+                </div>
+              )}
+              {followedServices.length > 0 && (
+                <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
+                  <ItemsCarousel
+                    title="Services recommandés"
+                    items={followedServices}
+                    type="service"
+                    onSeeMore={() => setActiveTab("services")}
+                    onAction={(item) => onAction(item, 'service')}
+                  />
+                </div>
+              )}
+            </>
+          )}
+          
+          {allPosts.map((post, index) => {
+            // Insère un carrousel de produits après le 2ème post, puis tous les 8 posts
+            const showProductCarousel = index === 1 || (index > 1 && (index - 1) % 8 === 0);
+            // Insère un carrousel de services après le 5ème post, puis tous les 8 posts
+            const showServiceCarousel = index === 4 || (index > 4 && (index - 4) % 8 === 0);
+
+            return (
+              <React.Fragment key={post._id}>
+                <PostCard post={post} onDeleted={refetchFeed} />
+                
+                {showProductCarousel && followedProducts.length > 0 && (
+                  <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
+                    <ItemsCarousel
+                      title="Produits suggérés pour vous"
+                      items={followedProducts}
+                      type="product"
+                      onSeeMore={() => setActiveTab("products")}
+                      onAction={(item) => onAction(item, 'product')}
+                    />
+                  </div>
+                )}
+
+                {showServiceCarousel && followedServices.length > 0 && (
+                  <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
+                    <ItemsCarousel
+                      title="Services recommandés"
+                      items={followedServices}
+                      type="service"
+                      onSeeMore={() => setActiveTab("services")}
+                      onAction={(item) => onAction(item, 'service')}
+                    />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
         {/* Zone cible pour l'IntersectionObserver (Loader de pagination) */}
         <div ref={loaderRef} style={{ padding: '20px 0', display: 'flex', justifyContent: 'center', visibility: hasMore ? 'visible' : 'hidden' }}>

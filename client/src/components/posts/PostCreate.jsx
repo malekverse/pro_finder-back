@@ -4,6 +4,7 @@ import { useCreatePostMutation } from "../../redux/features/posts/postApiSlice";
 import { ImagePlus, X, Send, Loader, Image } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
 import { useGetProfessionalProfileQuery } from "../../redux/features/professional/professionalApiSlice";
+import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
 import { ROLES } from "../../constants/roles";
 
 const PostCreate = ({ onSuccess }) => {

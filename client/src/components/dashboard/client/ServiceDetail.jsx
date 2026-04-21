@@ -1,95 +1,205 @@
-import React, { useState } from "react";
-import { X, Heart, Clock, Star, Building2, ShoppingBag } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Heart, Clock, Star, Building2, ShoppingBag, Calendar, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toImageUrl } from "../../../utils/imageUtils";
+import CalendarPicker from "./CalendarPicker";
+import TimeSlotPicker from "./TimeSlotPicker";
+import axios from "axios";
 
 const ServiceDetail = ({ service, onClose, onReserve }) => {
   const navigate = useNavigate();
   const [selectedImg, setSelectedImg] = useState(service?.imagesServices?.[0] || null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [note, setNote] = useState("");
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+  const formatDuration = (mins) => {
+    if (!mins) return "À disc.";
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0) return `${h}h${m > 0 ? ` ${m}min` : ''}`;
+    return `${mins} min`;
+  };
+
+  useEffect(() => {
+    if (selectedDate && service?._id) {
+      fetchSlots(selectedDate);
+    }
+  }, [selectedDate]);
+
+  const fetchSlots = async (date) => {
+    setIsLoadingSlots(true);
+    try {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${d}`;
+      
+      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}reservations/available-slots?serviceId=${service._id}&date=${dateStr}`, {
+        withCredentials: true
+      });
+      setAvailableSlots(res.data);
+    } catch (error) {
+      console.error("Error fetching slots:", error);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
 
   if (!service) return null;
+
+  const handleReserve = () => {
+    if (!selectedDate || !selectedSlot) {
+        alert("Veuillez choisir une date et un créneau horaire.");
+        return;
+    }
+    onReserve({
+        ...service,
+        bookingDate: selectedDate,
+        bookingSlot: selectedSlot,
+        notes: note
+    });
+  };
 
   return (
     <div style={pd.overlay} onClick={onClose}>
       <div style={pd.modal} onClick={e => e.stopPropagation()}>
         <button type="button" style={pd.closeBtn} onClick={onClose}><X size={24} /></button>
-        
-        <div style={pd.container}>
-          <div style={pd.leftCol}>
-            <div style={pd.mainImgBox}>
-              {selectedImg ? (
-                <img src={toImageUrl(selectedImg)} alt={service.name} style={pd.mainImg} />
-              ) : (
-                <ShoppingBag size={100} color="#cbd5e1" />
-              )}
+               <div style={pd.scrollArea}>
+          <div style={pd.container}>
+            <div style={pd.leftCol}>
+              <div style={pd.mainImgBox}>
+                {selectedImg ? (
+                  <img src={toImageUrl(selectedImg)} alt={service.name} style={pd.mainImg} />
+                ) : (
+                  <ShoppingBag size={100} color="#cbd5e1" />
+                )}
+              </div>
+              <div style={pd.thumbList}>
+                {service.imagesServices?.map((img, i) => (
+                  <div 
+                    key={i} 
+                    style={{...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0'}}
+                    onMouseEnter={() => setSelectedImg(img)}
+                  >
+                    <img src={toImageUrl(img)} alt="" style={pd.thumb} />
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={pd.thumbList}>
-              {service.imagesServices?.map((img, i) => (
-                <div 
-                  key={i} 
-                  style={{...pd.thumbBox, border: selectedImg === img ? '2px solid #1E3A5F' : '1px solid #e2e8f0'}}
-                  onMouseEnter={() => setSelectedImg(img)}
+
+            <div style={pd.midCol}>
+              <h1 style={pd.title}>{service.name}</h1>
+              <div style={pd.priceRow}>
+                <span style={pd.currentPrice}>{service.price?.toLocaleString() || 'À disc.'} DT</span>
+              </div>
+
+              <div style={pd.statusRow}>
+                <span style={{...pd.status, color: '#10b981'}}>
+                  <Clock size={16} /> DURÉE: {formatDuration(service.duration)}
+                </span>
+                <span style={pd.sku}>SKU: {service._id.slice(-8).toUpperCase()}</span>
+              </div>
+
+              <div style={pd.divider} />
+
+              <div style={pd.bookingSection}>
+                  <div style={pd.bookingHeader}>
+                      <Calendar size={18} color="#1E3A5F" />
+                      <h3 style={pd.bookingTitle}>RÉSERVER UN CRÉNEAU</h3>
+                  </div>
+
+                  <div style={pd.bookingContent}>
+                      <div style={pd.calendarWrapper}>
+                          <p style={pd.stepLabel}>1. Choisissez une date</p>
+                          <CalendarPicker 
+                              selectedDate={selectedDate} 
+                              onDateSelect={(d) => { setSelectedDate(d); setSelectedSlot(null); }} 
+                          />
+                      </div>
+
+                      <div style={pd.slotsWrapper}>
+                          <p style={pd.stepLabel}>2. Choisissez une heure</p>
+                          <TimeSlotPicker 
+                              slots={availableSlots} 
+                              selectedSlot={selectedSlot} 
+                              onSlotSelect={setSelectedSlot}
+                              isLoading={isLoadingSlots}
+                          />
+                      </div>
+                  </div>
+
+                  <div style={pd.noteSection}>
+                      <p style={pd.stepLabel}>3. Notes complémentaires (facultatif)</p>
+                      <textarea 
+                          placeholder="Ex: Précisions sur votre besoin, code d'accès, etc..."
+                          style={pd.noteArea}
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                      />
+                  </div>
+              </div>
+
+              <div style={pd.actionRow}>
+                <button 
+                  type="button" 
+                  disabled={!selectedDate || !selectedSlot}
+                  style={{ ...pd.buyBtn, opacity: (!selectedDate || !selectedSlot) ? 0.5 : 1 }} 
+                  onClick={handleReserve}
                 >
-                  <img src={toImageUrl(img)} alt="" style={pd.thumb} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={pd.midCol}>
-            <h1 style={pd.title}>{service.name}</h1>
-            <div style={pd.priceRow}>
-              <span style={pd.currentPrice}>{service.price?.toLocaleString() || 'À disc.'} DT</span>
+                  {!selectedDate || !selectedSlot ? "CHOISISSEZ UNE DATE & HEURE" : "CONFIRMER LA RÉSERVATION"}
+                </button>
+                <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
+              </div>
             </div>
 
-            <div style={pd.statusRow}>
-              <span style={{...pd.status, color: '#10b981'}}>
-                <Clock size={16} /> DURÉE: {service.duration} min
-              </span>
-              <span style={pd.sku}>SKU: {service._id.slice(-8).toUpperCase()}</span>
-            </div>
-
-            <div style={pd.divider} />
-
-            <div style={pd.actionRow}>
-              <button type="button" style={pd.buyBtn} onClick={() => onReserve(service)}>RÉSERVER MAINTENANT</button>
-              <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
-            </div>
-
-            <div style={pd.overview}>
-              <h3 style={pd.overviewTitle}>DESCRIPTION DU SERVICE</h3>
-              <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-                {service.description || 'Aucune description disponible'}
-              </p>
-            </div>
-          </div>
-
-          <div style={pd.rightCol}>
-            <div style={pd.sellerCard}>
-              <div style={pd.sellerHeader}>
-                <div style={pd.sellerLogo}>
-                  {service.companyId?.logoUrl ? (
-                    <img src={toImageUrl(service.companyId.logoUrl)} alt="" style={pd.logo} />
-                  ) : (
-                    <Building2 size={24} color="#94a3b8" />
-                  )}
-                </div>
-                <div>
-                  <h4 style={pd.sellerName}>{service.companyId?.companyName || 'Boutique'}</h4>
-                  <div style={pd.sellerRating}>
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                    <Star size={12} color="#cbd5e1" />
-                    <span style={pd.ratingCount}>5</span>
+            <div style={pd.rightCol}>
+              <div style={pd.sellerCard}>
+                <div style={pd.sellerHeader}>
+                  <div style={pd.sellerLogo}>
+                    {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
+                      <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
+                    ) : (
+                      <Building2 size={24} color="#94a3b8" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 style={pd.sellerName}>{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}</h4>
+                    <div style={pd.sellerRating}>
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} color="#cbd5e1" />
+                      <span style={pd.ratingCount}>5</span>
+                    </div>
                   </div>
                 </div>
+                <button 
+                  type="button" 
+                  style={pd.visitBtn} 
+                  onClick={() => {
+                    if (service.professionalId) {
+                      navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
+                    } else {
+                      navigate(`/user/company/${service.companyId?._id || service.companyId}`);
+                    }
+                  }}
+                >
+                  {service.professionalId ? "VOIR LE PROFIL" : "VISITER L'ENTREPRISE"}
+                </button>
               </div>
-              <button type="button" style={pd.visitBtn} onClick={() => navigate(`/user/company/${service.companyId?._id}`)}>
-                VISITER L'ENTREPRISE
-              </button>
             </div>
+          </div>
+
+          <div style={pd.bottomSection}>
+              <div style={pd.divider} />
+              <h3 style={pd.overviewTitle}>DESCRIPTION DU SERVICE</h3>
+              <p style={pd.descriptionText}>
+              {service.description || 'Aucune description disponible'}
+              </p>
           </div>
         </div>
       </div>
@@ -101,8 +211,8 @@ const pd = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
   modal: { background: '#fff', width: '100%', maxWidth: '1100px', borderRadius: '16px', position: 'relative', overflow: 'hidden', maxHeight: '95vh', display: 'flex', flexDirection: 'column' },
   closeBtn: { position: 'absolute', top: '20px', right: '20px', background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', zIndex: 10 },
-  container: { display: 'flex', gap: '30px', padding: '40px', overflowY: 'auto' },
-  leftCol: { width: '400px', flexShrink: 0 },
+  container: { display: 'flex', gap: '30px', padding: '40px 40px 0' },
+  leftCol: { width: '350px', flexShrink: 0 },
   mainImgBox: { width: '100%', aspectRatio: '1/1', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #e2e8f0', marginBottom: '15px' },
   mainImg: { width: '100%', height: '100%', objectFit: 'cover' },
   thumbList: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
@@ -121,11 +231,25 @@ const pd = {
   qtyBox: { display: 'flex', alignItems: 'center', width: 'fit-content', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' },
   qtyBtn: { width: '40px', height: '40px', background: '#fff', border: 'none', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#1E3A5F', transition: '0.2s' },
   qtyInput: { width: '50px', height: '40px', border: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', textAlign: 'center', fontSize: '14px', fontWeight: '700', color: '#1E3A5F' },
-  actionRow: { display: 'flex', gap: '15px', marginBottom: '35px' },
-  buyBtn: { flex: 1, height: '52px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  actionRow: { display: 'flex', gap: '15px', marginBottom: '35px', marginTop: '20px' },
+  buyBtn: { flex: 1, height: '52px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
   wishBtn: { width: '52px', height: '52px', background: '#f1f5f9', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' },
-  overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px', textTransform: 'uppercase' },
-  rightCol: { width: '280px', flexShrink: 0 },
+  bookingSection: { 
+    background: '#f8fafc', padding: '25px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '25px' 
+  },
+  bookingHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' },
+  bookingTitle: { fontSize: '16px', fontWeight: '800', color: '#1E3A5F', margin: 0 },
+  bookingContent: { display: 'flex', gap: '30px', flexWrap: 'wrap' },
+  calendarWrapper: { flex: 1, minWidth: '300px' },
+  slotsWrapper: { flex: 1, minWidth: '200px' },
+  stepLabel: { fontSize: '13px', fontWeight: '700', color: '#64748b', marginBottom: '12px' },
+  noteSection: { marginTop: '25px', padding: '20px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' },
+  noteArea: { width: '100%', minHeight: '100px', padding: '15px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', color: '#1e293b', outline: 'none', transition: '0.2s', resize: 'vertical' },
+  scrollArea: { flex: 1, overflowY: 'auto', paddingBottom: '20px' },
+  bottomSection: { padding: '0 40px 40px' },
+  descriptionText: { fontSize: '15px', color: '#475569', lineHeight: '1.7', margin: 0 },
+  overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#0f172a', margin: '20px 0 10px', textTransform: 'uppercase' },
+  rightCol: { width: '250px', flexShrink: 0 },
   sellerCard: { padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' },
   sellerHeader: { display: 'flex', gap: '12px', marginBottom: '20px' },
   sellerLogo: { width: '48px', height: '48px', borderRadius: '10px', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

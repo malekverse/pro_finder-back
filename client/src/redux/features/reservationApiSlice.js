@@ -26,6 +26,21 @@ export const reservationApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Reservation"],
     }),
+    createManualBlock: builder.mutation({
+      query: (data) => ({
+        url: "reservations/block",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Reservation"],
+    }),
+    deleteManualBlock: builder.mutation({
+      query: (id) => ({
+        url: `reservations/block/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Reservation"],
+    }),
   }),
 });
 
@@ -34,4 +49,6 @@ export const {
   useGetMyReservationsQuery,
   useGetCompanyReservationsQuery,
   useUpdateReservationStatusMutation,
+  useCreateManualBlockMutation,
+  useDeleteManualBlockMutation,
 } = reservationApiSlice;

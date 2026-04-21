@@ -7,34 +7,38 @@ const mongoose = require("mongoose");
 // Ajouter un avis
 const createReview = async (req, res) => {
   try {
-    const { company_id, rating, comment } = req.body;
+    const { company_id, professional_id, rating, comment } = req.body;
     const user_id = req.user;
 
-    // Vérifier si l'utilisateur suit l'entreprise (ou a déjà interagi, selon le besoin)
-    // Ici on vérifie s'il suit l'entreprise
-    const follow = await Follow.findOne({ user_id, company_id });
+    // Check if following
+    const queryFollow = company_id ? { user_id, company_id } : { user_id, professional_id };
+    const follow = await Follow.findOne(queryFollow);
+    
     if (!follow) {
-      return res.status(403).json({ message: "Vous devez suivre l'entreprise pour laisser un avis." });
+      return res.status(403).json({ message: "Vous devez suivre pour laisser un avis." });
     }
 
-    // Vérifier si l'utilisateur est bloqué
     if (follow.is_blocked) {
-      return res.status(403).json({ message: "Vous avez été bloqué par cette entreprise." });
+      return res.status(403).json({ message: "Vous avez été bloqué par cet utilisateur." });
     }
 
-    // Créer ou mettre à jour l'avis (si l'index unique n'est pas suffisant pour la logique applicative)
+    const reviewQuery = company_id ? { user_id, company_id } : { user_id, professional_id };
     const review = await Review.findOneAndUpdate(
-      { user_id, company_id },
+      reviewQuery,
       { rating, comment },
       { new: true, upsert: true, runValidators: true }
     );
 
-    // Notification (seulement si ce n'est pas sa propre entreprise)
-    if (req.companyId?.toString() !== company_id.toString()) {
+    // Notification
+    const providerId = company_id || professional_id;
+    const providerType = company_id ? "Company" : "Professional";
+    const isSelfReview = company_id ? (req.companyId?.toString() === company_id.toString()) : (req.user.toString() === professional_id.toString());
+
+    if (!isSelfReview) {
       const user = await User.findById(user_id);
       await Notification.create({
-        recipient_id: company_id,
-        recipient_type: "Company",
+        recipient_id: providerId,
+        recipient_type: providerType,
         sender_id: user_id,
         sender_type: "User",
         type: "review",
@@ -63,6 +67,34 @@ const getCompanyReviews = async (req, res) => {
     res.status(500).json({ message: "Erreur lors de la récupération des avis" });
   }
 };
+
+const getProfessionalReviews = async (req, res) => {
+  try {
+    const { professional_id } = req.params;
+    const reviews = await Review.find({ professional_id })
+      .populate("user_id", "fullName avatarUrl")
+      .sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors de la récupération des avis" });
+  }
+};
+
+const getProviderReviews = async (req, res) => {
+  try {
+    const id = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { professional_id: id } : { company_id: id };
+    
+    const reviews = await Review.find(query)
+      .populate("user_id", "fullName avatarUrl")
+      .sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors de la récupération de vos avis" });
+  }
+}
 
 // Supprimer un avis
 const deleteReview = async (req, res) => {
@@ -133,10 +165,40 @@ const getAverageRating = async (req, res) => {
   }
 };
 
+const getProfessionalAverageRating = async (req, res) => {
+  try {
+    const { professional_id } = req.params;
+    const stats = await Review.aggregate([
+      { $match: { professional_id: new mongoose.Types.ObjectId(professional_id) } },
+      {
+        $group: {
+          _id: "$professional_id",
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    if (stats.length === 0) {
+      return res.json({ averageRating: 0, totalReviews: 0 });
+    }
+
+    res.json({
+      averageRating: stats[0].averageRating.toFixed(1),
+      totalReviews: stats[0].totalReviews,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors du calcul de la note moyenne" });
+  }
+};
+
 module.exports = {
   createReview,
   getCompanyReviews,
+  getProfessionalReviews,
+  getProviderReviews,
   deleteReview,
   updateReview,
-  getAverageRating
+  getAverageRating,
+  getProfessionalAverageRating
 };

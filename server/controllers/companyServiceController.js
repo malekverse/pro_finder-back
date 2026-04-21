@@ -14,14 +14,21 @@ const createService = async (req, res) => {
 
     const imagesServices = req.files ? req.files.filter(f => f.fieldname === 'imagesServices').map((f) => f.path.replace(/\\/g, '/')) : [];
 
-    const service = await CompanyService.create({
+    let serviceData = {
       name,
       description,
       price,
       duration,
       imagesServices,
-      companyId,
-    });
+    };
+
+    if (req.roles.includes("professional")) {
+      serviceData.professionalId = req.user;
+    } else {
+      serviceData.companyId = req.companyId || req.user;
+    }
+
+    const service = await CompanyService.create(serviceData);
 
     res.status(201).json(service);
   } catch (err) {
@@ -33,8 +40,13 @@ const createService = async (req, res) => {
 // GET BY COMPANY
 const getCompanyServices = async (req, res) => {
   try {
-    const companyId = req.params.companyId || req.companyId || req.user;
-    const services = await CompanyService.find({ companyId }).sort({ createdAt: -1 });
+    const id = req.params.companyId || req.companyId || req.user;
+    const services = await CompanyService.find({
+      $or: [
+        { companyId: id },
+        { professionalId: id }
+      ]
+    }).sort({ createdAt: -1 });
     res.json(services);
   } catch (err) {
     console.error("[getCompanyServices]", err);
@@ -47,9 +59,11 @@ const updateService = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, duration, existingImages } = req.body;
-    const companyId = req.companyId || req.user;
+    const ownerId = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 
-    const service = await CompanyService.findOne({ _id: id, companyId });
+    const service = await CompanyService.findOne(query);
     if (!service) {
       return res.status(404).json({ message: "Service non trouvé ou non autorisé" });
     }
@@ -83,9 +97,11 @@ const updateService = async (req, res) => {
 const deleteService = async (req, res) => {
   try {
     const { id } = req.params;
-    const companyId = req.companyId || req.user;
+    const ownerId = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 
-    const service = await CompanyService.findOne({ _id: id, companyId });
+    const service = await CompanyService.findOne(query);
     if (!service) {
       return res.status(404).json({ message: "Service non trouvé ou non autorisé" });
     }
@@ -110,7 +126,10 @@ const deleteService = async (req, res) => {
 // GET ALL (Global search)
 const getAllServices = async (req, res) => {
   try {
-    const services = await CompanyService.find().populate("companyId", "companyName logoUrl").sort({ createdAt: -1 });
+    const services = await CompanyService.find()
+      .populate("companyId", "companyName logoUrl")
+      .populate("professionalId", "fullName photoProfessional")
+      .sort({ createdAt: -1 });
     res.json(services);
   } catch (err) {
     console.error("[getAllServices]", err);
@@ -124,11 +143,18 @@ const getFollowedServices = async (req, res) => {
     const Follow = require("../models/follow");
     const userId = req.user;
 
-    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } }).select("company_id");
-    const companyIds = follows.map(f => f.company_id);
+    const follows = await Follow.find({ user_id: userId, is_blocked: { $ne: true } });
+    const companyIds = follows.filter(f => f.company_id).map(f => f.company_id);
+    const professionalIds = follows.filter(f => f.professional_id).map(f => f.professional_id);
 
-    const services = await CompanyService.find({ companyId: { $in: companyIds } })
+    const services = await CompanyService.find({ 
+      $or: [
+        { companyId: { $in: companyIds } },
+        { professionalId: { $in: professionalIds } }
+      ]
+    })
       .populate("companyId", "companyName logoUrl")
+      .populate("professionalId", "fullName photoProfessional")
       .sort({ createdAt: -1 })
       .limit(20);
 

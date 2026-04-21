@@ -2,7 +2,7 @@ const Notification = require("../models/Notification");
 
 exports.getNotifications = async (req, res) => {
   try {
-    const { type } = req.query; // "User" ou "Company"
+    const { type } = req.query; // "User", "Company" ou "Professional"
     
     let recipientId;
     let recipientType;
@@ -10,14 +10,27 @@ exports.getNotifications = async (req, res) => {
     if (type === "Company") {
       recipientId = req.companyId;
       recipientType = "Company";
+    } else if (type === "Professional") {
+      recipientId = req.user;
+      recipientType = "Professional";
     } else if (type === "User") {
       recipientId = req.user;
       recipientType = "User";
     } else {
-      // Fallback: si on a un companyId et pas de type, on assume Company, sinon User
+      // Fallback
       const isCompany = !!req.companyId;
-      recipientId = isCompany ? req.companyId : req.user;
-      recipientType = isCompany ? "Company" : "User";
+      const isProfessional = req.roles?.includes("professional");
+      
+      if (isCompany) {
+        recipientId = req.companyId;
+        recipientType = "Company";
+      } else if (isProfessional) {
+        recipientId = req.user;
+        recipientType = "Professional";
+      } else {
+        recipientId = req.user;
+        recipientType = "User";
+      }
     }
     
     if (!recipientId) return res.json([]);
@@ -58,13 +71,26 @@ exports.markAllAsRead = async (req, res) => {
     if (type === "Company") {
       recipientId = req.companyId;
       recipientType = "Company";
+    } else if (type === "Professional") {
+      recipientId = req.user;
+      recipientType = "Professional";
     } else if (type === "User") {
       recipientId = req.user;
       recipientType = "User";
     } else {
       const isCompany = !!req.companyId;
-      recipientId = isCompany ? req.companyId : req.user;
-      recipientType = isCompany ? "Company" : "User";
+      const isProfessional = req.roles?.includes("professional");
+
+      if (isCompany) {
+        recipientId = req.companyId;
+        recipientType = "Company";
+      } else if (isProfessional) {
+        recipientId = req.user;
+        recipientType = "Professional";
+      } else {
+        recipientId = req.user;
+        recipientType = "User";
+      }
     }
 
     await Notification.updateMany(

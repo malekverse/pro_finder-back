@@ -5,21 +5,36 @@ const Activity = require("../models/Activity");
 // Client-side: Create a report
 const createReport = async (req, res) => {
   try {
-    const { company_id, reason } = req.body;
+    const { company_id, professional_id, reason } = req.body;
     const reporter_id = req.user; // From verifyJWT middleware
 
-    if (!company_id || !reason) {
-      return res.status(400).json({ message: "Company ID and reason are required" });
+    if (!company_id && !professional_id) {
+      return res.status(400).json({ message: "Company ID or Professional ID is required" });
     }
 
-    const company = await Company.findById(company_id);
-    if (!company) {
-      return res.status(404).json({ message: "Company not found" });
+    if (!reason) {
+      return res.status(400).json({ message: "Reason is required" });
+    }
+
+    if (company_id) {
+      const company = await Company.findById(company_id);
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+    }
+
+    if (professional_id) {
+      const Professional = mongoose.model("Professional");
+      const professional = await Professional.findById(professional_id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
     }
 
     const newReport = new Report({
       reporter_id,
-      company_id,
+      company_id: company_id || undefined,
+      professional_id: professional_id || undefined,
       reason,
     });
 
@@ -38,6 +53,7 @@ const getAllReports = async (req, res) => {
     const reports = await Report.find()
       .populate("reporter_id", "fullName email")
       .populate("company_id", "companyName logoUrl Status")
+      .populate("professional_id", "fullName photoProfessional Status")
       .sort({ createdAt: -1 });
 
     res.json(reports);

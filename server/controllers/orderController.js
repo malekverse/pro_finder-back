@@ -10,9 +10,28 @@ const createOrder = async (req, res) => {
     const { companyId, items, totalPrice, shippingAddress, notes } = req.body;
     const userId = req.user;
 
+    let actualCompanyId = companyId;
+    let actualProfessionalId = req.body.professionalId;
+    let isToProfessional = !!actualProfessionalId;
+
+    // Sécurité: si professionalId est manquant mais que companyId est présent, 
+    // on vérifie si l'ID appartient à un professionnel
+    if (!isToProfessional && actualCompanyId) {
+      const Professional = require("../models/Professional");
+      const isProAccount = await Professional.exists({ _id: actualCompanyId });
+      if (isProAccount) {
+        actualProfessionalId = actualCompanyId;
+        actualCompanyId = null;
+        isToProfessional = true;
+      }
+    }
+
+    const providerId = actualCompanyId || actualProfessionalId;
+
     const newOrder = new Order({
       userId,
-      companyId,
+      companyId: actualCompanyId,
+      professionalId: actualProfessionalId,
       items,
       totalPrice,
       shippingAddress,
@@ -31,8 +50,8 @@ const createOrder = async (req, res) => {
         if (product.stock === 0) {
           // Notify Company about stock rupture
           await Notification.create({
-            recipient_id: companyId,
-            recipient_type: "Company",
+            recipient_id: providerId,
+            recipient_type: isToProfessional ? "Professional" : "Company",
             sender_id: userId,
             sender_type: "User",
             type: "stock_alert",
@@ -44,11 +63,15 @@ const createOrder = async (req, res) => {
     }
 
     // Notify Company (seulement si ce n'est pas le manager qui commande chez lui-même)
-    if (req.companyId?.toString() !== companyId.toString()) {
+    const isSelfOrdering = req.roles?.includes("professional") 
+      ? (req.user?.toString() === providerId?.toString()) 
+      : (req.companyId?.toString() === providerId?.toString());
+
+    if (!isSelfOrdering) {
       const user = await User.findById(userId).select("fullName");
       await Notification.create({
-        recipient_id: companyId,
-        recipient_type: "Company",
+        recipient_id: providerId,
+        recipient_type: isToProfessional ? "Professional" : "Company",
         sender_id: userId,
         sender_type: "User",
         type: "order",
@@ -70,6 +93,7 @@ const getMyOrders = async (req, res) => {
     const userId = req.user;
     const orders = await Order.find({ userId })
       .populate("companyId", "companyName logoUrl")
+      .populate("professionalId", "fullName photoProfessional")
       .populate("items.productId", "name price images")
       .sort({ createdAt: -1 });
 
@@ -83,8 +107,11 @@ const getMyOrders = async (req, res) => {
 // Company: Get company orders
 const getCompanyOrders = async (req, res) => {
   try {
-    const companyId = req.companyId || req.user;
-    const orders = await Order.find({ companyId })
+    const id = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const query = isProfessional ? { professionalId: id } : { companyId: id };
+
+    const orders = await Order.find(query)
       .populate("userId", "fullName email avatarUrl phone")
       .populate("items.productId", "name price images")
       .sort({ createdAt: -1 });
@@ -101,12 +128,15 @@ const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, adminNotes } = req.body;
-    const companyId = req.companyId || req.user;
+    const isProfessional = req.roles?.includes("professional");
+    const ownerId = req.companyId || req.user;
+    const query = isProfessional ? { _id: orderId, professionalId: ownerId } : { _id: orderId, companyId: ownerId };
 
-    const order = await Order.findOne({ _id: orderId, companyId });
+    const order = await Order.findOne(query);
     if (!order) {
       return res.status(404).json({ message: "Commande non trouvée" });
     }
+
 
     const oldStatus = order.status;
     order.status = status || order.status;
@@ -115,7 +145,18 @@ const updateOrderStatus = async (req, res) => {
 
     // Notify User if status changed
     if (oldStatus !== status) {
-      const company = await Company.findById(companyId).select("companyName");
+      const providerId = order.companyId || order.professionalId;
+      const isFromPro = !!order.professionalId;
+      
+      let senderName = "Boutique";
+      if (isFromPro) {
+        const Professional = require("../models/Professional");
+        const pro = await Professional.findById(providerId).select("fullName");
+        senderName = pro?.fullName || "Votre prestataire";
+      } else {
+        const company = await Company.findById(providerId).select("companyName");
+        senderName = company?.companyName || "Votre boutique";
+      }
       let statusFr = status;
       if (status === "confirmed") statusFr = "confirmée";
       if (status === "shipped") statusFr = "expédiée";
