@@ -30,4 +30,7 @@ router.get("/recommended", professionalController.getRecommendedProfessionals);
 // Suggestions (auth)
 router.get("/suggested", verifyJWT, professionalController.getSuggestedProfessionals);
 
+// Sauvegarde professionnel généré par l'IA
+router.post("/ai-create", professionalController.createScrapedProfessional);
+
 module.exports = router;

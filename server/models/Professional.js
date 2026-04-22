@@ -23,7 +23,7 @@ const professionalSchema = new mongoose.Schema(
 
     phone: {
       type: String,
-      required: true,
+      required: function() { return !this.isGenerated; },
     },
 
     description: {
@@ -41,17 +41,17 @@ const professionalSchema = new mongoose.Schema(
     country: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Country",
-      required: true,
+      required: function() { return !this.isGenerated; },
     },
     region: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Region",
-      required: true,
+      required: function() { return !this.isGenerated; },
     },
     city: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "City",
-      required: true,
+      required: function() { return !this.isGenerated; },
     },
 
     services: [
@@ -72,6 +72,10 @@ const professionalSchema = new mongoose.Schema(
     roles: {
       type: [String],
       default: ["professional"],
+    },
+    isGenerated: {
+      type: Boolean,
+      default: false,
     },
   },
   {

@@ -762,9 +762,7 @@ const createScrapedCompany = async (req, res) => {
     const claimUrl = `${process.env.CLIENT_URL || 'http://localhost:3001'}/claim?token=${claimToken}`;
     
     // Pour faciliter les tests locaux
-    console.log("=========================================");
-    console.log("Lien de revendication (Test) :", claimUrl);
-    console.log("=========================================");
+   
 
     // Envoi de l'e-mail d'invitation automatiquement
     const htmlEmail = `

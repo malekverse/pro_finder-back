@@ -4,6 +4,9 @@ const Review = require("../models/Review");
 const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
+const jwt = require("jsonwebtoken");
+const { sendEmail } = require("../utils/emailService");
+const bcrypt = require("bcrypt");
 
 const Country = mongoose.model("Country");
 const Region = mongoose.model("Region");
@@ -421,6 +424,98 @@ const getDashboard = async (req, res) => {
   res.json({ message: "Professional Dashboard", professionalId: req.user });
 };
 
+const createScrapedProfessional = async (req, res) => {
+  try {
+    const { fullName, description, suggestedCategory, website, serviceId, email, phone } = req.body;
+
+    if (!fullName || !email) {
+      return res.status(400).json({ message: "Le nom complet et l'email de contact sont requis." });
+    }
+
+    // Protection : Vérifier que l'e-mail n'est pas déjà dans la base
+    const existingEmail = await Professional.findOne({ email });
+    if (existingEmail) {
+      return res.status(409).json({ message: "Ce professionnel existe déjà dans la base (e-mail en doublon)." });
+    }
+
+    // Le mot de passe reste provisoire tant que le pro n'a pas revendiqué
+    const fakePassword = `AI_GENERATED_${Math.random().toString(36).slice(-8)}`;
+    const hashedPassword = await bcrypt.hash(fakePassword, 10);
+
+    // Pour Professional, certains champs sont requis par le schéma (country, region, city)
+    // On va chercher des IDs par défaut ou laisser l'utilisateur choisir lors de la revendication
+    // Mais pour le moment, le schéma impose Country/Region/City.
+    // Je vais essayer de trouver des valeurs par défaut (ex: Tunisie) si possible, 
+    // ou alors on doit assouplir le schéma (isGenerated: true).
+    
+    const proData = {
+      fullName,
+      description: description ? `${description}\n\n[Catégorie suggérée : ${suggestedCategory}]` : `[Catégorie suggérée : ${suggestedCategory}]`,
+      website,
+      email,
+      phone: phone || "00000000",
+      password: hashedPassword,
+      Status: "active",
+      roles: ["professional"],
+      isGenerated: true,
+    };
+
+    // Si on a un service identifié formellement
+    if (serviceId) {
+      proData.services = [serviceId];
+    }
+
+    // Problème: le schéma impose country, region, city.
+    // Dans createScrapedCompany, le schéma a été assoupli avec "required: function() { return !this.isGenerated; }"
+    // Je dois vérifier si Professional.js a cette souplesse.
+    // D'après ma lecture précédente de Professional.js, NON.
+    // Donc je devrais peut-être d'abord modifier Professional.js.
+
+    const newProfessional = new Professional(proData);
+    const savedProfessional = await newProfessional.save();
+
+    // Création du Token de Revendication (Valide 7 jours)
+    const claimToken = jwt.sign(
+      { professionalId: savedProfessional._id, email },
+      process.env.ACCESS_TOKEN_SECRET || "default_secret",
+      { expiresIn: '7d' }
+    );
+
+    const claimUrl = `${process.env.CLIENT_URL || 'http://localhost:3001'}/claim-pro?token=${claimToken}`;
+    
+    const htmlEmail = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 25px; border-radius: 12px;">
+        <h1 style="color: #1a2b47; font-size: 24px; text-align: center;">Félicitations !</h1>
+        <p>Bonjour,</p>
+        <p>L'équipe de <strong>ProFinder</strong> a le plaisir de vous informer que votre profil professionnel <b>${fullName}</b> a été référencé sur notre réseau.</p>
+        <p>Afin de pouvoir compléter votre profil et recevoir des demandes de clients, vous devez prendre le contrôle de votre fiche.</p>
+        <div style="text-align: center; margin: 35px 0;">
+          <a href="${claimUrl}" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            Revendiquer mon profil (Gratuit)
+          </a>
+        </div>
+        <p style="color: #64748b; font-size: 13px;">Si ce bouton ne fonctionne pas, copiez-collez ce lien : <br/>${claimUrl}</p>
+        <p>À très bientôt sur ProFinder !</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail(email, "Prenez le contrôle de votre profil sur ProFinder !", htmlEmail);
+    } catch (mailError) {
+      console.error("Erreur lors de l'envoi de l'email:", mailError);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Professionnel généré sauvegardé avec succès.",
+      professional: savedProfessional,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde du professionnel scrapé :", error);
+    res.status(500).json({ success: false, message: "Erreur serveur lors de la sauvegarde.", error: error.message });
+  }
+};
+
 module.exports = {
   getDashboard,
   getProfessionalProfile,
@@ -430,4 +525,5 @@ module.exports = {
   searchProfessionals,
   getSuggestedProfessionals,
   getRecommendedProfessionals,
+  createScrapedProfessional,
 };

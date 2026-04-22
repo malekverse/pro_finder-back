@@ -35,7 +35,7 @@ async function runGeminiWithRetry(model, prompt, retries = 2, delay = 10000) {
                 error.message.includes('Internal Server Error');
 
             if (isRetryableError && i < retries) {
-                console.warn(`[Gemini Error] Erreur détectée (${error.message}). Nouvelle tentative dans ${delay/1000}s... (Essai ${i+1}/${retries})`);
+                
                 await new Promise(r => setTimeout(r, delay));
                 continue;
             }
@@ -66,7 +66,7 @@ async function scrapeStatic(url) {
         
         return { title, content: body, method: 'static' };
     } catch (error) {
-        console.error('Static scraping error:', error.message);
+
         throw error;
     }
 }
@@ -107,7 +107,7 @@ async function scrapeDynamic(url) {
         
         return { title: content.title, content: content.body, method: 'dynamic' };
     } catch (error) {
-        console.error('Dynamic scraping error:', error.message);
+       
         throw error;
     } finally {
         if (browser) {
@@ -148,14 +148,12 @@ async function validateUrlAndEmail(url) {
         });
 
         if (validEmails.length === 0) {
-            console.log(`[Validation] Aucun email détecté sur la homepage de ${url}, mais on garde le site pour analyse profonde.`);
+            
             return true; // On garde quand même pour l'IA
         }
 
-        console.log(`[Validation] ${validEmails.length} email(s) potentiel(s) trouvé(s) sur ${url}`);
         return true;
     } catch (error) {
-        console.log(`[Validation] Site inaccessible : ${url} (${error.code || error.message})`);
         return false;
     }
 }
@@ -163,7 +161,7 @@ async function validateUrlAndEmail(url) {
 /**
  * Analyse avec Gemini prenant en compte la taxonomie de ProFinder
  */
-async function analyzeWithGemini(scrapedData, taxonomyOptions) {
+async function analyzeWithGemini(scrapedData, taxonomyOptions, type = 'company') {
     try {
         // Utilisation de gemini-2.5-flash-lite (plus disponible et rapide que la version standard)
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
@@ -172,16 +170,19 @@ async function analyzeWithGemini(scrapedData, taxonomyOptions) {
             ? `\nIMPORTANT: Tu DOIS obligatoirement choisir la "Catégorie suggérée" UNIQUEMENT à partir de cette liste exacte : [${taxonomyOptions.join(', ')}]. Copie exactement le texte du service choisi. Si absolument aucune catégorie ne correspond à l'entreprise, renvoie exactement "Sans catégorie". Ne crée pas de nouvelles catégories !`
             : '';
 
+        const isPro = type === 'professional';
+        const entityLabel = isPro ? "Nom complet de la personne" : "Nom de l'entreprise";
         const prompt = `
             Tu es un expert en extraction de données. Voici le contenu brut d'une page web :
             Titre: ${scrapedData.title}
             Contenu: ${scrapedData.content}
             
             Analyse ce contenu et extrais les informations suivantes sous format JSON :
-            - "Nom de l'entreprise"
+            - "${entityLabel}"
             - "Description courte"
             - "Catégorie suggérée"
             - "Email de contact" (Cherche bien dans le texte, les pieds de page ou déduis-le des liens détectés. S'il y a plusieurs emails, choisis le plus générique comme info@ ou contact@. Si vraiment rien n'est trouvable, renvoie 'null').
+            - "Téléphone" (Si présent, format international. Sinon 'null').
         
             ${taxonomyInstruction}
 
@@ -204,7 +205,7 @@ async function analyzeWithGemini(scrapedData, taxonomyOptions) {
 
 // Endpoint principal
 app.post('/api/scrape', async (req, res) => {
-    const { url, dynamic = false, taxonomyOptions = [] } = req.body;
+    const { url, dynamic = false, taxonomyOptions = [], type = 'company' } = req.body;
     
     if (!url) {
         return res.status(400).json({ error: 'URL is required' });
@@ -223,7 +224,7 @@ app.post('/api/scrape', async (req, res) => {
             }
         }
 
-        const analysis = await analyzeWithGemini(data, taxonomyOptions);
+        const analysis = await analyzeWithGemini(data, taxonomyOptions, type);
         
         res.json({
             success: true,
@@ -241,7 +242,7 @@ app.post('/api/scrape', async (req, res) => {
 });
 
 app.post('/api/search-maps', async (req, res) => {
-    const { query } = req.body;
+    const { query, type = 'company' } = req.body;
     if (!query) return res.status(400).json({ error: 'Query is required' });
 
     try {
@@ -250,8 +251,9 @@ app.post('/api/search-maps', async (req, res) => {
             tools: [{ googleSearch: {} }]
         });
 
+        const entityName = type === 'professional' ? "professionnels" : "entreprises";
         const prompt = `Trouve les sites web officiels pour cette recherche: "${query}". 
-Cherche des vraies entreprises qui affichent clairement leurs contacts (email, téléphone).
+Cherche des vraies ${entityName} qui affichent clairement leurs contacts (email, téléphone).
 Évite les portails comme facebook, instagram, linkedin, pagesjaunes, med.tn, youtube, tiktok, ou annuaires.
 Renvoie la réponse UNIQUEMENT sous forme d'un tableau JSON valide d'objets, avec ce format exact :
 [
