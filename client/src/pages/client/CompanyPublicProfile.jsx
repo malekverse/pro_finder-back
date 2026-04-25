@@ -10,7 +10,8 @@ import PostCard from "../../components/Posts/PostCard";
 import {
   ArrowLeft, Building2, Globe, Mail, Phone,
   MapPin, Newspaper, Loader, UserCheck, UserPlus, Flag, X, Send,
-  Package, Wrench, Calendar, Info, Clock, CreditCard, Ban, Star, MessageSquare, AlertCircle, ShieldCheck
+  Package, Wrench, Calendar, Info, Clock, CreditCard, Ban, Star, MessageSquare, AlertCircle, ShieldCheck, ShoppingCart,
+  Edit, Trash2, CheckCircle2
 } from "lucide-react";
 import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
@@ -25,10 +26,16 @@ import {
   useUpdateReviewMutation,
 } from "../../redux/features/reviewApiSlice";
 import { useRequestClaimMutation as useReqClaim } from "../../redux/features/company/companyApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { useSelector } from "react-redux";
-import { Edit, Trash2 } from "lucide-react";
+
 
 import { toImageUrl } from "../../utils/imageUtils";
+
+// Components Premium
+import ProductDetail from "../../components/dashboard/client/ProductDetail";
+import ServiceDetail from "../../components/dashboard/client/ServiceDetail";
+import ActionModal from "../../components/dashboard/client/ActionModal";
 
 const CompanyPublicProfile = () => {
   const navigate = useNavigate();
@@ -61,6 +68,7 @@ const CompanyPublicProfile = () => {
   // Reservation & Order Logic
   const [createReservation, { isLoading: reserving }] = useCreateReservationMutation();
   const [createOrder, { isLoading: ordering }] = useCreateOrderMutation();
+  const [initPayment, { isLoading: isPaying }] = useInitializePaymentMutation();
   
   const [selectedService, setSelectedService] = useState(null);
   const [reservationDate, setReservationDate] = useState("");
@@ -78,6 +86,12 @@ const CompanyPublicProfile = () => {
     phone: user?.phone || "",
   });
   const [orderSuccess, setOrderSuccess] = useState(false);
+
+  // Premium Detail Modals
+  const [productForDetail, setProductForDetail] = useState(null);
+  const [serviceForDetail, setServiceForDetail] = useState(null);
+  const [selectedItemForAction, setSelectedItemForAction] = useState(null);
+  const [actionType, setActionType] = useState(null);
 
   // Review Logic
   const [reviewRating, setReviewRating] = useState(5);
@@ -266,32 +280,70 @@ const CompanyPublicProfile = () => {
   };
 
   const handlePlaceOrder = async (e) => {
-    e.preventDefault();
+    // Remplacé par handleSubmitAction via ActionModal
+  };
+
+  const handleSubmitAction = async (data) => {
     if (!user) {
       navigate("/auth/login", { state: { from: location.pathname } });
       return;
     }
     try {
-      await createOrder({
-        companyId,
-        items: [{
-          productId: selectedProduct._id,
-          quantity: orderQuantity,
-          price: selectedProduct.price
-        }],
-        totalPrice: selectedProduct.price * orderQuantity,
-        shippingAddress,
-      }).unwrap();
-      setOrderSuccess(true);
+      if (actionType === 'product') {
+        const orderResult = await createOrder({
+          companyId,
+          items: [{
+            productId: selectedItemForAction._id,
+            quantity: data.quantity,
+            price: selectedItemForAction.price
+          }],
+          totalPrice: selectedItemForAction.price * data.quantity,
+          shippingAddress: {
+            fullName: user?.fullName,
+            phone: user?.phone,
+            ...data.address
+          },
+          notes: data.note
+        }).unwrap();
+        
+        // DÉCLENCHER LE PAIEMENT (CHECKOUT)
+        const paymentData = await initPayment({
+          orderId: orderResult.order._id,
+          successUrl: `${window.location.origin}/payment/success`,
+          failUrl: `${window.location.origin}/payment/fail`
+        }).unwrap();
+
+        if (paymentData.result_url) {
+          window.location.href = paymentData.result_url;
+        } else {
+          setOrderSuccess(true);
+        }
+      } else {
+        await createReservation({
+          companyId,
+          serviceId: selectedItemForAction._id,
+          date: data.date,
+          timeSlot: data.time,
+          notes: data.note,
+        }).unwrap();
+        setResSuccess(true);
+      }
+      setSelectedItemForAction(null);
       setTimeout(() => {
-        setSelectedProduct(null);
         setOrderSuccess(false);
-        setOrderQuantity(1);
-      }, 2000);
+        setResSuccess(false);
+      }, 3000);
     } catch (err) {
-      console.error("Order error", err);
-      alert("Erreur lors de la commande");
+      console.error("Action error", err);
+      alert(err.data?.message || "Une erreur est survenue");
     }
+  };
+
+  const handleAction = (item, type) => {
+    setSelectedItemForAction(item);
+    setActionType(type);
+    setProductForDetail(null);
+    setServiceForDetail(null);
   };
 
   const handleRequestClaim = async () => {
@@ -555,7 +607,7 @@ const CompanyPublicProfile = () => {
                           </div>
                           <button 
                             style={s.bookBtn}
-                            onClick={() => setSelectedService(service)}
+                            onClick={() => setServiceForDetail(service)}
                           >
                             <Calendar size={16} /> Réserver
                           </button>
@@ -590,7 +642,7 @@ const CompanyPublicProfile = () => {
                           <button 
                             style={s.orderBtn}
                             disabled={product.stock === 0}
-                            onClick={() => setSelectedProduct(product)}
+                            onClick={() => setProductForDetail(product)}
                           >
                             <ShoppingCart size={16} /> Commander
                           </button>
@@ -718,167 +770,41 @@ const CompanyPublicProfile = () => {
       
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* MODAL RESERVATION */}
-      {selectedService && (
-        <div style={s.modalOverlay}>
-          <div style={s.modalContent}>
-            <div style={s.modalHeader}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '10px' }}>
-                  <Calendar size={20} color="#2563eb" />
-                </div>
-                <h3 style={s.modalTitle}>Réserver : {selectedService.name}</h3>
-              </div>
-              <button onClick={() => setSelectedService(null)} style={s.closeBtn}><X size={20} /></button>
-            </div>
-
-            {resSuccess ? (
-              <div style={s.successMsg}>
-                <div style={{ background: '#10b981', color: 'white', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                  <UserCheck size={24} />
-                </div>
-                <p style={{ fontWeight: '600', color: '#065f46' }}>Réservation envoyée !</p>
-                <p style={{ fontSize: '14px', color: '#047857' }}>L'entreprise vous contactera pour confirmer.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleBookService}>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={s.label}>Date</label>
-                    <input 
-                      type="date" 
-                      required 
-                      style={s.input} 
-                      value={reservationDate}
-                      onChange={(e) => setReservationDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={s.label}>Heure</label>
-                    <input 
-                      type="time" 
-                      required 
-                      style={s.input} 
-                      value={reservationTime}
-                      onChange={(e) => setReservationTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Notes (optionnel)</label>
-                  <textarea 
-                    style={s.textarea} 
-                    placeholder="Précisez votre besoin..."
-                    value={reservationNotes}
-                    onChange={(e) => setReservationNotes(e.target.value)}
-                  />
-                </div>
-                <div style={s.modalFooter}>
-                  <button type="button" onClick={() => setSelectedService(null)} style={s.cancelBtn}>Annuler</button>
-                  <button type="submit" disabled={reserving} style={{ ...s.submitBtn, background: '#2563eb' }}>
-                    {reserving ? <Loader size={18} className="animate-spin" /> : 'Confirmer la réservation'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
+      {/* MODAL RESERVATION PREMIUM */}
+      {serviceForDetail && (
+        <ServiceDetail 
+          service={serviceForDetail}
+          onClose={() => setServiceForDetail(null)}
+          onReserve={(s) => handleAction(s, 'service')}
+        />
       )}
 
-      {/* MODAL COMMANDE */}
-      {selectedProduct && (
-        <div style={s.modalOverlay}>
-          <div style={s.modalContent}>
-            <div style={s.modalHeader}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ padding: '8px', background: '#f0fdf4', borderRadius: '10px' }}>
-                  <ShoppingCart size={20} color="#16a34a" />
-                </div>
-                <h3 style={s.modalTitle}>Commander : {selectedProduct.name}</h3>
-              </div>
-              <button onClick={() => setSelectedProduct(null)} style={s.closeBtn}><X size={20} /></button>
-            </div>
+      {/* MODAL PRODUIT PREMIUM */}
+      {productForDetail && (
+        <ProductDetail 
+          product={productForDetail}
+          onClose={() => setProductForDetail(null)}
+          onOrder={(p) => handleAction(p, 'product')}
+        />
+      )}
 
-            {orderSuccess ? (
-              <div style={s.successMsg}>
-                <div style={{ background: '#10b981', color: 'white', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                  <Package size={24} />
-                </div>
-                <p style={{ fontWeight: '600', color: '#065f46' }}>Commande enregistrée !</p>
-                <p style={{ fontSize: '14px', color: '#047857' }}>Merci pour votre achat.</p>
-              </div>
-            ) : (
-              <form onSubmit={handlePlaceOrder}>
-                <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', alignItems: 'center', background: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
-                  {selectedProduct.imagesProduct?.[0] && <img src={toImageUrl(selectedProduct.imagesProduct[0])} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '700' }}>{selectedProduct.name}</div>
-                    <div style={{ color: '#16a34a', fontWeight: '800' }}>{selectedProduct.price} TND</div>
-                  </div>
-                  <div style={{ width: '80px' }}>
-                    <label style={s.label}>Qté</label>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      max={selectedProduct.stock} 
-                      value={orderQuantity} 
-                      onChange={(e) => setOrderQuantity(parseInt(e.target.value))} 
-                      style={s.input} 
-                    />
-                  </div>
-                </div>
+      {/* ACTION MODAL (FORMULAIRE) */}
+      {selectedItemForAction && (
+        <ActionModal 
+          type={actionType}
+          item={selectedItemForAction}
+          user={user}
+          onClose={() => setSelectedItemForAction(null)}
+          onSubmit={handleSubmitAction}
+          isLoading={ordering || reserving || isPaying}
+        />
+      )}
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={s.label}>Adresse de livraison</label>
-                  <input 
-                    type="text" 
-                    placeholder="Rue et numéro" 
-                    required 
-                    style={{ ...s.input, marginBottom: '10px' }} 
-                    value={shippingAddress.street}
-                    onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
-                  />
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Ville" 
-                      required 
-                      style={s.input} 
-                      value={shippingAddress.city}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="Code Postal" 
-                      required 
-                      style={s.input} 
-                      value={shippingAddress.zipCode}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ padding: '15px', background: '#f1f5f9', borderRadius: '12px', marginBottom: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span>Sous-total :</span>
-                    <span>{selectedProduct.price * orderQuantity} TND</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '16px', color: '#1e293b' }}>
-                    <span>Total à payer :</span>
-                    <span>{selectedProduct.price * orderQuantity} TND</span>
-                  </div>
-                </div>
-
-                <div style={s.modalFooter}>
-                  <button type="button" onClick={() => setSelectedProduct(null)} style={s.cancelBtn}>Annuler</button>
-                  <button type="submit" disabled={ordering} style={{ ...s.submitBtn, background: '#16a34a' }}>
-                    {ordering ? <Loader size={18} className="animate-spin" /> : <><CreditCard size={18} /> Payer et Commander</>}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
+      {/* SUCCESS MESSAGES (SI BESOIN) */}
+      {(orderSuccess || resSuccess) && (
+        <div style={{ position: 'fixed', bottom: '20px', right: '20px', background: '#10b981', color: '#fff', padding: '15px 25px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 3000, display: 'flex', alignItems: 'center', gap: '10px', animation: 'fadeInUp 0.3s' }}>
+          <CheckCircle2 size={20} />
+          <span>{orderSuccess ? "Commande réussie !" : "Réservation envoyée !"}</span>
         </div>
       )}
 
@@ -908,6 +834,19 @@ const CompanyPublicProfile = () => {
               </div>
             ) : (
               <form onSubmit={handleReport}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                  {company.logoUrl ? (
+                    <img src={toImageUrl(company.logoUrl)} alt="" style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Building2 size={24} color="#64748b" />
+                    </div>
+                  )}
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#1e293b' }}>{company.companyName}</h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Entreprise à signaler</p>
+                  </div>
+                </div>
                 <p style={s.modalInfo}>
                   Dites-nous pourquoi vous signalez <strong>{company?.companyName}</strong>. Votre signalement sera traité de manière anonyme.
                 </p>

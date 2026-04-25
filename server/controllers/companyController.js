@@ -352,7 +352,7 @@ const getSuggestedCompanies = async (req, res) => {
     const userId = req.user;
 
     // 1. Companies déjà suivies
-    const followed = await Follow.find({ user_id: userId }).lean();
+    const followed = await Follow.find({ user_id: userId, company_id: { $ne: null } }).lean();
     const followedIds = followed.map((f) => new mongoose.Types.ObjectId(f.company_id));
 
     // 2. Companies aléatoires non suivies avec nombre de followers et adresse
@@ -648,6 +648,7 @@ const getRecommendedCompanies = async (req, res) => {
   try {
     // 1. Obtenir les IDs des entreprises avec les meilleures notes
     const topReviews = await Review.aggregate([
+      { $match: { company_id: { $ne: null } } },
       {
         $group: {
           _id: "$company_id",
@@ -660,7 +661,7 @@ const getRecommendedCompanies = async (req, res) => {
       { $limit: 6 }
     ]);
 
-    const topCompanyIds = topReviews.map(r => r._id);
+    const topCompanyIds = topReviews.map(r => r._id).filter(id => id !== null);
 
     // 2. Récupérer les détails des entreprises
     const companies = await Company.find({ 
@@ -673,7 +674,7 @@ const getRecommendedCompanies = async (req, res) => {
     // 3. Enrichir avec les stats et les noms de localisation
     const enriched = await Promise.all(
       companies.map(async (company) => {
-        const reviewStat = topReviews.find(r => r._id.toString() === company._id.toString());
+        const reviewStat = topReviews.find(r => r._id && r._id.toString() === company._id.toString());
         
         let cityName = company.city;
         if (company.city && mongoose.isValidObjectId(company.city)) {

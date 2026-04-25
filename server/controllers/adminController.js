@@ -66,6 +66,8 @@ const getDashboard = async (req, res) => {
         users: totalUsers,
         companies: totalCompanies,
         professionals: totalProfessionals,
+        pendingCompanies,
+        pendingProfessionals,
         villes: totalCities, 
         categories: totalCategories, 
         services: totalServices,
@@ -177,7 +179,6 @@ const verifyCompany = async (req, res) => {
 
     res.json({ message: "Company verified successfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error verifying company" });
   }
 };
@@ -187,7 +188,6 @@ const getPendingCompanies = async (req, res) => {
     const pendingCompanies = await Company.find({ Status: "pending" });
     res.json(pendingCompanies);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error fetching pending companies" });
   }
 };
@@ -255,25 +255,19 @@ const contactCompany = async (req, res) => {
     const { companyId } = req.params;
     const { message, type } = req.body;
 
-    console.log(`[contactCompany] Tentative d'envoi d'email à l'entreprise ID: ${companyId}`);
-
     const company = await Company.findById(companyId);
     if (!company) {
-      console.log(`[contactCompany] Entreprise non trouvée avec l'ID: ${companyId}`);
       return res.status(404).json({ message: "Entreprise non trouvée" });
     }
 
     if (!company.email) {
-      console.log(`[contactCompany] Email manquant pour l'entreprise: ${company.companyName}`);
       return res.status(400).json({ message: "L'entreprise n'a pas d'adresse email enregistrée." });
     }
 
-    console.log(`[contactCompany] Envoi d'un email de type '${type}' à ${company.email}`);
 
     try {
       await sendStatusEmail(company.email, company.companyName, type || "manual", message);
     } catch (emailError) {
-      console.error("[contactCompany] Erreur Nodemailer détaillée:", emailError.message);
       return res.status(500).json({ 
         message: "Erreur Nodemailer", 
         error: emailError.message,
@@ -290,7 +284,6 @@ const contactCompany = async (req, res) => {
 
     res.json({ message: "Email envoyé avec succès" });
   } catch (err) {
-    console.error("[contactCompany] Erreur générale:", err);
     res.status(500).json({ message: "Erreur serveur lors de l'envoi de l'email", error: err.message });
   }
 };
@@ -308,7 +301,6 @@ const contactProfessional = async (req, res) => {
     try {
       await sendStatusEmail(professional.email, professional.fullName, type || "manual", message);
     } catch (emailError) {
-      console.error("[contactProfessional] Erreur Nodemailer:", emailError.message);
       return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
     }
 
@@ -330,7 +322,6 @@ const getPendingProfessionals = async (req, res) => {
     const pending = await Professional.find({ Status: "pending" });
     res.json(pending);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error fetching pending professionals" });
   }
 };
@@ -358,7 +349,6 @@ const verifyProfessional = async (req, res) => {
 
     res.json({ message: "Professional verified successfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error verifying professional" });
   }
 };

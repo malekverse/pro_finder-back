@@ -117,7 +117,7 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
               <>
                 <div style={h.overlay} onClick={() => setMenuOpen(false)} />
                 <div style={h.dropdown}>
-                  <button type="button" style={h.dropItem} onClick={() => { setMenuOpen(false); onProfileClick(); }}>
+                  <button type="button" style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/profile"); }}>
                     <User size={15} color="#1E3A5F" /> Mon profil
                   </button>
                   <div style={h.dropDivider} />
@@ -524,8 +524,7 @@ const ProductDetail = ({ product, onClose }) => {
     if (!user) {
       navigate("/auth/signup");
     } else {
-      // Logique d'achat
-      alert("Redirection vers la commande...");
+      navigate("/user/dashboard");
     }
   };
 
@@ -708,7 +707,7 @@ const ServiceDetail = ({ service, onClose }) => {
 
   if (!service) return null;
 
-  const handleReserve = () => {
+  const handleBuy = () => {
     if (!user) {
       navigate("/auth/signup");
     } else {

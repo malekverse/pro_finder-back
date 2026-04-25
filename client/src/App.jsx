@@ -45,6 +45,11 @@ import ProfessionalDocuments from './pages/professional/ProfessionalDocuments';
 import ProfessionalReviews from './pages/professional/ProfessionalReviews';
 import ProfessionalUserManagement from './pages/professional/ProfessionalUserManagement';
 
+// Pages Payment
+import PaymentSuccess from './pages/payment/PaymentSuccess';
+import PaymentFail from './pages/payment/PaymentFail';
+import PaymentCheckout from './pages/payment/PaymentCheckout';
+
 // Pages Admin
 import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
 import AdminHome from "./components/dashboard/admin/AdminHome";
@@ -62,63 +67,36 @@ function App() {
         <Route index element={<Home />} />
 
         {/* PUBLIQUES */}
-        <Route path="auth/login"  element={<Login />} />
+        <Route path="auth/login" element={<Login />} />
         <Route path="auth/signup" element={<Signup />} />
         <Route path="claim" element={<ClaimCompany />} />
 
         <Route path="unauthorized" element={<div>Accès non autorisé</div>} />
 
-        {/* CLIENT - Profil */}
-        <Route
-          path="profile"
-          element={
-            <RequireAuth>
-              <RequireRole allowedRoles={[ROLES.USER]}>
-                <Profile />
-              </RequireRole>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="purchases"
-          element={
-            <RequireAuth>
-              <RequireRole allowedRoles={[ROLES.USER]}>
-                <ClientPurchases />
-              </RequireRole>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="documents"
-          element={
-            <RequireAuth>
-              <RequireRole allowedRoles={[ROLES.USER]}>
-                <ClientDocuments />
-              </RequireRole>
-            </RequireAuth>
-          }
-        />
+        {/* PAIEMENT - PUBLIC & RACINE */}
+        <Route path="payment/success" element={<PaymentSuccess />} />
+        <Route path="payment/fail" element={<PaymentFail />} />
+        <Route path="payment/checkout" element={<PaymentCheckout />} />
 
-        {/* CLIENT - Dashboard / Feed */}
+        {/* CLIENT - Profil & Espace Sécurisé */}
         <Route
-          path="user/dashboard"
+          path="user"
           element={
             <RequireAuth>
-              <RequireRole allowedRoles={[ROLES.USER]}>
-                <UserDashboard />
-              </RequireRole>
+              <RequireRole allowedRoles={[ROLES.USER, ROLES.COMPANY, ROLES.PROFESSIONAL, "admin"]} />
             </RequireAuth>
           }
-        />
-        <Route
-          path="user/company/:companyId"
-          element={<CompanyPublicProfile />}
-        />
-        <Route
-          path="user/professional/:professionalId"
-          element={<ProfessionalPublicProfile />}
-        />
+        >
+          <Route index element={<UserDashboard />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="dashboard" element={<UserDashboard />} />
+          <Route path="purchases" element={<ClientPurchases />} />
+          <Route path="documents" element={<ClientDocuments />} />
+        </Route>
+
+        {/* PROFIL PUBLIC */}
+        <Route path="user/company/:companyId" element={<CompanyPublicProfile />} />
+        <Route path="user/professional/:professionalId" element={<ProfessionalPublicProfile />} />
 
         {/* ADMIN */}
         <Route
@@ -132,14 +110,14 @@ function App() {
           }
         >
           <Route index element={<AdminHome />} />
-          <Route path="dashboard"  element={<AdminHome />} />
-          <Route path="geography"  element={<AdminGeography />} />
-          <Route path="taxonomy"   element={<AdminTaxonomy />} />
+          <Route path="dashboard" element={<AdminHome />} />
+          <Route path="geography" element={<AdminGeography />} />
+          <Route path="taxonomy" element={<AdminTaxonomy />} />
           <Route path="moderation" element={<AdminModeration />} />
-          <Route path="users"      element={<AdminUsers />} />
-          <Route path="profile"    element={<AdminProfile />} />
-          <Route path="roles"      element={<AdminRoles />} />
-          <Route path="scraper"    element={<AiScraperTool />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="roles" element={<AdminRoles />} />
+          <Route path="scraper" element={<AiScraperTool />} />
         </Route>
 
         {/* COMPANY & STAFF */}
@@ -154,17 +132,17 @@ function App() {
           }
         >
           <Route index element={<Statistiques />} />
-          <Route path="stats"     element={<Statistiques />} />
-          <Route path="quotes"    element={<Quotes />} />
+          <Route path="stats" element={<Statistiques />} />
+          <Route path="quotes" element={<Quotes />} />
           <Route path="contracts" element={<Contracts />} />
           <Route path="documents" element={<CompanyDocuments />} />
           <Route path="commandes" element={<Commandes />} />
-          <Route path="reviews"   element={<Reviews />} />
-          <Route path="produits"  element={<Produits />} />
-          <Route path="services"  element={<MesServices />} />
-          <Route path="users"     element={<UserManagement />} />
-          <Route path="profile"   element={<CompanyProfile />} />
-          <Route path="posts"     element={<Publication />} />
+          <Route path="reviews" element={<Reviews />} />
+          <Route path="produits" element={<Produits />} />
+          <Route path="services" element={<MesServices />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="profile" element={<CompanyProfile />} />
+          <Route path="posts" element={<Publication />} />
         </Route>
 
         {/* PROFESSIONAL */}
@@ -179,15 +157,15 @@ function App() {
           }
         >
           <Route index element={<ProfessionalStats />} />
-          <Route path="stats"      element={<ProfessionalStats />} />
-          <Route path="produits"   element={<ProfessionalProduits />} />
-          <Route path="services"   element={<ProfessionalServices />} />
-          <Route path="commandes"  element={<ProfessionalCommandes />} />
-          <Route path="documents"  element={<ProfessionalDocuments />} />
-          <Route path="posts"      element={<Publication />} />
-          <Route path="profile"    element={<ProfessionalProfile />} />
-          <Route path="reviews"    element={<ProfessionalReviews />} />
-          <Route path="users"      element={<ProfessionalUserManagement />} />
+          <Route path="stats" element={<ProfessionalStats />} />
+          <Route path="produits" element={<ProfessionalProduits />} />
+          <Route path="services" element={<ProfessionalServices />} />
+          <Route path="commandes" element={<ProfessionalCommandes />} />
+          <Route path="documents" element={<ProfessionalDocuments />} />
+          <Route path="posts" element={<Publication />} />
+          <Route path="profile" element={<ProfessionalProfile />} />
+          <Route path="reviews" element={<ProfessionalReviews />} />
+          <Route path="users" element={<ProfessionalUserManagement />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

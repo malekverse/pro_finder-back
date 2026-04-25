@@ -42,8 +42,7 @@ const createReport = async (req, res) => {
 
     res.status(201).json({ message: "Report submitted successfully", report: newReport });
   } catch (error) {
-    console.error("Error creating report:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "error: report not submitted" });
   }
 };
 
@@ -51,14 +50,13 @@ const createReport = async (req, res) => {
 const getAllReports = async (req, res) => {
   try {
     const reports = await Report.find()
-      .populate("reporter_id", "fullName email")
+      .populate("reporter_id", "fullName email avatarUrl")
       .populate("company_id", "companyName logoUrl Status")
       .populate("professional_id", "fullName photoProfessional Status")
       .sort({ createdAt: -1 });
 
     res.json(reports);
   } catch (error) {
-    console.error("Error fetching reports:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

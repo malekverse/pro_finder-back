@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetMyOrdersQuery } from "../../redux/features/orderApiSlice";
 import { useGetMyReservationsQuery } from "../../redux/features/reservationApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { 
   ShoppingBag, 
   Calendar, 
@@ -11,7 +12,8 @@ import {
   Loader2,
   AlertCircle,
   Building2,
-  FileText
+  FileText,
+  CreditCard
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css"; // Reuse same styles for consistency
 
@@ -21,11 +23,34 @@ const ClientPurchases = () => {
 
   const { data: orders = [], isLoading: loadingOrders } = useGetMyOrdersQuery(undefined, { pollingInterval: 3000 });
   const { data: reservations = [], isLoading: loadingReservations } = useGetMyReservationsQuery(undefined, { pollingInterval: 3000 });
+  const [initializePayment, { isLoading: isPaying }] = useInitializePaymentMutation();
+
+  const handlePayment = async (item, type) => {
+    try {
+      const amount = item.totalPrice || item.totalAmount || item.totalValue || item.serviceId?.price;
+      if (!amount) return alert("Montant invalide");
+
+      const res = await initializePayment({
+        reservationId: type === 'reservation' ? item._id : null,
+        orderId: type === 'order' ? item._id : null,
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      }).unwrap();
+
+      if (res.result_url) {
+        window.location.href = res.result_url;
+      }
+    } catch (err) {
+      console.error("Payment initialization failed:", err);
+      alert(err.data?.message || "Erreur lors de l'initialisation du paiement");
+    }
+  };
 
   const getStatusBadge = (status) => {
     const s = {
       pending: { bg: "#fef3c7", color: "#92400e", label: "En attente" },
       confirmed: { bg: "#dcfce7", color: "#166534", label: "Confirmé" },
+      paid: { bg: "#dcfce7", color: "#166534", label: "Payé" },
       shipped: { bg: "#dbeafe", color: "#1e40af", label: "Expédié" },
       delivered: { bg: "#f0fdf4", color: "#15803d", label: "Livré" },
       cancelled: { bg: "#fee2e2", color: "#991b1b", label: "Annulé" },
@@ -105,6 +130,22 @@ const ClientPurchases = () => {
                       <span>Total payé :</span>
                       <span className={styles.totalPrice}>{order.totalPrice} €</span>
                     </div>
+
+                    {(order.status === 'pending' || order.status === 'confirmed') && (
+                      <button 
+                        onClick={() => handlePayment(order, 'order')}
+                        disabled={isPaying}
+                        className={styles.payButton}
+                        style={{
+                          width: '100%', marginTop: '15px', padding: '10px', borderRadius: '10px',
+                          border: 'none', background: '#fbbf24', color: '#000', fontWeight: '800',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                          opacity: isPaying ? 0.7 : 1
+                        }}
+                      >
+                        <CreditCard size={18} /> {isPaying ? 'Chargement...' : 'Payer avec Flouci'}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -153,28 +194,43 @@ const ClientPurchases = () => {
                       </div>
                     </div>
 
-                    {res.quote && (
+                    {res.status === 'confirmed' && (
+                      <button 
+                        onClick={() => handlePayment(res, 'reservation')}
+                        disabled={isPaying}
+                        style={{
+                          width: '100%', marginTop: '15px', padding: '10px', borderRadius: '10px',
+                          border: 'none', background: '#fbbf24', color: '#000', fontWeight: '800',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                          opacity: isPaying ? 0.7 : 1
+                        }}
+                      >
+                        <CreditCard size={18} /> {isPaying ? 'Chargement...' : 'Payer avec Flouci'}
+                      </button>
+                    )}
+
+                    {res.quote && !['paid', 'completed'].includes(res.status) && (
                       <div 
-                        onClick={() => navigate("/documents", { state: { tab: "quotes" } })}
+                        onClick={() => navigate("/user/documents", { state: { tab: "quotes" } })}
                         style={{
                           marginTop: '15px',
                           padding: '12px',
-                          backgroundColor: '#eff6ff',
+                          backgroundColor: res.quote.status === 'accepted' ? '#dcfce7' : '#eff6ff',
                           borderRadius: '12px',
-                          border: '1px solid #bfdbfe',
+                          border: `1px solid ${res.quote.status === 'accepted' ? '#86efac' : '#bfdbfe'}`,
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
                           cursor: 'pointer',
                           transition: 'all 0.2s'
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#dbeafe'}
-                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = res.quote.status === 'accepted' ? '#bbf7d0' : '#dbeafe'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = res.quote.status === 'accepted' ? '#dcfce7' : '#eff6ff'}
                       >
                         <div style={{
                           width: '32px',
                           height: '32px',
-                          backgroundColor: '#24416b',
+                          backgroundColor: res.quote.status === 'accepted' ? '#166534' : '#24416b',
                           borderRadius: '8px',
                           display: 'flex',
                           alignItems: 'center',
@@ -184,8 +240,12 @@ const ClientPurchases = () => {
                           <FileText size={18} />
                         </div>
                         <div>
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e3a8a' }}>Devis reçu</div>
-                          <div style={{ fontSize: '11px', color: '#1e40af' }}>Cliquez pour voir les détails</div>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: res.quote.status === 'accepted' ? '#166534' : '#1e3a8a' }}>
+                            Devis {res.quote.status === 'accepted' ? 'Accepté' : 'Reçu'}
+                          </div>
+                          <div style={{ fontSize: '11px', color: res.quote.status === 'accepted' ? '#15803d' : '#1e40af' }}>
+                            {res.quote.status === 'accepted' ? 'Paiement effectué' : 'Cliquez pour voir les détails'}
+                          </div>
                         </div>
                       </div>
                     )}

@@ -8,6 +8,7 @@ import {
   useGetCompanyReservationsQuery, 
   useUpdateReservationStatusMutation 
 } from "../../redux/features/reservationApiSlice";
+import { useGetProviderPaymentsQuery } from "../../redux/features/paymentApiSlice";
 import { 
   ShoppingBag, 
   Calendar, 
@@ -20,7 +21,8 @@ import {
   Package,
   Loader2,
   AlertCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  DollarSign
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css";
 import CompanyCalendar from "../../components/dashboard/Company/CompanyCalendar";
@@ -31,6 +33,7 @@ const Commandes = () => {
 
   const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery(undefined, { pollingInterval: 3000 });
   const { data: reservations = [], isLoading: loadingReservations } = useGetCompanyReservationsQuery(undefined, { pollingInterval: 3000 });
+  const { data: payments = [], isLoading: loadingPayments } = useGetProviderPaymentsQuery(undefined, { pollingInterval: 3000 });
 
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
   const [updateReservationStatus] = useUpdateReservationStatusMutation();
@@ -52,6 +55,14 @@ const Commandes = () => {
   };
 
   const handleCreateQuote = (reservation) => {
+    // S'assurer qu'on a bien l'ID de l'utilisateur
+    const userId = reservation.userId?._id || reservation.userId;
+    const userName = reservation.userId?.fullName || "Client";
+    const userEmail = reservation.userId?.email || "";
+    const userPhone = reservation.userId?.phone || "";
+
+    console.log("Navigating to create quote for reservation:", reservation._id, "User:", userId);
+
     // Rediriger vers la page des documents avec l'onglet devis actif et les données pré-remplies
     navigate("/company/documents", { 
       state: { 
@@ -59,11 +70,14 @@ const Commandes = () => {
         openModal: true,
         prefill: {
           reservationId: reservation._id,
-          userId: reservation.userId?._id,
-          userName: reservation.userId?.fullName,
-          serviceId: reservation.serviceId?._id,
-          serviceName: reservation.serviceId?.name,
-          price: reservation.serviceId?.price,
+          userId: userId,
+          userName: userName,
+          userEmail: userEmail,
+          userPhone: userPhone,
+          serviceId: reservation.serviceId?._id || reservation.serviceId,
+          serviceName: reservation.serviceId?.name || "Service",
+          price: reservation.serviceId?.price || 0,
+          duration: reservation.serviceId?.duration || "60 min",
           notes: `Détails de la réservation #${reservation._id.slice(-6).toUpperCase()} du ${new Date(reservation.date).toLocaleDateString()}.`
         }
       } 
@@ -74,6 +88,7 @@ const Commandes = () => {
     const s = {
       pending: { bg: "#fef3c7", color: "#92400e", label: "En attente" },
       confirmed: { bg: "#dcfce7", color: "#166534", label: "Confirmé" },
+      paid: { bg: "#dcfce7", color: "#166534", label: "Payé" },
       shipped: { bg: "#dbeafe", color: "#1e40af", label: "Expédié" },
       delivered: { bg: "#f0fdf4", color: "#15803d", label: "Livré" },
       cancelled: { bg: "#fee2e2", color: "#991b1b", label: "Annulé" },
@@ -112,6 +127,12 @@ const Commandes = () => {
           className={activeTab === "reservations" ? styles.tabActive : styles.tab}
         >
           <Calendar size={18} /> Réservations ({reservations.length})
+        </button>
+        <button 
+          onClick={() => setActiveTab("payments")}
+          className={activeTab === "payments" ? styles.tabActive : styles.tab}
+        >
+          <DollarSign size={18} /> Paiements ({payments.length})
         </button>
         <button 
           onClick={() => setActiveTab("calendar")}
@@ -294,7 +315,7 @@ const Commandes = () => {
                   </div>
 
                   <div className={styles.cardFooter}>
-                    {res.status === "pending" && (
+                    {res.status === "pending" && !res.quote && (
                       <>
                         <button 
                           onClick={() => handleCreateQuote(res)} 
@@ -315,10 +336,61 @@ const Commandes = () => {
             </div>
           )}
         </div>
+      ) : activeTab === "payments" ? (
+        <div className={styles.content}>
+          {loadingPayments ? (
+            <div className={styles.loader}><Loader2 className="animate-spin" /></div>
+          ) : payments.length === 0 ? (
+            <div className={styles.empty}>
+              <DollarSign size={48} />
+              <p>Aucun paiement reçu pour le moment.</p>
+            </div>
+          ) : (
+            <div className={styles.grid}>
+              {payments.map((payment) => (
+                <div key={payment._id} className={styles.card}>
+                  <div className={styles.cardHeader}>
+                    <div className={styles.orderId}>Paiement #{payment._id.slice(-6).toUpperCase()}</div>
+                    <span style={{ 
+                      padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+                      background: payment.status === 'success' ? '#dcfce7' : '#fee2e2', 
+                      color: payment.status === 'success' ? '#166534' : '#991b1b', 
+                      textTransform: 'uppercase'
+                    }}>
+                      {payment.status === 'success' ? 'Payé' : 'Échoué'}
+                    </span>
+                  </div>
+                  <div className={styles.cardBody}>
+                    <div className={styles.userSection}>
+                      <User size={16} />
+                      <div>
+                        <div className={styles.userName}>{payment.userId?.fullName}</div>
+                        <div className={styles.userEmail}>{payment.userId?.email}</div>
+                      </div>
+                    </div>
+                    <div style={{ margin: '15px 0', padding: '12px', background: '#f8fafc', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '13px', color: '#64748b' }}>Montant :</span>
+                        <span style={{ fontWeight: '800', color: '#1e293b' }}>{payment.amount.toFixed(2)} TND</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '13px', color: '#64748b' }}>Date :</span>
+                        <span style={{ fontSize: '13px', color: '#1e293b' }}>{new Date(payment.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Clock size={12} /> Flouci ID: {payment.flouciPaymentId?.slice(0, 15)}...
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <div className={styles.content}>
            <CompanyCalendar 
-                reservations={reservations.filter(r => ["confirmed", "completed", "blocked"].includes(r.status))} 
+                reservations={reservations.filter(r => ["pending", "confirmed", "paid", "completed", "blocked"].includes(r.status))} 
                 onUpdateStatus={handleUpdateReservation}
            />
         </div>

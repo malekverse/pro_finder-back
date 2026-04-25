@@ -120,11 +120,11 @@ const Header = ({
                 <User size={16} /> Mon profil
               </button>
               
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/purchases"); }}>
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/purchases"); }}>
                 <CreditCard size={16} /> Mes achats
               </button>
               
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/documents"); }}>
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/documents"); }}>
                 <FileText size={16} /> Mes documents
               </button>
               

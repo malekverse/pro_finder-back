@@ -11,7 +11,7 @@ import PostCard from "../../components/Posts/PostCard";
 import {
   ArrowLeft, Globe, Mail, Phone,
   MapPin, Newspaper, Loader, UserCheck, UserPlus, Flag, X, Send,
-  Package, Wrench, Calendar, Info, Clock, CreditCard, Star, MessageSquare, AlertCircle, User
+  Package, Wrench, Calendar, Info, Clock, CreditCard, Star, MessageSquare, AlertCircle, User, CheckCircle2, ShoppingCart
 } from "lucide-react";
 import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
@@ -25,10 +25,16 @@ import {
   useDeleteReviewMutation,
   useUpdateReviewMutation,
 } from "../../redux/features/reviewApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { useSelector } from "react-redux";
 import { Edit, Trash2 } from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
+
+// Components Premium
+import ProductDetail from "../../components/dashboard/client/ProductDetail";
+import ServiceDetail from "../../components/dashboard/client/ServiceDetail";
+import ActionModal from "../../components/dashboard/client/ActionModal";
 
 const ProfessionalPublicProfile = () => {
   const navigate = useNavigate();
@@ -61,6 +67,7 @@ const ProfessionalPublicProfile = () => {
   // Reservation & Order Logic
   const [createReservation, { isLoading: reserving }] = useCreateReservationMutation();
   const [createOrder, { isLoading: ordering }] = useCreateOrderMutation();
+  const [initPayment, { isLoading: isPaying }] = useInitializePaymentMutation();
   
   const [selectedService, setSelectedService] = useState(null);
   const [reservationDate, setReservationDate] = useState("");
@@ -78,6 +85,12 @@ const ProfessionalPublicProfile = () => {
     phone: user?.phone || "",
   });
   const [orderSuccess, setOrderSuccess] = useState(false);
+
+  // Premium Detail Modals
+  const [productForDetail, setProductForDetail] = useState(null);
+  const [serviceForDetail, setServiceForDetail] = useState(null);
+  const [selectedItemForAction, setSelectedItemForAction] = useState(null);
+  const [actionType, setActionType] = useState(null);
 
   // Review Logic
   const [reviewRating, setReviewRating] = useState(5);
@@ -260,32 +273,70 @@ const ProfessionalPublicProfile = () => {
   };
 
   const handlePlaceOrder = async (e) => {
-    e.preventDefault();
+    // Remplacé par handleSubmitAction via ActionModal
+  };
+
+  const handleSubmitAction = async (data) => {
     if (!user) {
       navigate("/auth/login", { state: { from: location.pathname } });
       return;
     }
     try {
-      await createOrder({
-        professionalId,
-        items: [{
-          productId: selectedProduct._id,
-          quantity: orderQuantity,
-          price: selectedProduct.price
-        }],
-        totalPrice: selectedProduct.price * orderQuantity,
-        shippingAddress,
-      }).unwrap();
-      setOrderSuccess(true);
+      if (actionType === 'product') {
+        const orderResult = await createOrder({
+          professionalId,
+          items: [{
+            productId: selectedItemForAction._id,
+            quantity: data.quantity,
+            price: selectedItemForAction.price
+          }],
+          totalPrice: selectedItemForAction.price * data.quantity,
+          shippingAddress: {
+            fullName: user?.fullName,
+            phone: user?.phone,
+            ...data.address
+          },
+          notes: data.note
+        }).unwrap();
+
+        // DÉCLENCHER LE PAIEMENT (CHECKOUT)
+        const paymentData = await initPayment({
+          orderId: orderResult.order._id,
+          successUrl: `${window.location.origin}/payment/success`,
+          failUrl: `${window.location.origin}/payment/fail`
+        }).unwrap();
+
+        if (paymentData.result_url) {
+          window.location.href = paymentData.result_url;
+        } else {
+          setOrderSuccess(true);
+        }
+      } else {
+        await createReservation({
+          professionalId,
+          serviceId: selectedItemForAction._id,
+          date: data.date,
+          timeSlot: data.time,
+          notes: data.note,
+        }).unwrap();
+        setResSuccess(true);
+      }
+      setSelectedItemForAction(null);
       setTimeout(() => {
-        setSelectedProduct(null);
         setOrderSuccess(false);
-        setOrderQuantity(1);
-      }, 2000);
+        setResSuccess(false);
+      }, 3000);
     } catch (err) {
-      console.error("Order error", err);
-      alert("Erreur lors de la commande");
+      console.error("Action error", err);
+      alert(err.data?.message || "Une erreur est survenue");
     }
+  };
+
+  const handleAction = (item, type) => {
+    setSelectedItemForAction(item);
+    setActionType(type);
+    setProductForDetail(null);
+    setServiceForDetail(null);
   };
 
   const posts = postsData?.posts ?? [];
@@ -485,7 +536,7 @@ const ProfessionalPublicProfile = () => {
                       <span><Clock size={14} /> {service.duration} min</span>
                       <span style={s.itemPrice}>{service.price} TND</span>
                     </div>
-                    <button onClick={() => setSelectedService(service)} style={s.itemBtn}>
+                    <button onClick={() => setServiceForDetail(service)} style={s.itemBtn}>
                       <Calendar size={16} /> Réserver
                     </button>
                   </div>
@@ -508,8 +559,8 @@ const ProfessionalPublicProfile = () => {
                     <div style={s.itemMeta}>
                       <span style={s.itemPrice}>{product.price} TND</span>
                     </div>
-                    <button onClick={() => setSelectedProduct(product)} style={s.itemBtn}>
-                      <Package size={16} /> Commander
+                    <button onClick={() => setProductForDetail(product)} style={s.itemBtn}>
+                      <ShoppingCart size={16} /> Commander
                     </button>
                   </div>
                 </div>
@@ -598,142 +649,38 @@ const ProfessionalPublicProfile = () => {
         )}
       </div>
 
-      {/* Reservation Modal */}
-      {selectedService && (
-        <div style={s.modalOverlay}>
-          <div style={s.modal}>
-            <button onClick={() => setSelectedService(null)} style={s.modalClose}><X size={24} /></button>
-            <div style={s.modalHeader}>
-              <Wrench size={24} color="#24416b" />
-              <h2 style={s.modalTitle}>Réserver un service</h2>
-            </div>
-            
-            {resSuccess ? (
-              <div style={s.successMsg}>
-                <Star size={48} color="#10b981" />
-                <h3>Demande envoyée !</h3>
-                <p>Le professionnel vous contactera pour confirmer.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleBookService} style={s.modalForm}>
-                <div style={s.modalItemInfo}>
-                  <img src={toImageUrl(selectedService.imageService)} alt="" style={s.modalItemImg} />
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '18px' }}>{selectedService.name}</h3>
-                    <p style={{ margin: '5px 0', color: '#64748b' }}>{selectedService.price} TND • {selectedService.duration} min</p>
-                  </div>
-                </div>
-
-                <div style={s.formGrid}>
-                  <div style={s.formGroup}>
-                    <label style={s.formLabel}>Date souhaitée</label>
-                    <input type="date" required style={s.formInput} value={reservationDate} onChange={e => setReservationDate(e.target.value)} />
-                  </div>
-                  <div style={s.formGroup}>
-                    <label style={s.formLabel}>Heure</label>
-                    <input type="time" required style={s.formInput} value={reservationTime} onChange={e => setReservationTime(e.target.value)} />
-                  </div>
-                </div>
-
-                <div style={s.formGroup}>
-                  <label style={s.formLabel}>Notes (optionnel)</label>
-                  <textarea 
-                    style={s.formTextarea} 
-                    placeholder="Précisez vos besoins..."
-                    value={reservationNotes}
-                    onChange={e => setReservationNotes(e.target.value)}
-                  />
-                </div>
-
-                <button type="submit" disabled={reserving} style={s.modalSubmit}>
-                  {reserving ? <Loader size={18} className="animate-spin" /> : "Confirmer la réservation"}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
+      {/* MODALS PREMIUM */}
+      {serviceForDetail && (
+        <ServiceDetail 
+          service={serviceForDetail}
+          onClose={() => setServiceForDetail(null)}
+          onReserve={(s) => handleAction(s, 'service')}
+        />
       )}
 
-      {/* Order Modal */}
-      {selectedProduct && (
-        <div style={s.modalOverlay}>
-          <div style={s.modal}>
-            <button onClick={() => setSelectedProduct(null)} style={s.modalClose}><X size={24} /></button>
-            <div style={s.modalHeader}>
-              <Package size={24} color="#24416b" />
-              <h2 style={s.modalTitle}>Commander un produit</h2>
-            </div>
+      {productForDetail && (
+        <ProductDetail 
+          product={productForDetail}
+          onClose={() => setProductForDetail(null)}
+          onOrder={(p) => handleAction(p, 'product')}
+        />
+      )}
 
-            {orderSuccess ? (
-              <div style={s.successMsg}>
-                <Star size={48} color="#10b981" />
-                <h3>Commande validée !</h3>
-                <p>Votre commande a été transmise avec succès.</p>
-              </div>
-            ) : (
-              <form onSubmit={handlePlaceOrder} style={s.modalForm}>
-                <div style={s.modalItemInfo}>
-                  <img src={toImageUrl(selectedProduct.imageProduct)} alt="" style={s.modalItemImg} />
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '18px' }}>{selectedProduct.name}</h3>
-                    <p style={{ margin: '5px 0', color: '#64748b' }}>{selectedProduct.price} TND / unité</p>
-                  </div>
-                </div>
+      {selectedItemForAction && (
+        <ActionModal 
+          type={actionType}
+          item={selectedItemForAction}
+          user={user}
+          onClose={() => setSelectedItemForAction(null)}
+          onSubmit={handleSubmitAction}
+          isLoading={ordering || reserving || isPaying}
+        />
+      )}
 
-                <div style={s.formGroup}>
-                  <label style={s.formLabel}>Quantité</label>
-                  <input 
-                    type="number" min="1" required style={s.formInput} 
-                    value={orderQuantity} onChange={e => setOrderQuantity(parseInt(e.target.value))} 
-                  />
-                </div>
-
-                <div style={s.sectionDivider}>Adresse de livraison</div>
-                
-                <div style={s.formGroup}>
-                  <label style={s.formLabel}>Nom complet</label>
-                  <input 
-                    type="text" required style={s.formInput} 
-                    value={shippingAddress.fullName} onChange={e => setShippingAddress({...shippingAddress, fullName: e.target.value})} 
-                  />
-                </div>
-
-                <div style={s.formGroup}>
-                  <label style={s.formLabel}>Rue / Quartier</label>
-                  <input 
-                    type="text" required style={s.formInput} 
-                    value={shippingAddress.street} onChange={e => setShippingAddress({...shippingAddress, street: e.target.value})} 
-                  />
-                </div>
-
-                <div style={s.formGrid}>
-                  <div style={s.formGroup}>
-                    <label style={s.formLabel}>Ville</label>
-                    <input 
-                      type="text" required style={s.formInput} 
-                      value={shippingAddress.city} onChange={e => setShippingAddress({...shippingAddress, city: e.target.value})} 
-                    />
-                  </div>
-                  <div style={s.formGroup}>
-                    <label style={s.formLabel}>Téléphone</label>
-                    <input 
-                      type="text" required style={s.formInput} 
-                      value={shippingAddress.phone} onChange={e => setShippingAddress({...shippingAddress, phone: e.target.value})} 
-                    />
-                  </div>
-                </div>
-
-                <div style={s.orderSummary}>
-                  <span>Total à payer:</span>
-                  <span style={{ fontSize: '20px', color: '#24416b' }}>{selectedProduct.price * orderQuantity} TND</span>
-                </div>
-
-                <button type="submit" disabled={ordering} style={s.modalSubmit}>
-                  {ordering ? <Loader size={18} className="animate-spin" /> : "Passer la commande"}
-                </button>
-              </form>
-            )}
-          </div>
+      {(orderSuccess || resSuccess) && (
+        <div style={{ position: 'fixed', bottom: '20px', right: '20px', background: '#10b981', color: '#fff', padding: '15px 25px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 3000, display: 'flex', alignItems: 'center', gap: '10px', animation: 'fadeInUp 0.3s' }}>
+          <CheckCircle2 size={20} />
+          <span>{orderSuccess ? "Commande réussie !" : "Réservation envoyée !"}</span>
         </div>
       )}
 
@@ -755,6 +702,19 @@ const ProfessionalPublicProfile = () => {
               </div>
             ) : (
               <form onSubmit={handleReport} style={s.modalForm}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
+                  {pro.photoProfessional ? (
+                    <img src={photo} alt="" style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <User size={24} color="#64748b" />
+                    </div>
+                  )}
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#1e293b' }}>{pro.fullName}</h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Profil à signaler</p>
+                  </div>
+                </div>
                 <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '15px' }}>
                   Aidez-nous à maintenir la communauté sûre. Pourquoi signalez-vous ce professionnel ?
                 </p>

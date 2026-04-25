@@ -5,8 +5,7 @@ import { useGetAllReportsQuery, useUpdateReportStatusMutation } from "../../../r
 import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2, Info, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "../../../styles/dashboardAdmin.module.css";
-
-const SERVER_URL = "http://localhost:5000";
+import { toImageUrl } from "../../../utils/imageUtils";
 
 const AdminModeration = () => {
     const [activeTab, setActiveTab] = useState("companies"); // 'companies' or 'reports'
@@ -270,7 +269,7 @@ const AdminModeration = () => {
                                                     <Link to={`/user/company/${company._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
                                                         {company.logoUrl ? (
                                                             <img 
-                                                                src={`${SERVER_URL}/${company.logoUrl}`} 
+                                                                src={toImageUrl(company.logoUrl)} 
                                                                 alt="logo" 
                                                                 style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} 
                                                             />
@@ -372,7 +371,7 @@ const AdminModeration = () => {
                         <table className={styles.table}>
                             <thead className={styles.thead}>
                                 <tr>
-                                    <th className={styles.th}>ENTREPRISE SIGNALÉE</th>
+                                    <th className={styles.th}>ENTITÉ SIGNALÉE</th>
                                     <th className={styles.th}>SIGNALÉ PAR</th>
                                     <th className={styles.th}>RAISON</th>
                                     <th className={styles.th}>STATUT</th>
@@ -392,28 +391,48 @@ const AdminModeration = () => {
                                         <tr key={report._id} className={styles.tr}>
                                             <td className={styles.td}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    {report.company_id?.logoUrl ? (
+                                                    {(report.company_id?.logoUrl || report.professional_id?.photoProfessional) ? (
                                                         <img 
-                                                            src={`${SERVER_URL}/${report.company_id.logoUrl}`} 
+                                                            src={toImageUrl(report.company_id?.logoUrl || report.professional_id?.photoProfessional)} 
                                                             alt="logo" 
-                                                            style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} 
+                                                            style={{ width: '36px', height: '36px', borderRadius: report.professional_id ? '50%' : '8px', objectFit: 'cover' }} 
                                                         />
                                                     ) : (
                                                         <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <Building2 size={18} color="#94a3b8" />
+                                                            {report.professional_id ? <User size={18} color="#94a3b8" /> : <Building2 size={18} color="#94a3b8" />}
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <div style={{ fontWeight: '600', color: '#1e293b' }}>{report.company_id?.companyName}</div>
-                                                        <Link to={`/user/company/${report.company_id?._id}`} style={{ fontSize: '11px', color: '#24416b', textDecoration: 'underline' }}>
+                                                        <div style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                            {report.company_id?.companyName || report.professional_id?.fullName}
+                                                        </div>
+                                                        <Link 
+                                                            to={report.company_id ? `/user/company/${report.company_id?._id}` : `/user/professional/${report.professional_id?._id}`} 
+                                                            style={{ fontSize: '11px', color: '#24416b', textDecoration: 'underline' }}
+                                                        >
                                                             Voir le profil
                                                         </Link>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className={styles.td}>
-                                                <div style={{ fontSize: '13px', fontWeight: '500' }}>{report.reporter_id?.fullName}</div>
-                                                <div style={{ fontSize: '11px', color: '#64748b' }}>{report.reporter_id?.email}</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    {report.reporter_id?.avatarUrl ? (
+                                                        <img 
+                                                            src={toImageUrl(report.reporter_id.avatarUrl)} 
+                                                            alt="" 
+                                                            style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} 
+                                                        />
+                                                    ) : (
+                                                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <User size={14} color="#94a3b8" />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div style={{ fontSize: '13px', fontWeight: '500' }}>{report.reporter_id?.fullName}</div>
+                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>{report.reporter_id?.email}</div>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className={styles.td}>
                                                 <div style={{ 
@@ -498,7 +517,7 @@ const AdminModeration = () => {
                                                     <Link to={`/user/professional/${pro._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
                                                         {pro.photoProfessional ? (
                                                             <img 
-                                                                src={`${SERVER_URL}/${pro.photoProfessional}`} 
+                                                                src={toImageUrl(pro.photoProfessional)} 
                                                                 alt="photo" 
                                                                 style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }} 
                                                             />
@@ -665,7 +684,25 @@ const AdminModeration = () => {
                         </div>
                         
                         <div style={{ marginBottom: '20px' }}>
-                            <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                                {(selectedReport?.company_id?.logoUrl || selectedReport?.professional_id?.photoProfessional) ? (
+                                    <img 
+                                        src={toImageUrl(selectedReport?.company_id?.logoUrl || selectedReport?.professional_id?.photoProfessional)} 
+                                        alt="" 
+                                        style={{ width: '60px', height: '60px', borderRadius: selectedReport?.professional_id ? '50%' : '12px', objectFit: 'cover', border: '2px solid #fff' }} 
+                                    />
+                                ) : (
+                                    <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {selectedReport?.professional_id ? <User size={24} color="#94a3b8" /> : <Building2 size={24} color="#94a3b8" />}
+                                    </div>
+                                )}
+                                <div>
+                                    <h4 style={{ margin: 0, fontSize: '16px', color: '#1e293b' }}>{selectedReport?.company_id?.companyName || selectedReport?.professional_id?.fullName}</h4>
+                                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Entité signalée</p>
+                                </div>
+                            </div>
+                            
+                            <div style={{ padding: '15px', background: '#fef2f2', borderRadius: '12px', border: '1px solid #fee2e2', marginBottom: '20px' }}>
                                 <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '5px', fontWeight: '700' }}>RAISON DU SIGNALEMENT :</div>
                                 <div style={{ fontSize: '14px', color: '#1e293b', fontStyle: 'italic' }}>"{selectedReport?.reason}"</div>
                             </div>

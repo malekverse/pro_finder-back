@@ -12,6 +12,7 @@ import {
 } from "../../redux/features/company/companyServiceApiSlice";
 import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
 import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart, User } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
 import Cart from "../../components/dashboard/client/Cart";
@@ -54,6 +55,7 @@ const UserDashboard = () => {
 
   const [createOrder, { isLoading: isOrdering }] = useCreateOrderMutation();
   const [createReservation, { isLoading: isReserving }] = useCreateReservationMutation();
+  const [initPayment, { isLoading: isPaying }] = useInitializePaymentMutation();
 
   const handleAction = (item, type) => {
     setSelectedItem(item);
@@ -72,7 +74,7 @@ const UserDashboard = () => {
         timeSlot: data.bookingSlot,
         notes: "" 
       }).unwrap();
-      alert("Réservation effectuée avec succès !");
+      navigate("/user/purchases");
       setServiceForDetail(null);
     } catch (err) {
       alert(err.data?.message || "Une erreur est survenue");
@@ -87,7 +89,7 @@ const UserDashboard = () => {
           return;
         }
         const isPro = !!selectedItem.professionalId;
-        await createOrder({
+        const orderResult = await createOrder({
           companyId: !isPro ? (selectedItem.companyId?._id || selectedItem.companyId) : null,
           professionalId: isPro ? (selectedItem.professionalId?._id || selectedItem.professionalId) : null,
           items: [{ productId: selectedItem._id, quantity: data.quantity, price: selectedItem.price }],
@@ -99,7 +101,19 @@ const UserDashboard = () => {
           },
           notes: data.note
         }).unwrap();
-        alert("Commande effectuée avec succès !");
+        
+        // DÉCLENCHER LE PAIEMENT (CHECKOUT)
+        const paymentData = await initPayment({
+          orderId: orderResult.order._id,
+          successUrl: `${window.location.origin}/payment/success`,
+          failUrl: `${window.location.origin}/payment/fail`
+        }).unwrap();
+
+        if (paymentData.result_url) {
+          window.location.href = paymentData.result_url;
+        } else {
+          navigate("/user/purchases");
+        }
       } else {
         const isPro = !!selectedItem.professionalId;
         await createReservation({
@@ -110,7 +124,7 @@ const UserDashboard = () => {
           timeSlot: data.time,
           notes: data.note
         }).unwrap();
-        alert("Réservation effectuée avec succès !");
+        navigate("/user/purchases");
       }
       setSelectedItem(null);
     } catch (err) {
@@ -128,7 +142,7 @@ const UserDashboard = () => {
     <div style={p.root}>
       <Header
         user={user}
-        onProfileClick={() => navigate("/profile")}
+        onProfileClick={() => navigate("/user/profile")}
         onLogout={handleLogout}
         onCompanyClick={hasCompanyAccess ? () => navigate("/company/stats") : null}
         onHomeClick={() => {
@@ -213,7 +227,7 @@ const UserDashboard = () => {
           user={user}
           onClose={() => setSelectedItem(null)}
           onSubmit={handleSubmitAction}
-          isLoading={isOrdering || isReserving}
+          isLoading={isOrdering || isReserving || isPaying}
         />
       )}
 

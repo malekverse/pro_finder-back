@@ -25,7 +25,7 @@ const RequireRole = ({ allowedRoles, children }) => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-   return children;
+  return children || <Outlet />;
 };
 
 export default RequireRole;

@@ -1,5 +1,6 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { removeFromCart, updateQuantity, clearCart } from "../../../redux/features/cart/cartSlice";
 import { useCreateOrderMutation } from "../../../redux/features/orderApiSlice";
 import { 
@@ -10,6 +11,7 @@ import { toImageUrl } from "../../../utils/imageUtils";
 
 const Cart = ({ onClose }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const carts = useSelector((state) => state.cart.carts);
   const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation();
 
@@ -45,7 +47,8 @@ const Cart = ({ onClose }) => {
 
       await createOrder(orderData).unwrap();
       dispatch(clearCart({ companyId }));
-      alert(`Commande passée avec succès chez ${cart.companyName} !`);
+      navigate("/user/purchases");
+      onClose();
     } catch (err) {
       console.error("Checkout failed:", err);
       alert(err.data?.message || "Erreur lors de la commande.");

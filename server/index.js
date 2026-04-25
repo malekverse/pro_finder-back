@@ -25,6 +25,7 @@ require("./models/country");
 require("./models/region");
 require("./models/Review");
 require("./models/Professional");
+require("./models/Payment");
 
 connectDB();
 
@@ -64,6 +65,7 @@ app.use("/reviews", require("./routes/reviewRoutes"));
 app.use("/notifications", require("./routes/notificationRoutes"));
 app.use("/quotes", require("./routes/quoteRoutes"));
 app.use("/contracts", require("./routes/contractRoutes"));
+app.use("/payments", require("./routes/paymentRoutes"));
 
 app.use("/categories", require("./routes/categoriesRoutes/subCategoryRoutes"));
 app.use("/categories", require("./routes/categoriesRoutes/serviceRoutes"));

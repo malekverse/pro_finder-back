@@ -8,9 +8,10 @@ import {
   useGetUserContractsQuery, 
   useUpdateContractStatusMutation 
 } from "../../redux/features/company/contractApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { 
   FileSpreadsheet, FileSignature, Loader2, Calendar, 
-  DollarSign, CheckCircle2, XCircle, Building2, Clock, FileText, Eye, X, Download
+  DollarSign, CheckCircle2, XCircle, Building2, Clock, FileText, Eye, X, Download, CreditCard
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css";
 import { generateQuotePDF, generateContractPDF } from "../../utils/pdfGenerator";
@@ -26,14 +27,42 @@ const ClientDocuments = () => {
   
   const [updateQuoteStatus] = useUpdateQuoteStatusMutation();
   const [updateContractStatus] = useUpdateContractStatusMutation();
+  const [initializePayment, { isLoading: isPaying }] = useInitializePaymentMutation();
+
+  const handlePayment = async (item, type) => {
+    try {
+      const amount = item.totalAmount || item.totalPrice || item.totalValue || (item.serviceId?.price);
+      if (!amount) return alert("Montant invalide");
+
+      const res = await initializePayment({
+          quoteId: type === 'quote' ? item._id : null,
+          contractId: type === 'contract' ? item._id : null,
+          reservationId: type === 'reservation' ? item._id : null,
+          orderId: type === 'order' ? item._id : null,
+          successUrl: `${window.location.origin}/payment/success`,
+          failUrl: `${window.location.origin}/payment/fail`,
+        }).unwrap();
+
+      if (res.result_url) {
+        window.location.href = res.result_url;
+      }
+    } catch (err) {
+      console.error("Payment initialization failed:", err);
+      alert(err.data?.message || "Erreur lors de l'initialisation du paiement");
+    }
+  };
 
   const handleQuoteAction = async (id, status) => {
     if (window.confirm(`Voulez-vous vraiment ${status === 'accepted' ? 'accepter' : 'refuser'} ce devis ?`)) {
       try {
-        await updateQuoteStatus({ id, status }).unwrap();
-        refetchQuotes();
+        console.log("🚀 [handleQuoteAction] Updating quote status:", { id, status });
+        const response = await updateQuoteStatus({ id, status }).unwrap();
+        console.log("✅ [handleQuoteAction] Update success:", response);
+        // Force refetch and wait for it
+        await refetchQuotes();
       } catch (err) {
-        console.error("Action échouée:", err);
+        console.error("❌ [handleQuoteAction] Action échouée:", err);
+        alert(`Erreur: ${err.data?.message || "Une erreur est survenue lors de la mise à jour du devis."}`);
       }
     }
   };
@@ -149,6 +178,21 @@ const ClientDocuments = () => {
                           <button onClick={() => handleQuoteAction(quote._id, 'rejected')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #ef4444', background: 'white', color: '#ef4444', fontWeight: '700', cursor: 'pointer' }}>Refuser</button>
                         </>
                       )}
+
+                      {quote.status === 'accepted' && !quote.requiresContract && (
+                            <button 
+                              onClick={() => handlePayment(quote, 'quote')}
+                              disabled={isPaying}
+                              style={{
+                                flex: 1, padding: '10px', borderRadius: '10px',
+                                border: 'none', background: '#fbbf24', color: '#000', fontWeight: '800',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                opacity: isPaying ? 0.7 : 1
+                              }}
+                            >
+                              <CreditCard size={18} /> {isPaying ? 'Chargement...' : 'Payer maintenant'}
+                            </button>
+                          )}
                     </div>
                   </div>
                 </div>
@@ -196,13 +240,28 @@ const ClientDocuments = () => {
                         <Eye size={16} /> Lire
                       </button>
                       
-                      {contract.status === 'signed' && (
+                       {contract.status === 'signed' && (
                         <button 
                           onClick={() => generateContractPDF(contract, contract.companyId)}
                           style={{ padding: '10px', borderRadius: '10px', border: '1px solid #24416b', background: 'white', color: '#24416b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           title="Télécharger PDF"
                         >
                           <Download size={16} />
+                        </button>
+                      )}
+
+                      {contract.status === 'signed' && (
+                        <button 
+                          onClick={() => handlePayment(contract, 'contract')}
+                          disabled={isPaying}
+                          style={{
+                            flex: 1.5, padding: '10px', borderRadius: '10px',
+                            border: 'none', background: '#fbbf24', color: '#000', fontWeight: '800',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                            opacity: isPaying ? 0.7 : 1
+                          }}
+                        >
+                          <CreditCard size={18} /> {isPaying ? 'Chargement...' : 'Payer'}
                         </button>
                       )}
                       

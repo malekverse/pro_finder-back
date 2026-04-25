@@ -28,6 +28,16 @@ const createOrder = async (req, res) => {
 
     const providerId = actualCompanyId || actualProfessionalId;
 
+    // Vérifier la disponibilité des stocks avant de créer la commande
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product || product.stock < item.quantity) {
+        return res.status(400).json({ 
+          message: `Stock insuffisant pour le produit ${product ? product.name : 'inconnu'}` 
+        });
+      }
+    }
+
     const newOrder = new Order({
       userId,
       companyId: actualCompanyId,
@@ -36,6 +46,7 @@ const createOrder = async (req, res) => {
       totalPrice,
       shippingAddress,
       notes,
+      status: "pending" // Mis en 'pending' par défaut pour permettre le paiement
     });
 
     await newOrder.save();

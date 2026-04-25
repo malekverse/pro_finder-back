@@ -39,10 +39,11 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
   };
 
   const [formData, setFormData] = useState({
-    userId: prefillData?.userId || "",
-    reservationId: prefillData?.reservationId || "",
+    userId: prefillData?.userId ? prefillData.userId.toString() : "",
+    reservationId: prefillData?.reservationId ? prefillData.reservationId.toString() : "",
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours par défaut
     notes: prefillData?.notes || "",
+    requiresContract: false,
     items: prefillData?.serviceId ? [
       { description: `Service: ${prefillData.serviceName}`, quantity: 1, unitPrice: prefillData.price, duration: prefillData.duration || "60 min" }
     ] : [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
@@ -51,15 +52,28 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
   // Mettre à jour le formulaire si les données de pré-remplissage changent
   useEffect(() => {
     if (prefillData) {
-      setFormData({
-        userId: prefillData.userId || "",
-        reservationId: prefillData.reservationId || "",
+      console.log("🔍 [Quotes] Prefill data received:", prefillData);
+      const uId = prefillData.userId?.toString() || "";
+      const rId = prefillData.reservationId?.toString() || "";
+      
+      const newFormData = {
+        userId: uId,
+        reservationId: rId,
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: prefillData.notes || "",
+        requiresContract: false,
         items: prefillData.serviceId ? [
-          { description: `Service: ${prefillData.serviceName}`, quantity: 1, unitPrice: prefillData.price, duration: prefillData.duration || "60 min" }
+          { 
+            description: prefillData.serviceName || "Service sans nom", 
+            quantity: 1, 
+            unitPrice: parseFloat(prefillData.price) || 0, 
+            duration: prefillData.duration || "60 min" 
+          }
         ] : [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
-      });
+      };
+      
+      console.log("📝 [Quotes] Setting new form data:", newFormData);
+      setFormData(newFormData);
       setIsModalOpen(true);
     }
   }, [prefillData]);
@@ -96,19 +110,56 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Récupérer l'ID client de n'importe quelle source disponible
+    const finalUserId = formData.userId || prefillData?.userId;
+
+    console.log("🚀 [Quotes] Attempting to submit quote with data:", { ...formData, userId: finalUserId });
+
+    // Client-side validation
+    if (!finalUserId) {
+      alert("Veuillez sélectionner un client.");
+      return;
+    }
+
+    if (!formData.items || formData.items.length === 0 || !formData.items[0].description || formData.items[0].unitPrice <= 0) {
+      alert("Veuillez remplir les détails de la prestation (description et prix).");
+      return;
+    }
+
     try {
-      await createQuote(formData).unwrap();
+      // S'assurer que tous les champs requis par le backend sont présents
+      const quoteData = { 
+        ...formData, 
+        userId: finalUserId, // Forcer l'ID client correct
+        status: 'sent',
+        taxRate: 19, // TVA par défaut
+        subTotal: formData.items[0].unitPrice * (formData.items[0].quantity || 1),
+        taxAmount: (formData.items[0].unitPrice * (formData.items[0].quantity || 1)) * 0.19,
+        totalAmount: (formData.items[0].unitPrice * (formData.items[0].quantity || 1)) * 1.19
+      };
+      
+      console.log("📤 [Quotes] Sending final quote data to server:", quoteData);
+      
+      const response = await createQuote(quoteData).unwrap();
+      console.log("✅ [Quotes] Quote created successfully:", response);
+      
       setIsModalOpen(false);
+      // Reset form
       setFormData({
         userId: "",
         reservationId: "",
-        validUntil: "",
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: "",
+        requiresContract: false,
         items: [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
       });
       refetch();
+      alert("Devis généré et envoyé au client avec succès !");
     } catch (err) {
-      console.error("Failed to create quote:", err);
+      console.error("❌ [Quotes] Failed to create quote:", err);
+      const errorMessage = err.data?.message || "Erreur lors de la création du devis. Vérifiez que tous les champs sont remplis.";
+      alert(errorMessage);
     }
   };
 
@@ -373,27 +424,53 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                   <label style={qs.label}>Client (Abonné)</label>
                   <div style={qs.inputWrapper}>
                     <User size={18} style={qs.inputIcon} />
-                    <select 
+                    {formData.reservationId ? (
+                      <div style={{
+                        ...qs.input,
+                        backgroundColor: '#f1f5f9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        border: '1px solid #cbd5e1',
+                        minHeight: '45px',
+                        padding: '8px 15px'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '15px' }}>{prefillData?.userName || "Client de la réservation"}</span>
+                          {prefillData?.userEmail && (
+                            <span style={{ fontSize: '11px', fontWeight: '400', color: '#64748b' }}>{prefillData.userEmail}</span>
+                          )}
+                        </div>
+                        <span style={{ 
+                          fontSize: '10px', 
+                          backgroundColor: '#24416b', 
+                          color: 'white', 
+                          padding: '3px 10px', 
+                          borderRadius: '6px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>Automatique</span>
+                      </div>
+                    ) : (
+                      <select 
                         required 
-                        disabled={!!formData.reservationId}
-                        style={{ 
-                            ...qs.select, 
-                            cursor: formData.reservationId ? 'not-allowed' : 'pointer', 
-                            backgroundColor: formData.reservationId ? '#f1f5f9' : '#fff',
-                            color: formData.reservationId ? '#1e293b' : '#1e293b',
-                            fontWeight: formData.reservationId ? '600' : '500'
-                        }}
+                        style={qs.select}
                         value={formData.userId}
                         onChange={(e) => setFormData({...formData, userId: e.target.value})}
-                    >
+                      >
                         <option value="">Sélectionner un client</option>
-                        {prefillData?.userId && !followers.some(f => f.user_id._id === prefillData.userId) && (
-                        <option value={prefillData.userId}>{prefillData.userName} (Client Réservation)</option>
-                        )}
-                        {followers.map(f => (
-                        <option key={f.user_id._id} value={f.user_id._id}>{f.user_id.fullName}</option>
-                        ))}
-                    </select>
+                        {followers.map(f => {
+                          const fId = f.user_id?._id?.toString() || f.user_id?.toString();
+                          return (
+                            <option key={fId} value={fId}>
+                              {f.user_id?.fullName || "Client sans nom"}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
                   </div>
                 </div>
                 <div style={qs.formGroup}>
@@ -406,8 +483,21 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                         value={formData.validUntil}
                         onChange={(e) => setFormData({...formData, validUntil: e.target.value})}
                     />
-                  </div>
                 </div>
+              </div>
+            </div>
+
+              <div style={{ ...qs.formGroup, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '12px', border: '1px solid #bae6fd', marginBottom: '24px' }}>
+                <input 
+                  type="checkbox" 
+                  id="requiresContract"
+                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  checked={formData.requiresContract}
+                  onChange={(e) => setFormData({...formData, requiresContract: e.target.checked})}
+                />
+                <label htmlFor="requiresContract" style={{ fontWeight: '700', fontSize: '14px', color: '#0369a1', cursor: 'pointer' }}>
+                  Signature d'un contrat obligatoire avant le paiement
+                </label>
               </div>
 
               <div style={qs.section}>

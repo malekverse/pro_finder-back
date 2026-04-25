@@ -56,6 +56,7 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
     reservationId: prefillData?.reservationId || "",
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: prefillData?.notes || "",
+    requiresContract: false,
     items: prefillData?.serviceId ? [
       { description: `Service: ${prefillData.serviceName}`, quantity: 1, unitPrice: prefillData.price, duration: prefillData.duration || "60 min" }
     ] : [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
@@ -109,18 +110,23 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createQuote(formData).unwrap();
+      // S'assurer que le statut passe à 'sent' lors de l'envoi
+      const quoteData = { ...formData, status: 'sent' };
+      await createQuote(quoteData).unwrap();
       setIsModalOpen(false);
       setFormData({
         userId: "",
         reservationId: "",
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: "",
+        requiresContract: false,
         items: [{ description: "", quantity: 1, unitPrice: 0, duration: "" }]
       });
       refetch();
+      alert("Devis généré et envoyé au client avec succès !");
     } catch (err) {
       console.error("Failed to create quote:", err);
+      alert("Erreur lors de la création du devis.");
     }
   };
 
@@ -348,25 +354,48 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
                   <label style={qs.label}>Client (Abonné)</label>
                   <div style={qs.inputWrapper}>
                     <User size={18} style={qs.inputIcon} />
-                    <select 
+                    {formData.reservationId ? (
+                      <div style={{
+                        ...qs.input,
+                        backgroundColor: '#f1f5f9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        border: '1px solid #cbd5e1',
+                        minHeight: '45px',
+                        padding: '8px 15px'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '15px' }}>{prefillData?.userName || "Client de la réservation"}</span>
+                          {prefillData?.userEmail && (
+                            <span style={{ fontSize: '11px', fontWeight: '400', color: '#64748b' }}>{prefillData.userEmail}</span>
+                          )}
+                        </div>
+                        <span style={{ 
+                          fontSize: '10px', 
+                          backgroundColor: '#24416b', 
+                          color: 'white', 
+                          padding: '3px 10px', 
+                          borderRadius: '6px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>Automatique</span>
+                      </div>
+                    ) : (
+                      <select 
                         required 
-                        disabled={!!formData.reservationId}
-                        style={{ 
-                            ...qs.select, 
-                            cursor: formData.reservationId ? 'not-allowed' : 'pointer', 
-                            backgroundColor: formData.reservationId ? '#f1f5f9' : '#fff'
-                        }}
+                        style={qs.select}
                         value={formData.userId}
                         onChange={(e) => setFormData({...formData, userId: e.target.value})}
-                    >
+                      >
                         <option value="">Sélectionner un client</option>
-                        {prefillData?.userId && !followers.some(f => f.user_id._id === prefillData.userId) && (
-                        <option value={prefillData.userId}>{prefillData.userName} (Client Réservation)</option>
-                        )}
                         {followers.map(f => (
-                        <option key={f.user_id._id} value={f.user_id._id}>{f.user_id.fullName}</option>
+                          <option key={f.user_id._id} value={f.user_id._id}>{f.user_id.fullName}</option>
                         ))}
-                    </select>
+                      </select>
+                    )}
                   </div>
                 </div>
                 <div style={qs.formGroup}>
@@ -381,6 +410,19 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div style={{ ...qs.formGroup, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '12px', border: '1px solid #bae6fd', marginBottom: '24px' }}>
+                <input 
+                  type="checkbox" 
+                  id="requiresContract"
+                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  checked={formData.requiresContract}
+                  onChange={(e) => setFormData({...formData, requiresContract: e.target.checked})}
+                />
+                <label htmlFor="requiresContract" style={{ fontWeight: '700', fontSize: '14px', color: '#0369a1', cursor: 'pointer' }}>
+                  Signature d'un contrat obligatoire avant le paiement
+                </label>
               </div>
 
               <div style={qs.section}>

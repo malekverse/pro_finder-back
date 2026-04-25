@@ -82,9 +82,9 @@ const CompanyCalendar = ({ reservations, onUpdateStatus }) => {
     for (let d = 1; d <= numDays; d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayReservations = reservations.filter(res => {
-        // Formater la date de la réservation en YYYY-MM-DD pour comparaison
+        if (!res.date) return false;
         const resDate = new Date(res.date);
-        const resDateStr = `${resDate.getFullYear()}-${String(resDate.getMonth() + 1).padStart(2, '0')}-${String(resDate.getDate()).padStart(2, '0')}`;
+        const resDateStr = resDate.toISOString().split('T')[0];
         return resDateStr === dateStr;
       });
 
@@ -97,8 +97,8 @@ const CompanyCalendar = ({ reservations, onUpdateStatus }) => {
                 key={res._id} 
                 style={{
                   ...s.event, 
-                  background: res.status === 'blocked' ? '#f1f5f9' : (res.status === 'confirmed' ? '#dcfce7' : res.status === 'cancelled' ? '#fee2e2' : '#eff6ff'),
-                  borderLeft: `4px solid ${res.status === 'blocked' ? '#94a3b8' : (res.status === 'confirmed' ? '#22c55e' : res.status === 'cancelled' ? '#ef4444' : '#3b82f6')}`
+                  background: res.status === 'blocked' ? '#f1f5f9' : (res.status === 'confirmed' || res.status === 'paid' ? '#dcfce7' : res.status === 'cancelled' ? '#fee2e2' : '#eff6ff'),
+                  borderLeft: `4px solid ${res.status === 'blocked' ? '#94a3b8' : (res.status === 'confirmed' || res.status === 'paid' ? '#22c55e' : res.status === 'cancelled' ? '#ef4444' : '#3b82f6')}`
                 }}
               >
                 <div style={s.eventTime}>

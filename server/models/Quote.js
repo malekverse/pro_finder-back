@@ -49,6 +49,10 @@ const quoteSchema = new mongoose.Schema(
       required: true,
     },
     notes: { type: String },
+    requiresContract: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

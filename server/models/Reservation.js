@@ -32,7 +32,7 @@ const reservationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed", "blocked"],
+      enum: ["pending", "confirmed", "paid", "cancelled", "completed", "blocked"],
       default: "pending",
     },
     isManualBlock: {
