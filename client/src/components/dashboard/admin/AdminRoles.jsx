@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ShieldCheck, Plus, Edit, Trash2, Search, Loader2, X, GripVertical } from "lucide-react";
 import { PERMISSIONS } from "../../../constants/permissions";
-import styles from "../../../styles/dashboardAdmin.module.css"; 
+import styles from "../../../styles/dashboardAdmin.module.css";
 
 const AdminRoles = () => {
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    
+
     // États pour la modale
     const [showModal, setShowModal] = useState(false);
     const [editingRole, setEditingRole] = useState(null);
@@ -20,34 +20,42 @@ const AdminRoles = () => {
     const API_BASE = "http://localhost:5000/roles";
 
     // Fonction pour récupérer les rôles
-    const fetchRoles = async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem("accessToken");
-            const res = await axios.get(`${API_BASE}/getRoles`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setRoles(res.data);
-        } catch (err) { 
-            console.error("Erreur fetchRoles:", err); 
-        } finally { 
-            setLoading(false); 
-        }
-    };
+    const fetchRoles = async (showLoader = false) => {
+    try {
+        if (showLoader) setLoading(true);
 
-    useEffect(() => { 
-        fetchRoles(); 
-        const interval = setInterval(fetchRoles, 3000);
-        return () => clearInterval(interval);
-    }, []);
+        const token = localStorage.getItem("accessToken");
+
+        const res = await axios.get(`${API_BASE}/getRoles`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        setRoles(res.data);
+
+    } catch (err) {
+        console.error("Erreur fetchRoles:", err);
+    } finally {
+        if (showLoader) setLoading(false);
+    }
+};
+
+    useEffect(() => {
+    fetchRoles(true); // loader seulement au début
+
+    const interval = setInterval(() => {
+        fetchRoles(false); // refresh sans loader
+    }, 3000);
+
+    return () => clearInterval(interval);
+}, []);
 
     // Gestion de la modale
     const handleOpenModal = (role = null) => {
         if (role) {
             setEditingRole(role);
-            setFormData({ 
-                name: role.name, 
-                permissions: Array.isArray(role.permissions) ? role.permissions : [] 
+            setFormData({
+                name: role.name,
+                permissions: Array.isArray(role.permissions) ? role.permissions : []
             });
         } else {
             setEditingRole(null);
@@ -115,12 +123,12 @@ const AdminRoles = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRoles(roles.filter(r => r._id !== id));
-        } catch (err) { 
-            alert("Erreur lors de la suppression"); 
+        } catch (err) {
+            alert("Erreur lors de la suppression");
         }
     };
 
-    const filteredRoles = roles.filter(r => 
+    const filteredRoles = roles.filter(r =>
         r.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -177,15 +185,15 @@ const AdminRoles = () => {
                                 </td>
                                 <td className={styles.td} style={{ textAlign: 'center' }}>
                                     <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                                        <Edit 
-                                            size={18} 
+                                        <Edit
+                                            size={18}
                                             style={{ cursor: 'pointer', color: '#3b82f6' }}
-                                            onClick={() => handleOpenModal(role)} 
+                                            onClick={() => handleOpenModal(role)}
                                         />
-                                        <Trash2 
-                                            size={18} 
+                                        <Trash2
+                                            size={18}
                                             style={{ cursor: 'pointer', color: '#ef4444' }}
-                                            onClick={() => handleDelete(role._id)} 
+                                            onClick={() => handleDelete(role._id)}
                                         />
                                     </div>
                                 </td>
@@ -197,35 +205,35 @@ const AdminRoles = () => {
 
             {/* MODALE D'AJOUT / EDITION AVEC DRAG & DROP TAGS */}
             {showModal && (
-                <div className={styles.modalOverlay} style={{ 
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', 
-                    justifyContent: 'center', alignItems: 'center', zIndex: 1000 
+                <div className={styles.modalOverlay} style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                    justifyContent: 'center', alignItems: 'center', zIndex: 1000
                 }}>
-                    <div className={styles.modalContent} style={{ 
-                        backgroundColor: 'white', padding: '30px', borderRadius: '12px', 
-                        width: '500px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' 
+                    <div className={styles.modalContent} style={{
+                        backgroundColor: 'white', padding: '30px', borderRadius: '12px',
+                        width: '500px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
                     }}>
-                        <X 
-                            size={20} 
-                            style={{ position: 'absolute', right: '20px', top: '20px', cursor: 'pointer' }} 
-                            onClick={() => setShowModal(false)} 
+                        <X
+                            size={20}
+                            style={{ position: 'absolute', right: '20px', top: '20px', cursor: 'pointer' }}
+                            onClick={() => setShowModal(false)}
                         />
                         <h3 className={styles.cardTitle} style={{ marginBottom: '25px' }}>
                             {editingRole ? "Modifier le rôle" : "Nouveau rôle"}
                         </h3>
-                        
+
                         <form onSubmit={handleSubmit}>
                             {/* Nom du rôle */}
                             <div style={{ marginBottom: '20px' }}>
                                 <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
                                     Nom du rôle
                                 </label>
-                                <input 
-                                    className={styles.searchInput} 
+                                <input
+                                    className={styles.searchInput}
                                     style={{ width: '100%', padding: '12px' }}
                                     value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     required
                                     placeholder="Ex: Manager, Éditeur..."
                                 />

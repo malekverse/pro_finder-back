@@ -199,22 +199,7 @@ const AdminModeration = () => {
                 >
                     Nouvelles Entreprises ({companies.length})
                 </button>
-                <button 
-                    onClick={() => setActiveTab("reports")}
-                    style={{ 
-                        padding: '12px 20px', 
-                        background: 'none', 
-                        border: 'none', 
-                        borderBottom: activeTab === 'reports' ? '3px solid #ef4444' : '3px solid transparent',
-                        color: activeTab === 'reports' ? '#ef4444' : '#64748b',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        fontSize: '15px',
-                        transition: '0.2s'
-                    }}
-                >
-                    Signalements ({reports.filter(r => r.status === 'pending').length})
-                </button>
+                
                 <button 
                     onClick={() => setActiveTab("professionals")}
                     style={{ 
@@ -230,6 +215,22 @@ const AdminModeration = () => {
                     }}
                 >
                     Professionnels ({professionals.length})
+                </button>
+                <button 
+                    onClick={() => setActiveTab("reports")}
+                    style={{ 
+                        padding: '12px 20px', 
+                        background: 'none', 
+                        border: 'none', 
+                        borderBottom: activeTab === 'reports' ? '3px solid #ef4444' : '3px solid transparent',
+                        color: activeTab === 'reports' ? '#ef4444' : '#64748b',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        transition: '0.2s'
+                    }}
+                >
+                    Signalements ({reports.filter(r => r.status === 'pending').length})
                 </button>
             </div>
 

@@ -11,7 +11,7 @@ const generateInvoiceNumber = async () => {
 };
 
 // Create an invoice from a payment
-exports.createInvoiceFromPayment = async (payment) => {
+const createInvoiceFromPayment = async (payment) => {
     try {
         const invoiceNumber = await generateInvoiceNumber();
         
@@ -41,7 +41,7 @@ exports.createInvoiceFromPayment = async (payment) => {
 };
 
 // Get invoices for client
-exports.getMyInvoices = async (req, res) => {
+const getMyInvoices = async (req, res) => {
     try {
         const invoices = await Invoice.find({ userId: req.user })
             .populate("companyId", "companyName")
@@ -54,7 +54,7 @@ exports.getMyInvoices = async (req, res) => {
 };
 
 // Get invoices for company/professional
-exports.getProviderInvoices = async (req, res) => {
+const getProviderInvoices = async (req, res) => {
     try {
         const id = req.companyId || req.user;
         const isProfessional = req.roles?.includes("professional");
@@ -68,3 +68,7 @@ exports.getProviderInvoices = async (req, res) => {
         res.status(500).json({ message: "Error fetching invoices" });
     }
 };
+module.exports ={generateInvoiceNumber,
+    createInvoiceFromPayment,
+    getMyInvoices,
+    getProviderInvoices}
