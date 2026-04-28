@@ -46,7 +46,7 @@ const ItemsCarousel = ({ title, items, type, onSeeMore, onAction }) => {
                   <p style={c.itemName}>{item.name}</p>
                   <div style={c.footer}>
                     <p style={c.itemPrice}>{item.price} TND</p>
-                    <p style={c.companyName}>@{item.companyId?.companyName}</p>
+                    <p style={c.companyName}>@{item.companyId?.companyName || item.professionalId?.fullName}</p>
                   </div>
                 </div>
               </div>

@@ -32,7 +32,8 @@ import {
 import {
   Loader, Users, ChevronDown, LogOut,
   Home as HomeIcon, User, Building2, MapPin, Search, X,
- Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock} from "lucide-react";
+  Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock
+} from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
 
@@ -46,8 +47,8 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
 
   return (
     <div style={h.bar}>
-      <div style={{ ...h.brand, cursor: 'pointer' }} onClick={(e) => { 
-        e.preventDefault(); 
+      <div style={{ ...h.brand, cursor: 'pointer' }} onClick={(e) => {
+        e.preventDefault();
         if (window.location.pathname === "/") {
           onAction('home');
         } else {
@@ -59,8 +60,8 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
       </div>
 
       <div style={h.nav}>
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => {
             if (window.location.pathname === "/") {
               onAction('home');
@@ -72,17 +73,17 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
         >
           <HomeIcon size={18} /><span style={h.navLabel}>Accueil</span>
         </button>
-        
-        <button 
-          type="button" 
+
+        <button
+          type="button"
           onClick={() => onAction('companies')}
           style={{ ...h.navBtn, color: activeTab === 'companies' ? "#1E3A5F" : "#64748b", borderBottom: activeTab === 'companies' ? "2px solid #1E3A5F" : "none" }}
         >
           <Building2 size={18} /><span style={h.navLabel}>Sociétés</span>
         </button>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => onAction('professionals')}
           style={{ ...h.navBtn, color: activeTab === 'professionals' ? "#1E3A5F" : "#64748b", borderBottom: activeTab === 'professionals' ? "2px solid #1E3A5F" : "none" }}
         >
@@ -150,7 +151,7 @@ const GlobalSearchBar = ({ onFilterChange, onAction }) => {
   const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region, pollingInterval: 30000 });
 
   const { data: categories = [] } = useGetCategoriesQuery(undefined, { pollingInterval: 30000 });
- 
+
   const handleSearch = () => {
     setIsSearching(true);
     const filters = {
@@ -264,32 +265,32 @@ const GlobalSearchBar = ({ onFilterChange, onAction }) => {
 
       <div style={sr.showcaseGrid}>
         {/* CARTE 1: CHERCHER EXPERT */}
-        <div className="showcase-card" style={{...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1521791136064-7986c2959210?auto=format&fit=crop&w=800&q=80")'}} onClick={() => onAction('professionals')}>
+        <div className="showcase-card" style={{ ...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1521791136064-7986c2959210?auto=format&fit=crop&w=800&q=80")' }} onClick={() => onAction('professionals')}>
           <div style={sr.cardContent}>
-            <span style={{...sr.cardTag, background: '#10b981'}}>Experts</span>
+            <span style={{ ...sr.cardTag, background: '#10b981' }}>Experts</span>
             <h3>Trouver un Expert</h3>
             <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Besoin d'un conseil ? Trouvez le professionnel indépendant idéal pour vos projets.</p>
-            <button style={{...sr.cardBtn, background: '#10b981'}} onClick={(e) => { e.stopPropagation(); onAction('professionals'); }}>Chercher un expert</button>
+            <button style={{ ...sr.cardBtn, background: '#10b981' }} onClick={(e) => { e.stopPropagation(); onAction('professionals'); }}>Chercher un expert</button>
           </div>
         </div>
 
         {/* CARTE 2: CHERCHER SOCIÉTÉ */}
-        <div className="showcase-card" style={{...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80")'}} onClick={() => onAction('companies')}>
+        <div className="showcase-card" style={{ ...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80")' }} onClick={() => onAction('companies')}>
           <div style={sr.cardContent}>
-            <span style={{...sr.cardTag, background: '#f59e0b'}}>Sociétés</span>
+            <span style={{ ...sr.cardTag, background: '#f59e0b' }}>Sociétés</span>
             <h3>Chercher une Société</h3>
             <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Découvrez les entreprises locales, explorez leurs produits et suivez leurs actualités.</p>
-            <button style={{...sr.cardBtn, background: '#f59e0b'}} onClick={(e) => { e.stopPropagation(); onAction('companies'); }}>Voir les sociétés</button>
+            <button style={{ ...sr.cardBtn, background: '#f59e0b' }} onClick={(e) => { e.stopPropagation(); onAction('companies'); }}>Voir les sociétés</button>
           </div>
         </div>
 
         {/* CARTE 3: DEVENIR PRESTATAIRE */}
-        <div className="showcase-card" style={{...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80")'}} onClick={() => onAction('join')}>
+        <div className="showcase-card" style={{ ...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80")' }} onClick={() => onAction('join')}>
           <div style={sr.cardContent}>
-            <span style={{...sr.cardTag, background: '#3b82f6'}}>Partenariat</span>
+            <span style={{ ...sr.cardTag, background: '#3b82f6' }}>Partenariat</span>
             <h3>Booster votre Activité</h3>
             <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Vous êtes un pro ? Rejoignez ProFinder pour trouver de nouveaux clients dès aujourd'hui.</p>
-            <button style={{...sr.cardBtn, background: '#3b82f6'}} onClick={(e) => { e.stopPropagation(); onAction('join'); }}>Devenir partenaire</button>
+            <button style={{ ...sr.cardBtn, background: '#3b82f6' }} onClick={(e) => { e.stopPropagation(); onAction('join'); }}>Devenir partenaire</button>
           </div>
         </div>
       </div>
@@ -327,7 +328,7 @@ const SuggestedCompanies = () => {
         {suggestions.map((comp) => (
           <div key={comp._id} style={sg.item}>
             <div style={sg.logoWrap} onClick={() => navigate(`/user/company/${comp._id}`)}>
-              {comp.logoUrl 
+              {comp.logoUrl
                 ? <img src={toImageUrl(comp.logoUrl)} alt="" style={sg.logo} />
                 : <div style={sg.logoFallback}><Building2 size={18} color="#94a3b8" /></div>
               }
@@ -339,7 +340,7 @@ const SuggestedCompanies = () => {
                 <span style={sg.city}><Users size={10} /> {comp.followersCount || 0} abonnés</span>
               </div>
             </div>
-            <button 
+            <button
               style={{ ...sg.followBtn, ...(followedIds.includes(comp._id) ? sg.followBtnActive : {}) }}
               onClick={() => handleFollow(comp._id)}
             >
@@ -388,9 +389,9 @@ const SuggestedProfessionals = () => {
         {suggestions.map((pro) => (
           <div key={pro._id} style={sg.item}>
             <div style={sg.logoWrap} onClick={() => navigate(`/user/professional/${pro._id}`)}>
-              {pro.photoProfessional 
-                ? <img src={toImageUrl(pro.photoProfessional)} alt="" style={{ ...sg.logo}} />
-                : <div style={{ ...sg.logoFallback}}><User size={18} color="#94a3b8" /></div>
+              {pro.photoProfessional
+                ? <img src={toImageUrl(pro.photoProfessional)} alt="" style={{ ...sg.logo }} />
+                : <div style={{ ...sg.logoFallback }}><User size={18} color="#94a3b8" /></div>
               }
             </div>
             <div style={sg.info}>
@@ -400,7 +401,7 @@ const SuggestedProfessionals = () => {
                 <span style={sg.city}><Users size={10} /> {pro.followersCount || 0} abonnés</span>
               </div>
             </div>
-            <button 
+            <button
               style={{ ...sg.followBtn, ...(followedIds.includes(pro._id) ? sg.followBtnActive : {}) }}
               onClick={() => handleFollow(pro._id)}
             >
@@ -501,7 +502,7 @@ const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
                   <button type="button" onClick={(e) => handleOrder(e, product)} style={orderBtnStyle}>Commander</button>
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#64748b' }}>
-                  @{product.companyId?.companyName || 'Société'}
+                 @{product.companyId?.companyName || product.professionalId?.fullName || 'Prestataire'}
                 </p>
               </div>
             </div>
@@ -600,14 +601,14 @@ const ProductDetail = ({ product, onClose }) => {
             <div style={pd.sellerCard}>
               <div style={pd.sellerHeader}>
                 <div style={pd.sellerLogo}>
-                  {product.companyId?.logoUrl ? (
-                    <img src={toImageUrl(product.companyId.logoUrl)} alt="" style={pd.logo} />
+                  {(product.companyId?.logoUrl || product.professionalId?.photoProfessional) ? (
+                    <img src={toImageUrl(product.companyId?.logoUrl || product.professionalId?.photoProfessional)} alt="" style={pd.logo} />
                   ) : (
                     <Building2 size={24} color="#94a3b8" />
                   )}
                 </div>
                 <div>
-                  <h4 style={pd.sellerName}>{product.companyId?.companyName || 'Boutique'}</h4>
+                <h4 style={pd.sellerName}>{product.companyId?.companyName || product.professionalId?.fullName || 'Boutique'}</h4>
                   <div style={pd.sellerRating}>
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
@@ -618,8 +619,15 @@ const ProductDetail = ({ product, onClose }) => {
                   </div>
                 </div>
               </div>
-              <button type="button" style={pd.visitBtn} onClick={(e) => { e.preventDefault(); navigate(`/user/company/${product.companyId?._id}`); }}>
-                VISITER LA BOUTIQUE
+              <button type="button" style={pd.visitBtn} onClick={(e) => { 
+                e.preventDefault(); 
+                if (product.professionalId) {
+                  navigate(`/user/professional/${product.professionalId?._id || product.professionalId}`);
+                } else {
+                  navigate(`/user/company/${product.companyId?._id || product.companyId}`);
+                }
+              }}>
+                {product.professionalId ? "VOIR LE PROFIL" : "VISITER LA BOUTIQUE"}
               </button>
             </div>
 
@@ -688,7 +696,7 @@ const ServiceCarousel = ({ title, services, isLoading, onServiceClick }) => {
                   <button type="button" onClick={(e) => handleReserve(e, service)} style={orderBtnStyle}>Réserver</button>
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#64748b' }}>
-                  @{service.companyId?.companyName || 'Société'}
+                   @{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}
                 </p>
               </div>
             </div>
@@ -774,15 +782,14 @@ const ServiceDetail = ({ service, onClose }) => {
             <div style={pd.sellerCard}>
               <div style={pd.sellerHeader}>
                 <div style={pd.sellerLogo}>
-                  {service.companyId?.logoUrl ? (
-                    <img src={toImageUrl(service.companyId.logoUrl)} alt="" style={pd.logo} />
+                   {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
+                    <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
                   ) : (
                     <Building2 size={24} color="#94a3b8" />
                   )}
                 </div>
                 <div>
-                  <h4 style={pd.sellerName}>{service.companyId?.companyName || 'Boutique'}</h4>
-                  <div style={pd.sellerRating}>
+                  <h4 style={pd.sellerName}>{service.companyId?.companyName || service.professionalId?.fullName || 'Boutique'}</h4>                  <div style={pd.sellerRating}>
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
@@ -792,8 +799,15 @@ const ServiceDetail = ({ service, onClose }) => {
                   </div>
                 </div>
               </div>
-              <button type="button" style={pd.visitBtn} onClick={(e) => { e.preventDefault(); navigate(`/user/company/${service.companyId?._id}`); }}>
-                VISITER L'ENTREPRISE
+              <button type="button" style={pd.visitBtn} onClick={(e) => { 
+                e.preventDefault(); 
+                if (service.professionalId) {
+                  navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
+                } else {
+                  navigate(`/user/company/${service.companyId?._id || service.companyId}`);
+                }
+              }}>
+                {service.professionalId ? "VOIR LE PROFIL" : "VISITER L'ENTREPRISE"}
               </button>
             </div>
 
@@ -968,9 +982,9 @@ const CompanyFeed = ({ filters }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {companies.map((company) => (
-        <div 
-          key={company._id} 
-          style={c.listCard} 
+        <div
+          key={company._id}
+          style={c.listCard}
           onClick={() => navigate(`/user/company/${company._id}`)}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1014,7 +1028,7 @@ const CompanyFeed = ({ filters }) => {
               </div>
             </div>
             <div style={c.listActions}>
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); navigate(`/user/company/${company._id}`); }}
                 style={c.listBtn}
               >
@@ -1052,8 +1066,8 @@ const ProfessionalFeed = ({ filters }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {professionals.map((pro) => (
-        <div 
-          key={pro._id} 
+        <div
+          key={pro._id}
           style={c.listCard}
           onClick={() => navigate(`/user/professional/${pro._id}`)}
           onMouseEnter={(e) => {
@@ -1098,7 +1112,7 @@ const ProfessionalFeed = ({ filters }) => {
               </div>
             </div>
             <div style={c.listActions}>
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); navigate(`/user/professional/${pro._id}`); }}
                 style={{ ...c.listBtn, background: '#3b82f6', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)' }}
               >
@@ -1162,10 +1176,10 @@ const Home = () => {
 
   return (
     <div style={p.root}>
-      <Header 
-        user={user} 
-        onProfileClick={() => navigate("/profile")} 
-        onLogout={handleLogout} 
+      <Header
+        user={user}
+        onProfileClick={() => navigate("/profile")}
+        onLogout={handleLogout}
         onAction={handleAction}
         activeTab={isShowingResults ? searchTab : null}
       />
@@ -1203,7 +1217,7 @@ const Home = () => {
                     <Search size={18} color="#1E3A5F" />
                     <h2 style={p.feedTitle}>Résultats pour {searchTab === 'companies' ? 'Sociétés' : 'Professionnels'}</h2>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsShowingResults(false)}
                     style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', cursor: 'pointer' }}
                   >
@@ -1212,13 +1226,13 @@ const Home = () => {
                 </div>
 
                 <div style={r.tabToggle}>
-                  <button 
+                  <button
                     style={{ ...r.tabBtn, ...(searchTab === 'companies' ? r.tabBtnActive : {}) }}
                     onClick={() => setSearchTab('companies')}
                   >
                     Entreprises
                   </button>
-                  <button 
+                  <button
                     style={{ ...r.tabBtn, ...(searchTab === 'professionals' ? r.tabBtnActive : {}) }}
                     onClick={() => setSearchTab('professionals')}
                   >
@@ -1388,11 +1402,11 @@ const r = {
   ratingRow: { display: 'flex', alignItems: 'center', gap: 8 },
   stars: { display: 'flex', gap: 2 },
   cityText: { fontSize: 12, color: '#64748b', fontWeight: 500 },
-  tabToggle: { 
-    display: 'flex', 
-    background: '#f1f5f9', 
-    padding: '4px', 
-    borderRadius: '12px', 
+  tabToggle: {
+    display: 'flex',
+    background: '#f1f5f9',
+    padding: '4px',
+    borderRadius: '12px',
     marginBottom: '20px',
     width: 'fit-content'
   },
@@ -1415,26 +1429,26 @@ const r = {
 };
 
 const c = {
-  listCard: { 
-    background: '#fff', 
-    borderRadius: '20px', 
-    border: '1px solid #e2e8f0', 
-    overflow: 'hidden', 
+  listCard: {
+    background: '#fff',
+    borderRadius: '20px',
+    border: '1px solid #e2e8f0',
+    overflow: 'hidden',
     boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
     transition: 'transform 0.2s, box-shadow 0.2s',
     cursor: 'pointer'
   },
   listHeader: { display: 'flex', padding: '24px', gap: '24px', alignItems: 'center' },
-  listLogoWrap: { 
-    width: '100px', 
-    height: '100px', 
-    borderRadius: '18px', 
-    background: '#f8fafc', 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    flexShrink: 0, 
-    overflow: 'hidden', 
+  listLogoWrap: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '18px',
+    background: '#f8fafc',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    overflow: 'hidden',
     border: '1px solid #f1f5f9',
     boxShadow: '0 4px 10px rgba(0,0,0,0.02)'
   },
@@ -1445,26 +1459,26 @@ const c = {
   listMeta: { fontSize: '14px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 },
   listRating: { textAlign: 'right' },
   listStars: { display: 'flex', gap: 2, marginBottom: '6px', justifyContent: 'flex-end' },
-  listReviewCount: { 
-    fontSize: '12px', 
-    color: '#fbbf24', 
-    fontWeight: '800', 
-    background: '#fef3c7', 
-    padding: '4px 10px', 
+  listReviewCount: {
+    fontSize: '12px',
+    color: '#fbbf24',
+    fontWeight: '800',
+    background: '#fef3c7',
+    padding: '4px 10px',
     borderRadius: '12px',
     display: 'inline-block'
   },
   listActions: { paddingLeft: '24px', borderLeft: '1px solid #f1f5f9' },
-  listBtn: { 
-    display: 'inline-flex', 
-    alignItems: 'center', 
-    background: '#1E3A5F', 
-    color: '#fff', 
-    padding: '12px 24px', 
-    borderRadius: '14px', 
-    fontSize: '14px', 
-    fontWeight: '700', 
-    textDecoration: 'none', 
+  listBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    background: '#1E3A5F',
+    color: '#fff',
+    padding: '12px 24px',
+    borderRadius: '14px',
+    fontSize: '14px',
+    fontWeight: '700',
+    textDecoration: 'none',
     whiteSpace: 'nowrap',
     transition: 'all 0.2s',
     boxShadow: '0 4px 10px rgba(30, 58, 95, 0.15)'

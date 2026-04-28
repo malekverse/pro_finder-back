@@ -242,7 +242,12 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
                     <RefreshCw size={18} />
                   </button>
                 )}
-                {quote.status === 'accepted' && (
+                {quote.isPaid && (
+                  <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#166534', borderRadius: '8px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <CheckCircle2 size={12} /> PAYÉ
+                  </span>
+                )}
+                {quote.status === 'accepted' && quote.requiresContract && !quote.contractId && (
                   <button 
                     onClick={() => {
                         navigate("/professional/documents", { 

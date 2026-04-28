@@ -8,6 +8,8 @@ const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const payment_id = searchParams.get("payment_id");
 
+  console.log("💰 [PaymentSuccess] Rendered with payment_id:", payment_id);
+
   const { data, isLoading, isError, error } = useVerifyPaymentQuery(payment_id, {
     skip: !payment_id,
   });
@@ -23,6 +25,7 @@ const PaymentSuccess = () => {
   }, [isError, data, error]);
 
   const handleGoToPurchases = () => {
+    console.log("💰 [PaymentSuccess] Navigating to purchases...");
     navigate("/user/purchases", { replace: true });
   };
 

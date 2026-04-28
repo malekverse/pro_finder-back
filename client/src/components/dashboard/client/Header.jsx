@@ -127,6 +127,10 @@ const Header = ({
               <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/documents"); }}>
                 <FileText size={16} /> Mes documents
               </button>
+
+              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/invoices"); }}>
+                <CreditCard size={16} /> Mes factures
+              </button>
               
               <div style={h.dropDivider} />
               

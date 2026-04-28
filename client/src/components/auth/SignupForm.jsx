@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/features/auth/authSlice'; 
 import Cookies from 'js-cookie';
 import Autocomplete from "./Autocomplete";
+import { Eye, EyeOff } from 'lucide-react';
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -22,6 +23,8 @@ const SignupForm = () => {
   const [countries, setCountries] = useState([]);
   const [regions, setRegions] = useState([]);
   const [cities, setCities] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [userInputs, setUserInputs] = useState({
     fullName: '',
@@ -280,23 +283,33 @@ useEffect(() => {
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label>Mot de passe</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    value={userInputs.password}
-                    onChange={(e) => setUserInputs({ ...userInputs, password: e.target.value })}
-                  />
+                  <div className={styles.passwordWrapper}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      value={userInputs.password}
+                      onChange={(e) => setUserInputs({ ...userInputs, password: e.target.value })}
+                    />
+                    <button type="button" className={styles.eyeButton} onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label>Confirmation</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    value={userInputs.confirmPassword}
-                    onChange={(e) => setUserInputs({ ...userInputs, confirmPassword: e.target.value })}
-                  />
+                  <div className={styles.passwordWrapper}>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      value={userInputs.confirmPassword}
+                      onChange={(e) => setUserInputs({ ...userInputs, confirmPassword: e.target.value })}
+                    />
+                    <button type="button" className={styles.eyeButton} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className={styles.inputGroup}>
@@ -373,23 +386,33 @@ useEffect(() => {
                     <div style={{ display: 'flex', gap: '20px' }}>
                       <div className={styles.inputGroup} style={{ flex: 1 }}>
                         <label>Mot de passe</label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          required
-                          value={companyInputs.password}
-                          onChange={(e) => setCompanyInputs({ ...companyInputs, password: e.target.value })}
-                        />
+                        <div className={styles.passwordWrapper}>
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            required
+                            value={companyInputs.password}
+                            onChange={(e) => setCompanyInputs({ ...companyInputs, password: e.target.value })}
+                          />
+                          <button type="button" className={styles.eyeButton} onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                       <div className={styles.inputGroup} style={{ flex: 1 }}>
                         <label>Confirmation</label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          required
-                          value={companyInputs.confirm_password}
-                          onChange={(e) => setCompanyInputs({ ...companyInputs, confirm_password: e.target.value })}
-                        />
+                        <div className={styles.passwordWrapper}>
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            required
+                            value={companyInputs.confirm_password}
+                            onChange={(e) => setCompanyInputs({ ...companyInputs, confirm_password: e.target.value })}
+                          />
+                          <button type="button" className={styles.eyeButton} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <div className={styles.inputGroup}>
@@ -580,23 +603,33 @@ useEffect(() => {
                     <div style={{ display: 'flex', gap: '20px' }}>
                       <div className={styles.inputGroup} style={{ flex: 1 }}>
                         <label>Mot de passe</label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          required
-                          value={professionalInputs.password}
-                          onChange={(e) => setProfessionalInputs({ ...professionalInputs, password: e.target.value })}
-                        />
+                        <div className={styles.passwordWrapper}>
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            required
+                            value={professionalInputs.password}
+                            onChange={(e) => setProfessionalInputs({ ...professionalInputs, password: e.target.value })}
+                          />
+                          <button type="button" className={styles.eyeButton} onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                       <div className={styles.inputGroup} style={{ flex: 1 }}>
                         <label>Confirmation</label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          required
-                          value={professionalInputs.confirm_password}
-                          onChange={(e) => setProfessionalInputs({ ...professionalInputs, confirm_password: e.target.value })}
-                        />
+                        <div className={styles.passwordWrapper}>
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            required
+                            value={professionalInputs.confirm_password}
+                            onChange={(e) => setProfessionalInputs({ ...professionalInputs, confirm_password: e.target.value })}
+                          />
+                          <button type="button" className={styles.eyeButton} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <div className={styles.inputGroup}>

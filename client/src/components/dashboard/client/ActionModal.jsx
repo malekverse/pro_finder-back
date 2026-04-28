@@ -1,17 +1,49 @@
 import React, { useState } from "react";
-import { X, Minus, Plus, Loader } from "lucide-react";
+import { X, Minus, Plus, Loader, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { toImageUrl } from "../../../utils/imageUtils";
+import CalendarPicker from "./CalendarPicker";
+import TimeSlotPicker from "./TimeSlotPicker";
+import axios from "axios";
+import { useEffect } from "react";
 
-const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
-  const [quantity, setQuantity] = useState(1);
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [note, setNote] = useState("");
+const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user, prefilledData }) => {
+  const [quantity, setQuantity] = useState(prefilledData?.quantity || 1);
+  const [date, setDate] = useState(prefilledData?.bookingDate || "");
+  const [time, setTime] = useState(prefilledData?.bookingSlot || "");
+  const [note, setNote] = useState(prefilledData?.notes || "");
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [address, setAddress] = useState({
     street: "",
     city: "",
     zipCode: ""
   });
+
+  useEffect(() => {
+    if (type === 'service' && date && !prefilledData) {
+      fetchSlots(date);
+    }
+  }, [date]);
+
+  const fetchSlots = async (selectedDate) => {
+    setIsLoadingSlots(true);
+    try {
+      const d = new Date(selectedDate);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${day}`;
+      
+      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}reservations/available-slots?serviceId=${item._id}&date=${dateStr}`, {
+        withCredentials: true
+      });
+      setAvailableSlots(res.data);
+    } catch (error) {
+      console.error("Error fetching slots:", error);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
 
   if (!item) return null;
 
@@ -107,15 +139,39 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user }) => {
               </div>
             </>
           ) : (
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={m.label}>Date souhaitée</label>
-                <input type="date" style={m.input} value={date} onChange={(e) => setDate(e.target.value)} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={m.label}>Heure</label>
-                <input type="time" style={m.input} value={time} onChange={(e) => setTime(e.target.value)} />
-              </div>
+            <div style={{ marginBottom: '20px' }}>
+              {prefilledData ? (
+                <div style={{ background: '#eff6ff', padding: '15px', borderRadius: '12px', border: '1px solid #bfdbfe', marginBottom: '20px' }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#1e40af', fontWeight: '700' }}>Rendez-vous sélectionné :</p>
+                  <div style={{ display: 'flex', gap: '20px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: '800', color: '#1e3a8a' }}>
+                      <CalendarIcon size={16} /> {new Date(date).toLocaleDateString()}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: '800', color: '#1e3a8a' }}>
+                      <Clock size={16} /> {time}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label style={m.label}>1. Choisissez une date</label>
+                    <CalendarPicker 
+                      selectedDate={date ? new Date(date) : null} 
+                      onDateSelect={(d) => { setDate(d); setTime(""); }} 
+                    />
+                  </div>
+                  <div>
+                    <label style={m.label}>2. Choisissez une heure</label>
+                    <TimeSlotPicker 
+                      slots={availableSlots} 
+                      selectedSlot={time} 
+                      onSlotSelect={setTime}
+                      isLoading={isLoadingSlots}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

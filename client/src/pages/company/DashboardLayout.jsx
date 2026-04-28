@@ -40,6 +40,7 @@ const DashboardLayout = () => {
   const mainMenu = [
     { path: "/company/stats", label: "Dashboard", icon: <BarChart3 size={20} />, show: true },
     { path: "/company/documents", label: "Documents", icon: <FileText size={20} />, show: true },
+    { path: "/company/invoices", label: "Factures", icon: <FileSpreadsheet size={20} />, show: true },
     { path: "/company/commandes", label: "Commandes & Réservations", icon: <ShoppingBag size={20} />, show: true },
     { path: "/company/reviews", label: "Avis clients", icon: <Star size={20} />, show: true },
     { path: "/company/posts", label: "Publications", icon: <LayoutDashboard size={20} />, show: hasPermission("create_post") },

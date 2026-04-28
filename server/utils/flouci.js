@@ -10,13 +10,13 @@ const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => 
   const paymentMode = (process.env.PAYMENT_MODE || '').trim().replace(/['"]/g, '').toLowerCase();
   
   if (paymentMode === 'test') {
-    console.log("💳 [FLOUCI] Mode Test activé - Redirection vers Checkout Simulation");
+    console.log("💳 [FLOUCI] Mode Test activé - Redirection Directe vers Success");
     const mockPaymentId = `TEST_PAY_${Math.random().toString(36).substring(7).toUpperCase()}`;
-    // On redirige vers notre page de checkout simulée sur le frontend
+    // On redirige directement vers l'URL de succès pour bypasser l'étape de simulation
     return {
       result: {
         payment_id: mockPaymentId,
-        link: `${process.env.CLIENT_URL}/payment/checkout?payment_id=${mockPaymentId}&amount=${amount}&success_url=${encodeURIComponent(successUrl)}`,
+        link: `${successUrl}?payment_id=${mockPaymentId}`,
       }
     };
   }

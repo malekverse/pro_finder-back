@@ -8,6 +8,7 @@ const Company = require("../models/company");
 const Professional = require("../models/Professional");
 const flouci = require("../utils/flouci");
 const { v4: uuidv4 } = require("uuid");
+const invoiceController = require("./invoiceController");
 
 // Initialize a Flouci payment
 exports.initializePayment = async (req, res) => {
@@ -39,7 +40,7 @@ exports.initializePayment = async (req, res) => {
     } else if (orderId) {
       targetEntity = await Order.findById(orderId).populate("items.productId");
       if (!targetEntity) return res.status(404).json({ message: "Commande non trouvée" });
-      
+
       // Recalculer le prix total à partir des produits en DB
       let recalculatedTotal = 0;
       for (const item of targetEntity.items) {
@@ -64,7 +65,7 @@ exports.initializePayment = async (req, res) => {
     }
 
     const developerTrackingId = uuidv4();
-    
+
     // Call Flouci to generate payment with RECALCULATED amount
     const flouciResponse = await flouci.initPayment(
       finalAmount,
@@ -111,7 +112,7 @@ exports.verifyPayment = async (req, res) => {
     }
 
     const verificationData = await flouci.verifyPayment(payment_id);
-    
+
     // Find our payment record
     const payment = await Payment.findOne({ flouciPaymentId: payment_id });
     if (!payment) {
@@ -121,22 +122,35 @@ exports.verifyPayment = async (req, res) => {
     if (verificationData.result.status === "SUCCESS") {
       // Double vérification du montant (optionnel mais recommandé)
       // On peut comparer verificationData.result.amount avec payment.amount * 1000
-      
+
       payment.status = "success";
       await payment.save();
+
+      // Generate Invoice automatically
+      try {
+        await invoiceController.createInvoiceFromPayment(payment);
+      } catch (invErr) {
+        console.error("❌ [verifyPayment] Invoice generation failed:", invErr);
+      }
 
       // Update related entity status if needed
       if (payment.reservationId) {
         await Reservation.findByIdAndUpdate(payment.reservationId, { status: "paid" });
         console.log(`✅ [verifyPayment] Reservation ${payment.reservationId} status updated to paid`);
       }
-      
+
       if (payment.quoteId) {
         const quote = await Quote.findById(payment.quoteId);
         if (quote) {
           quote.status = "accepted";
           await quote.save();
           console.log(`✅ [verifyPayment] Quote ${payment.quoteId} status updated to accepted`);
+
+          // Sync with Reservation (Calendar)
+          if (quote.reservationId) {
+            await Reservation.findByIdAndUpdate(quote.reservationId, { status: "paid" });
+            console.log(`✅ [verifyPayment] Linked reservation ${quote.reservationId} updated to paid`);
+          }
 
           // GENERATE AUTOMATIC CONTRACT IF REQUIRED (similar to quoteController.js)
           if (quote.requiresContract) {
@@ -145,9 +159,9 @@ exports.verifyPayment = async (req, res) => {
               if (!existingContract) {
                 const totalCount = await Contract.countDocuments({});
                 const contractNumber = `CTR-${new Date().getFullYear()}-${(totalCount + 1).toString().padStart(4, '0')}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-                
+
                 const itemsList = quote.items.map(item => `- ${item.description} (x${item.quantity}) : ${item.total} TND`).join('\n');
-                
+
                 const newContract = new Contract({
                   contractNumber,
                   companyId: quote.companyId,

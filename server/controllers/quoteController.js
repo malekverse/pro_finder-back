@@ -128,7 +128,22 @@ const getCompanyQuotes = async (req, res) => {
       .populate("userId", "fullName email")
       .sort({ createdAt: -1 });
     
-    res.json(quotes);
+    // Add contract and payment info
+    const Contract = require("../models/Contract");
+    const Payment = require("../models/Payment");
+    
+    const enrichedQuotes = await Promise.all(quotes.map(async (q) => {
+      const contract = await Contract.findOne({ quoteId: q._id }).select("_id status");
+      const payment = await Payment.findOne({ quoteId: q._id, status: "success" });
+      return {
+        ...q.toObject(),
+        contractId: contract?._id,
+        contractStatus: contract?.status,
+        isPaid: !!payment
+      };
+    }));
+    
+    res.json(enrichedQuotes);
   } catch (error) {
     console.error("[getCompanyQuotes] Error:", error);
     res.status(500).json({ message: "Erreur lors de la récupération des devis" });
@@ -144,28 +159,26 @@ const getUserQuotes = async (req, res) => {
     const quotes = await Quote.find({ userId, status: { $ne: "draft" } })
       .populate("companyId", "companyName logoUrl email phone")
       .populate("professionalId", "fullName photoProfessional email phone")
-      .sort({ createdAt: -1 })
-      .lean();
-    
-    // Trouver les contrats liés à ces devis
-    const quoteIds = quotes.map(q => q._id);
-    const contracts = await Contract.find({ quoteId: { $in: quoteIds } }).select("_id quoteId contractNumber").lean();
+      .sort({ createdAt: -1 });
 
-    // Attacher l'info du contrat à chaque devis
-    const quotesWithContracts = quotes.map(quote => {
-      const contract = contracts.find(c => c.quoteId?.toString() === quote._id.toString());
+    const Contract = require("../models/Contract");
+    const Payment = require("../models/Payment");
+
+    const enrichedQuotes = await Promise.all(quotes.map(async (q) => {
+      const contract = await Contract.findOne({ quoteId: q._id }).select("_id status");
+      const payment = await Payment.findOne({ quoteId: q._id, status: "success" });
       return {
-        ...quote,
-        contractId: contract ? contract._id : null,
-        contractNumber: contract ? contract.contractNumber : null
+        ...q.toObject(),
+        contractId: contract?._id,
+        contractStatus: contract?.status,
+        isPaid: !!payment
       };
-    });
-    
-    console.log(`[getUserQuotes] Found ${quotesWithContracts.length} quotes for user`);
-    res.json(quotesWithContracts);
+    }));
+
+    res.json(enrichedQuotes);
   } catch (error) {
     console.error("[getUserQuotes] Error:", error);
-    res.status(500).json({ message: "Erreur lors de la récupération de vos devis" });
+    res.status(500).json({ message: "Erreur lors de la récupération des devis" });
   }
 };
 

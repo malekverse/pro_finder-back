@@ -49,7 +49,7 @@ const getCompanyServices = async (req, res) => {
     }).sort({ createdAt: -1 });
     res.json(services);
   } catch (err) {
-      
+    console.error("[getCompanyServices]", err);
     res.status(500).json({ message: "Erreur lors de la récupération des services" });
   }
 };
@@ -88,7 +88,7 @@ const updateService = async (req, res) => {
     await service.save();
     res.json(service);
   } catch (err) {
-
+    console.error("[updateService]", err);
     res.status(500).json({ message: "Erreur lors de la mise à jour du service" });
   }
 };
@@ -118,6 +118,7 @@ const deleteService = async (req, res) => {
 
     res.json({ message: "Service supprimé avec succès" });
   } catch (err) {
+    console.error("[deleteService]", err);
     res.status(500).json({ message: "Erreur lors de la suppression du service" });
   }
 };
@@ -131,6 +132,7 @@ const getAllServices = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(services);
   } catch (err) {
+    console.error("[getAllServices]", err);
     res.status(500).json({ message: "Erreur lors de la récupération des services" });
   }
 };
@@ -158,6 +160,7 @@ const getFollowedServices = async (req, res) => {
 
     res.json(services);
   } catch (err) {
+    console.error("[getFollowedServices]", err);
     res.status(500).json({ message: "Erreur lors de la récupération des services suivis" });
   }
 };

@@ -152,61 +152,87 @@ const Commandes = () => {
               <p>Aucune commande pour le moment.</p>
             </div>
           ) : (
-            <div className={styles.grid}>
-              {orders.map((order) => (
-                <div key={order._id} className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <div className={styles.orderId}>Commande #{order._id.slice(-6).toUpperCase()}</div>
-                    {getStatusBadge(order.status)}
-                  </div>
-                  
-                  <div className={styles.cardBody}>
-                    <div className={styles.userSection}>
-                      <User size={16} />
-                      <div>
-                        <div className={styles.userName}>{order.userId?.fullName}</div>
-                        <div className={styles.userMeta}>{order.userId?.email}</div>
-                      </div>
-                    </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+              {[
+                { title: "Nouvelles Commandes", status: ["pending", "paid"], icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
+                { title: "En cours de traitement", status: ["confirmed", "shipped"], icon: <Truck size={20} color="#3b82f6" />, bg: "#eff6ff" },
+                { title: "Terminées / Annulées", status: ["delivered", "cancelled"], icon: <Package size={20} color="#94a3b8" />, bg: "#f8fafc" }
+              ].map((section, idx) => {
+                const filtered = orders.filter(o => section.status.includes(o.status));
+                if (filtered.length === 0) return null;
 
-                    <div className={styles.itemsList}>
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className={styles.itemRow}>
-                          <span>{item.quantity}x {item.productId?.name}</span>
-                          <span>{item.price * item.quantity} €</span>
+                return (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px 20px', background: section.bg, borderRadius: '12px', borderLeft: `5px solid ${section.icon.props.color}` }}>
+                      {section.icon}
+                      <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{section.title} ({filtered.length})</h2>
+                    </div>
+                    <div className={styles.grid}>
+                      {filtered.map((order) => (
+                        <div key={order._id} className={styles.card} style={{ border: ["pending", "paid"].includes(order.status) ? '2px solid #f59e0b' : '1px solid #e2e8f0' }}>
+                          <div className={styles.cardHeader}>
+                            <div className={styles.orderId}>Commande #{order._id.slice(-6).toUpperCase()}</div>
+                            {getStatusBadge(order.status)}
+                          </div>
+                          <div className={styles.cardBody}>
+                            <div className={styles.userSection}>
+                              <User size={16} />
+                              <div>
+                                <div className={styles.userName}>{order.userId?.fullName}</div>
+                                <div className={styles.userMeta}>{order.userId?.email}</div>
+                              </div>
+                            </div>
+                            <div className={styles.itemsList}>
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className={styles.itemRow}>
+                                  <span>{item.quantity}x {item.productId?.name}</span>
+                                  <span>{item.price * item.quantity} €</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className={styles.addressSection}>
+                              <MapPin size={16} />
+                              <div className={styles.address}>
+                                {order.shippingAddress.street}, {order.shippingAddress.city} {order.shippingAddress.zipCode}
+                              </div>
+                            </div>
+                            <div className={styles.totalRow}>
+                              <span>Total :</span>
+                              <span className={styles.totalPrice}>{order.totalPrice} €</span>
+                            </div>
+                          </div>
+                          <div className={styles.cardFooter}>
+                            {order.status === "pending" && (
+                              <>
+                                <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm}>Confirmer</button>
+                                <button onClick={() => handleUpdateOrder(order._id, "cancelled")} className={styles.btnCancel}>Refuser</button>
+                              </>
+                            )}
+                            {order.status === "paid" && (
+                              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                                <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm} style={{ flex: 1 }}>Confirmer & Préparer</button>
+                                <button 
+                                  onClick={() => navigate("/company/invoices", { state: { orderId: order._id } })} 
+                                  className={styles.btnDeliver}
+                                  style={{ flex: 1, backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}
+                                >
+                                  <FileSpreadsheet size={16} /> Facture
+                                </button>
+                              </div>
+                            )}
+                            {order.status === "confirmed" && (
+                              <button onClick={() => handleUpdateOrder(order._id, "shipped")} className={styles.btnShip}><Truck size={16} /> Marquer comme expédié</button>
+                            )}
+                            {order.status === "shipped" && (
+                              <button onClick={() => handleUpdateOrder(order._id, "delivered")} className={styles.btnDeliver}>Marquer comme livré</button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
-
-                    <div className={styles.addressSection}>
-                      <MapPin size={16} />
-                      <div className={styles.address}>
-                        {order.shippingAddress.street}, {order.shippingAddress.city} {order.shippingAddress.zipCode}
-                      </div>
-                    </div>
-
-                    <div className={styles.totalRow}>
-                      <span>Total :</span>
-                      <span className={styles.totalPrice}>{order.totalPrice} €</span>
-                    </div>
                   </div>
-
-                  <div className={styles.cardFooter}>
-                    {order.status === "pending" && (
-                      <>
-                        <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm}>Confirmer</button>
-                        <button onClick={() => handleUpdateOrder(order._id, "cancelled")} className={styles.btnCancel}>Refuser</button>
-                      </>
-                    )}
-                    {order.status === "confirmed" && (
-                      <button onClick={() => handleUpdateOrder(order._id, "shipped")} className={styles.btnShip}><Truck size={16} /> Marquer comme expédié</button>
-                    )}
-                    {order.status === "shipped" && (
-                      <button onClick={() => handleUpdateOrder(order._id, "delivered")} className={styles.btnDeliver}>Marquer comme livré</button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -220,119 +246,142 @@ const Commandes = () => {
               <p>Aucune réservation pour le moment.</p>
             </div>
           ) : (
-            <div className={styles.grid}>
-              {reservations.map((res) => (
-                <div key={res._id} className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <div className={styles.orderId}>Réservation #{res._id.slice(-6).toUpperCase()}</div>
-                    {getStatusBadge(res.status)}
-                  </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+               {[
+                { title: "À confirmer", status: "pending", icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
+                { title: "Confirmées / À venir", status: "confirmed", icon: <CheckCircle size={20} color="#10b981" />, bg: "#f0fdf4" },
+                { title: "Historique", status: ["completed", "cancelled"], icon: <Calendar size={20} color="#94a3b8" />, bg: "#f8fafc" }
+              ].map((section, idx) => {
+                const filtered = reservations.filter(r => Array.isArray(section.status) ? section.status.includes(r.status) : r.status === section.status);
+                if (filtered.length === 0) return null;
 
-                  <div className={styles.cardBody}>
-                    <div className={styles.userSection}>
-                      <User size={16} />
-                      <div>
-                        <div className={styles.userName}>{res.userId?.fullName}</div>
-                        <div className={styles.userMeta}>{res.userId?.phone}</div>
-                      </div>
+                return (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px 20px', background: section.bg, borderRadius: '12px', borderLeft: `5px solid ${section.icon.props.color || section.icon.props.fill}` }}>
+                      {section.icon}
+                      <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{section.title} ({filtered.length})</h2>
                     </div>
+                    <div className={styles.grid}>
+                      {filtered.map((res) => (
+                        <div key={res._id} className={styles.card} style={{ border: res.status === "pending" ? '2px solid #f59e0b' : '1px solid #e2e8f0' }}>
+                          <div className={styles.cardHeader}>
+                            <div className={styles.orderId}>Réservation #{res._id.slice(-6).toUpperCase()}</div>
+                            {getStatusBadge(res.status)}
+                          </div>
+                          <div className={styles.cardBody}>
+                            <div className={styles.userSection}>
+                              <User size={16} />
+                              <div>
+                                <div className={styles.userName}>{res.userId?.fullName}</div>
+                                <div className={styles.userMeta}>{res.userId?.phone}</div>
+                              </div>
+                            </div>
+                            <div className={styles.serviceBox}>
+                              <div className={styles.serviceName}>{res.serviceId?.name}</div>
+                              <div className={styles.serviceMeta}>
+                                <Clock size={14} /> {res.serviceId?.duration} min | {res.serviceId?.price} €
+                              </div>
+                            </div>
+                            <div className={styles.dateTimeSection}>
+                              <div className={styles.dateBadge}>
+                                <Calendar size={14} /> {new Date(res.date).toLocaleDateString()}
+                              </div>
+                              <div className={styles.timeBadge}>
+                                <Clock size={14} /> {res.timeSlot}
+                              </div>
+                            </div>
+                            {res.notes && (
+                              <div className={styles.notesBox}>
+                                <AlertCircle size={14} />
+                                <p>{res.notes}</p>
+                              </div>
+                            )}
 
-                    <div className={styles.serviceBox}>
-                      <div className={styles.serviceName}>{res.serviceId?.name}</div>
-                      <div className={styles.serviceMeta}>
-                        <Clock size={14} /> {res.serviceId?.duration} min | {res.serviceId?.price} €
-                      </div>
-                    </div>
-
-                    <div className={styles.dateTimeSection}>
-                      <div className={styles.dateBadge}>
-                        <Calendar size={14} /> {new Date(res.date).toLocaleDateString()}
-                      </div>
-                      <div className={styles.timeBadge}>
-                        <Clock size={14} /> {res.timeSlot}
-                      </div>
-                    </div>
-
-                    {res.notes && (
-                      <div className={styles.notesBox}>
-                        <AlertCircle size={14} />
-                        <p>{res.notes}</p>
-                      </div>
-                    )}
-
-                    {res.quote && (
-                      <div 
-                        onClick={() => navigate("/company/documents", { state: { tab: "quotes" } })}
-                        style={{
-                          marginTop: '15px',
-                          padding: '12px',
-                          backgroundColor: res.quote.status === 'accepted' ? '#dcfce7' : res.quote.status === 'rejected' ? '#fee2e2' : '#eff6ff',
-                          borderRadius: '12px',
-                          border: `1px solid ${res.quote.status === 'accepted' ? '#86efac' : res.quote.status === 'rejected' ? '#fecaca' : '#bfdbfe'}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#24416b',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
-                        }}>
-                          <FileSpreadsheet size={18} />
+                            {res.quote && (
+                              <div 
+                                onClick={() => navigate("/company/documents", { state: { tab: "quotes" } })}
+                                style={{
+                                  marginTop: '15px',
+                                  padding: '12px',
+                                  backgroundColor: res.quote.status === 'accepted' ? '#dcfce7' : res.quote.status === 'rejected' ? '#fee2e2' : '#eff6ff',
+                                  borderRadius: '12px',
+                                  border: `1px solid ${res.quote.status === 'accepted' ? '#86efac' : res.quote.status === 'rejected' ? '#fecaca' : '#bfdbfe'}`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                              >
+                                <div style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  backgroundColor: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#24416b',
+                                  borderRadius: '8px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'white'
+                                }}>
+                                  <FileSpreadsheet size={18} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ 
+                                    fontSize: '13px', 
+                                    fontWeight: '700', 
+                                    color: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#1e3a8a' 
+                                  }}>
+                                    Devis {res.quote.status === 'accepted' ? 'Accepté' : res.quote.status === 'rejected' ? 'Refusé' : 'Envoyé'}
+                                  </div>
+                                  <div style={{ 
+                                    fontSize: '11px', 
+                                    color: res.quote.status === 'accepted' ? '#15803d' : res.quote.status === 'rejected' ? '#b91c1c' : '#1e40af' 
+                                  }}>
+                                    N° {res.quote.quoteNumber} • {res.quote.totalAmount.toFixed(2)} TND
+                                  </div>
+                                </div>
+                                {res.quote.status === 'accepted' && (
+                                  <div style={{ color: '#166534' }}>
+                                    <CheckCircle size={18} />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className={styles.cardFooter}>
+                            {res.status === "pending" && !res.quote && (
+                              <>
+                                <button 
+                                  onClick={() => handleCreateQuote(res)} 
+                                  className={styles.btnConfirm}
+                                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                >
+                                  <FileSpreadsheet size={16} /> Établir un Devis
+                                </button>
+                                <button onClick={() => handleUpdateReservation(res._id, "cancelled")} className={styles.btnCancel}>Décliner</button>
+                              </>
+                            )}
+                            {res.status === "confirmed" && (
+                              <button onClick={() => handleUpdateReservation(res._id, "completed")} className={styles.btnDeliver}>Terminé</button>
+                            )}
+                            {res.status === "paid" && (
+                              <button 
+                                onClick={() => navigate("/company/invoices", { state: { reservationId: res._id } })} 
+                                className={styles.btnDeliver}
+                                style={{ width: '100%', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}
+                              >
+                                <FileSpreadsheet size={16} /> Voir la Facture
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ 
-                            fontSize: '13px', 
-                            fontWeight: '700', 
-                            color: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#1e3a8a' 
-                          }}>
-                            Devis {res.quote.status === 'accepted' ? 'Accepté' : res.quote.status === 'rejected' ? 'Refusé' : 'Envoyé'}
-                          </div>
-                          <div style={{ 
-                            fontSize: '11px', 
-                            color: res.quote.status === 'accepted' ? '#15803d' : res.quote.status === 'rejected' ? '#b91c1c' : '#1e40af' 
-                          }}>
-                            N° {res.quote.quoteNumber} • {res.quote.totalAmount.toFixed(2)} TND
-                          </div>
-                        </div>
-                        {res.quote.status === 'accepted' && (
-                          <div style={{ color: '#166534' }}>
-                            <CheckCircle size={18} />
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
-
-                  <div className={styles.cardFooter}>
-                    {res.status === "pending" && !res.quote && (
-                      <>
-                        <button 
-                          onClick={() => handleCreateQuote(res)} 
-                          className={styles.btnConfirm}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                        >
-                          <FileSpreadsheet size={16} /> Établir un Devis
-                        </button>
-                        <button onClick={() => handleUpdateReservation(res._id, "cancelled")} className={styles.btnCancel}>Décliner</button>
-                      </>
-                    )}
-                    {res.status === "confirmed" && (
-                      <button onClick={() => handleUpdateReservation(res._id, "completed")} className={styles.btnDeliver}>Terminé</button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

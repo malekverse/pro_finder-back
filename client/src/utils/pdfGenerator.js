@@ -22,6 +22,12 @@ export const generateQuotePDF = (quote, company) => {
   doc.text(`N° Devis: ${quote.quoteNumber}`, 140, 40);
   doc.text(`Date: ${date}`, 140, 45);
   doc.text(`Valide jusqu'au: ${new Date(quote.validUntil).toLocaleDateString()}`, 140, 50);
+  
+  doc.setFontSize(9);
+  doc.setTextColor(quote.requiresContract ? 154 : 21, quote.requiresContract ? 52 : 128, quote.requiresContract ? 18 : 61); // Reddish for required, Greenish for not
+  doc.text(quote.requiresContract ? "* Signature d'un contrat obligatoire" : "* Aucun contrat requis", 140, 56);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
 
   // Client Info
   doc.setFontSize(12);
@@ -114,4 +120,75 @@ export const generateContractPDF = (contract, company) => {
   }
 
   doc.save(`${contract.contractNumber}.pdf`);
+};
+
+export const generateInvoicePDF = (invoice, provider) => {
+  const doc = new jsPDF();
+  const date = new Date(invoice.date).toLocaleDateString();
+
+  // Header
+  doc.setFontSize(22);
+  doc.setTextColor(36, 65, 107);
+  doc.text("FACTURE", 105, 20, { align: "center" });
+
+  // Status Stamp
+  doc.setDrawColor(16, 185, 129); // Success Green
+  doc.setLineWidth(0.5);
+  doc.roundedRect(150, 10, 40, 15, 2, 2);
+  doc.setTextColor(16, 185, 129);
+  doc.setFontSize(14);
+  doc.text("PAYÉE", 170, 20, { align: "center" });
+
+  // Provider Info
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(provider?.companyName || provider?.fullName || "Prestataire", 20, 40);
+  doc.setFontSize(10);
+  doc.text(provider?.email || "", 20, 45);
+  doc.text(provider?.phone || "", 20, 50);
+
+  // Invoice Info
+  doc.text(`N° Facture: ${invoice.invoiceNumber}`, 140, 40);
+  doc.text(`Date: ${date}`, 140, 45);
+  doc.text(`Paiement: Flouci`, 140, 50);
+
+  // Client Info
+  doc.setFontSize(12);
+  doc.text("FACTURÉ À:", 20, 70);
+  doc.setFontSize(10);
+  doc.text(invoice.userId?.fullName || "Client", 20, 75);
+  doc.text(invoice.userId?.email || "", 20, 80);
+
+  // Table
+  const tableHead = [["Description", "Qté", "Prix Unitaire", "Total"]];
+  const tableRows = (invoice.items?.length > 0 ? invoice.items : [
+    { description: "Service / Produit (Prestation globale)", quantity: 1, price: invoice.amount, total: invoice.amount }
+  ]).map(item => [
+    item.description,
+    item.quantity || 1,
+    `${(item.price || item.unitPrice || invoice.amount).toFixed(2)} TND`,
+    `${(item.total || invoice.amount).toFixed(2)} TND`
+  ]);
+
+  autoTable(doc, {
+    startY: 90,
+    head: tableHead,
+    body: tableRows,
+    headStyles: { fillColor: [36, 65, 107] },
+  });
+
+  // Totals
+  const finalY = doc.lastAutoTable.finalY + 15;
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(`MONTANT PAYÉ: ${invoice.amount.toFixed(2)} TND`, 140, finalY, { align: "right" });
+
+  // Footer
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 100, 100);
+  doc.text("Merci pour votre confiance !", 105, finalY + 40, { align: "center" });
+  doc.text("PRO FINDER - Plateforme de mise en relation professionnelle", 105, finalY + 45, { align: "center" });
+
+  doc.save(`${invoice.invoiceNumber}.pdf`);
 };

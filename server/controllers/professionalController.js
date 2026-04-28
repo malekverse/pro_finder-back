@@ -41,14 +41,14 @@ const getProfessionalProfile = async (req, res) => {
 const getProfessionalFollowers = async (req, res) => {
   try {
     const professionalId = req.user;
-    
-    const followers = await Follow.find({ 
+
+    const followers = await Follow.find({
       professional_id: professionalId,
       is_blocked: { $ne: true }
     })
       .populate("user_id", "fullName email avatarUrl phone")
       .sort({ createdAt: -1 });
-      
+
     res.json(followers);
   } catch (error) {
     console.error("Error fetching professional followers:", error);
@@ -112,13 +112,13 @@ const updateProfessionalProfile = async (req, res) => {
     const professional = await Professional.findById(professionalId);
     if (!professional) return res.status(404).json({ message: "Professional not found" });
 
-    professional.fullName    = fullName    || professional.fullName;
-    professional.phone       = phone       || professional.phone;
-    professional.website     = website     || professional.website;
+    professional.fullName = fullName || professional.fullName;
+    professional.phone = phone || professional.phone;
+    professional.website = website || professional.website;
     professional.description = description || professional.description;
-    professional.country     = country     || professional.country;
-    professional.region      = region      || professional.region;
-    professional.city        = city        || professional.city;
+    professional.country = country || professional.country;
+    professional.region = region || professional.region;
+    professional.city = city || professional.city;
 
     // Gestion photo
     const photoFile = req.files?.find(f => f.fieldname === "photoProfessional");
@@ -447,7 +447,7 @@ const createScrapedProfessional = async (req, res) => {
     // Mais pour le moment, le schéma impose Country/Region/City.
     // Je vais essayer de trouver des valeurs par défaut (ex: Tunisie) si possible, 
     // ou alors on doit assouplir le schéma (isGenerated: true).
-    
+
     const proData = {
       fullName,
       description: description ? `${description}\n\n[Catégorie suggérée : ${suggestedCategory}]` : `[Catégorie suggérée : ${suggestedCategory}]`,
@@ -482,7 +482,7 @@ const createScrapedProfessional = async (req, res) => {
     );
 
     const claimUrl = `${process.env.CLIENT_URL || 'http://localhost:3001'}/claim-pro?token=${claimToken}`;
-    
+
     const htmlEmail = `
       <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 25px; border-radius: 12px;">
         <h1 style="color: #1a2b47; font-size: 24px; text-align: center;">Félicitations !</h1>

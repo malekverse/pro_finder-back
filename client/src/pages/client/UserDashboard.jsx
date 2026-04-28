@@ -116,11 +116,21 @@ const UserDashboard = () => {
         }
       } else {
         const isPro = !!selectedItem.professionalId;
+        
+        // Formater la date en YYYY-MM-DD pour éviter les décalages de fuseau horaire
+        let formattedDate = data.date;
+        if (data.date instanceof Date) {
+          const y = data.date.getFullYear();
+          const m = String(data.date.getMonth() + 1).padStart(2, '0');
+          const d = String(data.date.getDate()).padStart(2, '0');
+          formattedDate = `${y}-${m}-${d}`;
+        }
+
         await createReservation({
           companyId: !isPro ? (selectedItem.companyId?._id || selectedItem.companyId) : null,
           professionalId: isPro ? (selectedItem.professionalId?._id || selectedItem.professionalId) : null,
           serviceId: selectedItem._id,
-          date: data.date,
+          date: formattedDate,
           timeSlot: data.time,
           notes: data.note
         }).unwrap();

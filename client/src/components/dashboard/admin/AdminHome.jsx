@@ -20,6 +20,7 @@ const AdminHome = () => {
     ...dashboardData?.stats,
   };
 
+
   // Données réelles pour la courbe (envoyées par le backend)
   const chartData = dashboardData?.growthData || [
     { name: 'Jan', users: 0, companies: 0 },
@@ -31,11 +32,12 @@ const AdminHome = () => {
   ];
 
   const cards = [
-    { title: "Utilisateurs", value: stats.users, icon: <Users size={22}/>, color: "#6366f1", bg: "#eef2ff", trend: "+8%", path: "/admin/users" },
-    { title: "Entreprises", value: stats.companies, icon: <Building2 size={22}/>, color: "#a855f7", bg: "#faf5ff", trend: stats.pendingCompanies > 0 ? `${stats.pendingCompanies} en attente` : "Stable", path: "/admin/moderation" },
-    { title: "Professionnels", value: stats.professionals || 0, icon: <Wrench size={22}/>, color: "#3b82f6", bg: "#eff6ff", trend: stats.pendingProfessionals > 0 ? `${stats.pendingProfessionals} en attente` : "OK", path: "/admin/moderation" },
+    { title: "Utilisateurs", value: stats.users, icon: <Users size={22}/>, color: "#6366f1", bg: "#eef2ff"},
+    { title: "Entreprises", value: stats.companies, icon: <Building2 size={22}/>, color: "#a855f7", bg: "#faf5ff", trend: stats.pendingCompanies > 0 ? `${stats.pendingCompanies} en attente` : "Stable"},
+    { title: "Professionnels", value: stats.professionals || 0, icon: <Wrench size={22}/>, color: "#3b82f6", bg: "#eff6ff", trend: stats.pendingProfessionals > 0 ? `${stats.pendingProfessionals} en attente` : "OK",},
     { title: "Signalements", value: stats.reports || 0, icon: <AlertCircle size={22}/>, color: "#ef4444", bg: "#fef2f2", trend: stats.reports > 0 ? "Urgent" : "OK", path: "/admin/moderation" },
   ];
+
 
   // Helper pour formater le temps écoulé (ex: "10 min", "2h")
   const formatTimeAgo = (dateString) => {
@@ -106,7 +108,7 @@ const AdminHome = () => {
                </span>
             </div>
           </div>
-          <div style={{ width: '100%', height: '320px', minWidth: 0 }}>
+            <div style={{ width: '100%', height: '320px', minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>

@@ -7,6 +7,8 @@ import { Link } from "react-router-dom";
 import styles from "../../../styles/dashboardAdmin.module.css";
 import { toImageUrl } from "../../../utils/imageUtils";
 
+const SERVER_URL = "http://localhost:5000";
+
 const AdminModeration = () => {
     const [activeTab, setActiveTab] = useState("companies"); // 'companies' or 'reports'
     
@@ -391,18 +393,23 @@ const AdminModeration = () => {
                                         <tr key={report._id} className={styles.tr}>
                                             <td className={styles.td}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    
                                                     {(report.company_id?.logoUrl || report.professional_id?.photoProfessional) ? (
                                                         <img 
+                                                         
                                                             src={toImageUrl(report.company_id?.logoUrl || report.professional_id?.photoProfessional)} 
                                                             alt="logo" 
+                                                       
                                                             style={{ width: '36px', height: '36px', borderRadius: report.professional_id ? '50%' : '8px', objectFit: 'cover' }} 
                                                         />
                                                     ) : (
                                                         <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                           
                                                             {report.professional_id ? <User size={18} color="#94a3b8" /> : <Building2 size={18} color="#94a3b8" />}
                                                         </div>
                                                     )}
                                                     <div>
+                                                        
                                                         <div style={{ fontWeight: '600', color: '#1e293b' }}>
                                                             {report.company_id?.companyName || report.professional_id?.fullName}
                                                         </div>
@@ -416,6 +423,7 @@ const AdminModeration = () => {
                                                 </div>
                                             </td>
                                             <td className={styles.td}>
+                                               
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     {report.reporter_id?.avatarUrl ? (
                                                         <img 
@@ -435,7 +443,7 @@ const AdminModeration = () => {
                                                 </div>
                                             </td>
                                             <td className={styles.td}>
-                                                <div style={{ 
+                                              <div style={{ 
                                                     maxWidth: '200px', 
                                                     overflow: 'hidden', 
                                                     textOverflow: 'ellipsis', 
@@ -517,7 +525,7 @@ const AdminModeration = () => {
                                                     <Link to={`/user/professional/${pro._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
                                                         {pro.photoProfessional ? (
                                                             <img 
-                                                                src={toImageUrl(pro.photoProfessional)} 
+                                                                src={toImageUrl(pro.photoProfessional)}
                                                                 alt="photo" 
                                                                 style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }} 
                                                             />
@@ -706,7 +714,7 @@ const AdminModeration = () => {
                                 <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '5px', fontWeight: '700' }}>RAISON DU SIGNALEMENT :</div>
                                 <div style={{ fontSize: '14px', color: '#1e293b', fontStyle: 'italic' }}>"{selectedReport?.reason}"</div>
                             </div>
-
+                            
                             <div style={{ marginBottom: '15px' }}>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '8px' }}>NOTES DE L'ADMINISTRATEUR (INTERNE)</label>
                                 <textarea 

@@ -250,6 +250,11 @@ exports.getCompanyReservations = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    console.log(`📊 [getCompanyReservations] Found ${reservations.length} reservations`);
+    if (reservations.length > 0) {
+      console.log(`   - First reservation status: ${reservations[0].status}, date: ${reservations[0].date}`);
+    }
+
     // Fetch quotes for these reservations
     const Quote = require("../models/Quote");
     const reservationIds = reservations.map(r => r._id);

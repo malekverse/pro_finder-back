@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, Check, Trash2, Clock, User, MessageCircle, Star, UserPlus, ShoppingBag } from "lucide-react";
 import { 
   useGetNotificationsQuery, 
@@ -26,6 +27,7 @@ const formatRelativeTime = (dateString) => {
 };
 
 const NotificationBell = ({ type }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   
@@ -59,11 +61,62 @@ const NotificationBell = ({ type }) => {
     }
   };
 
-  const handleNotificationClick = async (id) => {
+  const getNotificationRoute = (notif) => {
+    const role = type?.toLowerCase() || "user";
+    
+    switch (notif.type) {
+      case "order":
+      case "reservation":
+        if (role === "company") return "/company/commandes";
+        if (role === "professional") return "/professional/commandes";
+        return "/user/purchases";
+      
+      case "quote":
+      case "contract":
+        if (role === "company") return `/company/${notif.type}s`; // /company/quotes or /company/contracts
+        if (role === "professional") return "/professional/documents";
+        return "/user/documents";
+
+      case "review":
+        if (role === "company") return "/company/reviews";
+        if (role === "professional") return "/professional/reviews";
+        return "/user/profile";
+
+      case "follow":
+        if (role === "company") return "/company/profile";
+        if (role === "professional") return "/professional/profile";
+        return "/user/profile";
+
+      case "comment":
+        if (role === "company") return "/company/posts";
+        if (role === "professional") return "/professional/posts";
+        return "/";
+
+      case "stock_alert":
+        if (role === "company") return "/company/produits";
+        if (role === "professional") return "/professional/produits";
+        return "/";
+
+      default:
+        return role === "user" ? "/user/dashboard" : `/${role}/stats`;
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
     try {
-      await markAsRead(id).unwrap();
+      if (!notif.is_read) {
+        await markAsRead(notif._id).unwrap();
+      }
+      
+      const route = getNotificationRoute(notif);
+      setIsOpen(false);
+      navigate(route);
     } catch (err) {
-      console.error("Failed to mark as read:", err);
+      console.error("Failed to handle notification click:", err);
+      // Still navigate even if marking as read fails
+      const route = getNotificationRoute(notif);
+      setIsOpen(false);
+      navigate(route);
     }
   };
 
@@ -165,7 +218,7 @@ const NotificationBell = ({ type }) => {
               notifications.map((notif) => (
                 <div 
                   key={notif._id}
-                  onClick={() => handleNotificationClick(notif._id)}
+                  onClick={() => handleNotificationClick(notif)}
                   style={{
                     padding: "15px 20px",
                     borderBottom: "1px solid #f1f5f9",

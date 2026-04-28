@@ -164,54 +164,84 @@ const ProfessionalCommandes = () => {
               <p style={{color: '#64748b'}}>Aucune commande reçue.</p>
             </div>
           ) : (
-            <div className={styles.grid}>
-              {orders.map((order) => (
-                <div key={order._id} className={styles.card} style={{borderRadius: '20px', overflow: 'hidden', border: '1px solid #e2e8f0'}}>
-                  <div className={styles.cardHeader} style={{padding: '20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div style={{fontWeight: '700'}}>Commande #{order._id.slice(-6).toUpperCase()}</div>
-                    {getStatusBadge(order.status)}
-                  </div>
-                  
-                  <div style={{padding: '20px'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px'}}>
-                      <div style={{width: '40px', height: '40px', background: '#f8fafc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><User size={20} color="#64748b" /></div>
-                      <div>
-                        <div style={{fontWeight: '700', fontSize: '14px'}}>{order.userId?.fullName}</div>
-                        <div style={{fontSize: '12px', color: '#94a3b8'}}>{order.userId?.email}</div>
-                      </div>
-                    </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+              {[
+                { title: "Nouvelles Commandes", status: ["pending", "paid"], icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
+                { title: "En cours de traitement", status: ["confirmed", "shipped"], icon: <Truck size={20} color="#3b82f6" />, bg: "#eff6ff" },
+                { title: "Terminées / Annulées", status: ["delivered", "cancelled"], icon: <Package size={20} color="#94a3b8" />, bg: "#f8fafc" }
+              ].map((section, idx) => {
+                const filtered = orders.filter(o => section.status.includes(o.status));
+                if (filtered.length === 0) return null;
 
-                    <div style={{background: '#f8fafc', padding: '12px', borderRadius: '12px', marginBottom: '20px'}}>
-                      {order.items.map((item, idx) => (
-                        <div key={idx} style={{display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px'}}>
-                          <span>{item.quantity}x {item.productId?.name}</span>
-                          <span style={{fontWeight: '600'}}>{item.price * item.quantity} TND</span>
+                return (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px 20px', background: section.bg, borderRadius: '12px', borderLeft: `5px solid ${section.icon.props.color}` }}>
+                      {section.icon}
+                      <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{section.title} ({filtered.length})</h2>
+                    </div>
+                    <div className={styles.grid}>
+                      {filtered.map((order) => (
+                        <div key={order._id} className={styles.card} style={{ border: ["pending", "paid"].includes(order.status) ? '2px solid #f59e0b' : '1px solid #e2e8f0' }}>
+                          <div className={styles.cardHeader}>
+                            <div className={styles.orderId}>Commande #{order._id.slice(-6).toUpperCase()}</div>
+                            {getStatusBadge(order.status)}
+                          </div>
+                          <div className={styles.cardBody}>
+                            <div className={styles.userSection}>
+                              <User size={16} />
+                              <div>
+                                <div className={styles.userName}>{order.userId?.fullName}</div>
+                                <div className={styles.userMeta}>{order.userId?.email}</div>
+                              </div>
+                            </div>
+                            <div className={styles.itemsList}>
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className={styles.itemRow}>
+                                  <span>{item.quantity}x {item.productId?.name}</span>
+                                  <span>{item.price * item.quantity} TND</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className={styles.addressSection}>
+                              <MapPin size={16} />
+                              <div className={styles.address}>
+                                {order.shippingAddress.street}, {order.shippingAddress.city}
+                              </div>
+                            </div>
+                            <div className={styles.totalRow}>
+                              <span>Total :</span>
+                              <span className={styles.totalPrice}>{order.totalPrice} TND</span>
+                            </div>
+                          </div>
+                          <div className={styles.cardFooter}>
+                            {order.status === "pending" && (
+                              <>
+                                <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm}>Confirmer</button>
+                                <button onClick={() => handleUpdateOrder(order._id, "cancelled")} className={styles.btnCancel}>Refuser</button>
+                              </>
+                            )}
+                            {order.status === "paid" && (
+                              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                                <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm} style={{ flex: 1 }}>Confirmer & Préparer</button>
+                                <button 
+                                  onClick={() => navigate("/professional/invoices", { state: { orderId: order._id } })} 
+                                  className={styles.btnDeliver}
+                                  style={{ flex: 1, backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}
+                                >
+                                  <FileSpreadsheet size={16} /> Facture
+                                </button>
+                              </div>
+                            )}
+                            {order.status === "confirmed" && (
+                              <button onClick={() => handleUpdateOrder(order._id, "shipped")} className={styles.btnShip}><Truck size={16} /> Marquer Expédié</button>
+                            )}
+                          </div>
                         </div>
                       ))}
-                      <div style={{borderTop: '1px solid #e2e8f0', marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: '700'}}>
-                        <span>Total</span>
-                        <span style={{color: '#24416b'}}>{order.totalPrice} TND</span>
-                      </div>
-                    </div>
-
-                    <div style={{display: 'flex', gap: '8px', color: '#64748b', fontSize: '13px'}}>
-                       <MapPin size={16} /> <span>{order.shippingAddress.street}, {order.shippingAddress.city}</span>
                     </div>
                   </div>
-
-                  <div style={{padding: '20px', background: '#f8fafc', display: 'flex', gap: '8px'}}>
-                    {order.status === "pending" && (
-                      <>
-                        <button onClick={() => handleUpdateOrder(order._id, "confirmed")} style={{flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#24416b', color: 'white', fontWeight: '600', cursor: 'pointer'}}>Confirmer</button>
-                        <button onClick={() => handleUpdateOrder(order._id, "cancelled")} style={{flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', color: '#64748b', fontWeight: '600', cursor: 'pointer'}}>Refuser</button>
-                      </>
-                    )}
-                    {order.status === "confirmed" && (
-                      <button onClick={() => handleUpdateOrder(order._id, "shipped")} style={{width: '100%', padding: '10px', borderRadius: '10px', border: 'none', background: '#24416b', color: 'white', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}><Truck size={18} /> Marquer Expédié</button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -225,107 +255,129 @@ const ProfessionalCommandes = () => {
               <p style={{color: '#64748b'}}>Aucun rendez-vous planifié.</p>
             </div>
           ) : (
-            <div className={styles.grid}>
-              {reservations.map((res) => (
-                <div key={res._id} className={styles.card} style={{borderRadius: '20px', overflow: 'hidden', border: '1px solid #e2e8f0'}}>
-                   <div style={{padding: '20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div style={{fontWeight: '700'}}>Réservation #{res._id.slice(-6).toUpperCase()}</div>
-                    {getStatusBadge(res.status)}
-                  </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+               {[
+                { title: "À confirmer", status: "pending", icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
+                { title: "Confirmées / À venir", status: "confirmed", icon: <CheckCircle size={20} color="#10b981" />, bg: "#f0fdf4" },
+                { title: "Historique", status: ["completed", "cancelled"], icon: <Calendar size={20} color="#94a3b8" />, bg: "#f8fafc" }
+              ].map((section, idx) => {
+                const filtered = reservations.filter(r => Array.isArray(section.status) ? section.status.includes(r.status) : r.status === section.status);
+                if (filtered.length === 0) return null;
 
-                  <div style={{padding: '20px'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px'}}>
-                      <div style={{width: '40px', height: '40px', background: '#f8fafc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><User size={20} color="#64748b" /></div>
-                      <div>
-                        <div style={{fontWeight: '700', fontSize: '14px'}}>{res.userId?.fullName}</div>
-                        <div style={{fontSize: '12px', color: '#94a3b8'}}>{res.userId?.phone}</div>
-                      </div>
+                return (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px 20px', background: section.bg, borderRadius: '12px', borderLeft: `5px solid ${section.icon.props.color}` }}>
+                      {section.icon}
+                      <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{section.title} ({filtered.length})</h2>
                     </div>
+                    <div className={styles.grid}>
+                      {filtered.map((res) => (
+                        <div key={res._id} className={styles.card} style={{ border: res.status === "pending" ? '2px solid #f59e0b' : '1px solid #e2e8f0' }}>
+                          <div className={styles.cardHeader}>
+                            <div className={styles.orderId}>Réservation #{res._id.slice(-6).toUpperCase()}</div>
+                            {getStatusBadge(res.status)}
+                          </div>
+                          <div className={styles.cardBody}>
+                            <div className={styles.userSection}>
+                              <User size={16} />
+                              <div>
+                                <div className={styles.userName}>{res.userId?.fullName}</div>
+                                <div className={styles.userMeta}>{res.userId?.phone}</div>
+                              </div>
+                            </div>
+                            <div className={styles.serviceBox}>
+                              <div className={styles.serviceName}>{res.serviceId?.name}</div>
+                              <div className={styles.serviceMeta}>
+                                <Clock size={14} /> {res.serviceId?.duration} min | {res.serviceId?.price} TND
+                              </div>
+                            </div>
+                            <div className={styles.dateTimeSection}>
+                              <div className={styles.dateBadge}>
+                                <Calendar size={14} /> {new Date(res.date).toLocaleDateString()}
+                              </div>
+                              <div className={styles.timeBadge}>
+                                <Clock size={14} /> {res.timeSlot}
+                              </div>
+                            </div>
+                            {res.notes && (
+                              <div className={styles.notesBox}>
+                                <AlertCircle size={14} />
+                                <p>{res.notes}</p>
+                              </div>
+                            )}
 
-                    <div style={{padding: '12px', background: '#eff6ff', borderRadius: '12px', marginBottom: '15px'}}>
-                      <div style={{fontWeight: '700', fontSize: '15px', color: '#1e3a8a'}}>{res.serviceId?.name}</div>
-                      <div style={{display: 'flex', gap: '12px', fontSize: '12px', color: '#1e40af', marginTop: '4px'}}>
-                        <span style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={14} /> {res.serviceId?.duration} min</span>
-                        <span style={{fontWeight:'700'}}>{res.serviceId?.price} TND</span>
-                      </div>
-                    </div>
-
-                    <div style={{display: 'flex', gap: '8px', marginBottom: '15px'}}>
-                      <div style={{background: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600'}}><Calendar size={14} /> {new Date(res.date).toLocaleDateString()}</div>
-                      <div style={{background: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600'}}><Clock size={14} /> {res.timeSlot}</div>
-                    </div>
-
-                    {res.notes && (
-                      <div style={{fontSize: '13px', color: '#64748b', background: '#fffbeb', padding: '10px', borderRadius: '8px', border: '1px solid #fde68a', marginBottom: '15px'}}>
-                        <AlertCircle size={14} style={{float: 'left', marginRight: '6px'}} /> {res.notes}
-                      </div>
-                    )}
-
-                    {res.quote && (
-                      <div 
-                        onClick={() => navigate("/professional/documents", { state: { tab: "quotes" } })}
-                        style={{
-                          marginTop: '15px',
-                          padding: '12px',
-                          backgroundColor: res.quote.status === 'accepted' ? '#dcfce7' : res.quote.status === 'rejected' ? '#fee2e2' : '#eff6ff',
-                          borderRadius: '12px',
-                          border: `1px solid ${res.quote.status === 'accepted' ? '#86efac' : res.quote.status === 'rejected' ? '#fecaca' : '#bfdbfe'}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#24416b',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
-                        }}>
-                          <FileSpreadsheet size={18} />
+                            {res.quote && (
+                              <div 
+                                onClick={() => navigate("/professional/documents", { state: { tab: "quotes" } })}
+                                style={{
+                                  marginTop: '15px',
+                                  padding: '12px',
+                                  backgroundColor: res.quote.status === 'accepted' ? '#dcfce7' : res.quote.status === 'rejected' ? '#fee2e2' : '#eff6ff',
+                                  borderRadius: '12px',
+                                  border: `1px solid ${res.quote.status === 'accepted' ? '#86efac' : res.quote.status === 'rejected' ? '#fecaca' : '#bfdbfe'}`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                <div style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  backgroundColor: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#24416b',
+                                  borderRadius: '8px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'white'
+                                }}>
+                                  <FileSpreadsheet size={18} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ 
+                                    fontSize: '13px', 
+                                    fontWeight: '700', 
+                                    color: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#1e3a8a' 
+                                  }}>
+                                    Devis {res.quote.status === 'accepted' ? 'Accepté' : res.quote.status === 'rejected' ? 'Refusé' : 'Envoyé'}
+                                  </div>
+                                  <div style={{ 
+                                    fontSize: '11px', 
+                                    color: res.quote.status === 'accepted' ? '#15803d' : res.quote.status === 'rejected' ? '#b91c1c' : '#1e40af' 
+                                  }}>
+                                    N° {res.quote.quoteNumber} • {res.quote.totalAmount?.toFixed(2)} TND
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className={styles.cardFooter}>
+                            {res.status === "pending" && !res.quote && (
+                              <>
+                                <button onClick={() => handleCreateQuote(res)} className={styles.btnConfirm}><FileSpreadsheet size={16} /> Établir Devis</button>
+                                <button onClick={() => handleUpdateReservation(res._id, "cancelled")} className={styles.btnCancel}>Décliner</button>
+                              </>
+                            )}
+                            {res.status === "confirmed" && (
+                              <button onClick={() => handleUpdateReservation(res._id, "completed")} className={styles.btnDeliver}>Terminé</button>
+                            )}
+                            {res.status === "paid" && (
+                              <button 
+                                onClick={() => navigate("/professional/invoices", { state: { reservationId: res._id } })} 
+                                className={styles.btnDeliver}
+                                style={{ width: '100%', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}
+                              >
+                                <FileSpreadsheet size={16} /> Voir la Facture
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ 
-                            fontSize: '13px', 
-                            fontWeight: '700', 
-                            color: res.quote.status === 'accepted' ? '#166534' : res.quote.status === 'rejected' ? '#991b1b' : '#1e3a8a' 
-                          }}>
-                            Devis {res.quote.status === 'accepted' ? 'Accepté' : res.quote.status === 'rejected' ? 'Refusé' : 'Envoyé'}
-                          </div>
-                          <div style={{ 
-                            fontSize: '11px', 
-                            color: res.quote.status === 'accepted' ? '#15803d' : res.quote.status === 'rejected' ? '#b91c1c' : '#1e40af' 
-                          }}>
-                            N° {res.quote.quoteNumber} • {res.quote.totalAmount.toFixed(2)} TND
-                          </div>
-                        </div>
-                        {res.quote.status === 'accepted' && (
-                          <div style={{ color: '#166534' }}>
-                            <CheckCircle size={18} />
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
-
-                  <div style={{padding: '20px', background: '#f8fafc', display: 'flex', gap: '8px'}}>
-                    {res.status === "pending" && !res.quote && (
-                      <>
-                        <button onClick={() => handleCreateQuote(res)} style={{flex: 1.5, padding: '10px', borderRadius: '10px', border: 'none', background: '#24416b', color: 'white', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'}}><FileSpreadsheet size={16} /> Devis</button>
-                        <button onClick={() => handleUpdateReservation(res._id, "cancelled")} style={{flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', color: '#64748b', fontWeight: '600', cursor: 'pointer'}}>Décliner</button>
-                      </>
-                    )}
-                    {res.status === "confirmed" && (
-                      <button onClick={() => handleUpdateReservation(res._id, "completed")} style={{width: '100%', padding: '10px', borderRadius: '10px', border: 'none', background: '#10b981', color: 'white', fontWeight: '600', cursor: 'pointer'}}>Terminer</button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

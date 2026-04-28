@@ -19,6 +19,7 @@ import ClientPurchases from './pages/client/ClientPurchases';
 import ClientDocuments from './pages/client/ClientDocuments';
 import CompanyPublicProfile from './pages/client/CompanyPublicProfile';
 import ProfessionalPublicProfile from './pages/client/ProfessionalPublicProfile';
+import ClientInvoices from './pages/client/ClientInvoices';
 
 // Pages Company
 import UserManagement from './pages/company/UserManagement';
@@ -29,6 +30,7 @@ import MesServices from './pages/company/MesServices';
 import Quotes from './pages/company/Quotes';
 import Contracts from './pages/company/Contracts';
 import CompanyDocuments from './pages/company/CompanyDocuments';
+import Invoices from './pages/company/Invoices';
 import CompanyProfile from './components/dashboard/Company/CompanyProfile';
 import Publication from './pages/company/Publication';
 import Commandes from './pages/company/Commandes';
@@ -43,12 +45,12 @@ import ProfessionalServices from './pages/professional/ProfessionalServices';
 import ProfessionalCommandes from './pages/professional/ProfessionalCommandes';
 import ProfessionalDocuments from './pages/professional/ProfessionalDocuments';
 import ProfessionalReviews from './pages/professional/ProfessionalReviews';
+import ProfessionalInvoices from './pages/professional/ProfessionalInvoices';
 import ProfessionalUserManagement from './pages/professional/ProfessionalUserManagement';
 
 // Pages Payment
 import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFail from './pages/payment/PaymentFail';
-import PaymentCheckout from './pages/payment/PaymentCheckout';
 
 // Pages Admin
 import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
@@ -76,7 +78,6 @@ function App() {
         {/* PAIEMENT - PUBLIC & RACINE */}
         <Route path="payment/success" element={<PaymentSuccess />} />
         <Route path="payment/fail" element={<PaymentFail />} />
-        <Route path="payment/checkout" element={<PaymentCheckout />} />
 
         {/* CLIENT - Profil & Espace Sécurisé */}
         <Route
@@ -92,6 +93,7 @@ function App() {
           <Route path="dashboard" element={<UserDashboard />} />
           <Route path="purchases" element={<ClientPurchases />} />
           <Route path="documents" element={<ClientDocuments />} />
+          <Route path="invoices" element={<ClientInvoices />} />
         </Route>
 
         {/* PROFIL PUBLIC */}
@@ -136,6 +138,7 @@ function App() {
           <Route path="quotes" element={<Quotes />} />
           <Route path="contracts" element={<Contracts />} />
           <Route path="documents" element={<CompanyDocuments />} />
+          <Route path="invoices" element={<Invoices />} />
           <Route path="commandes" element={<Commandes />} />
           <Route path="reviews" element={<Reviews />} />
           <Route path="produits" element={<Produits />} />
@@ -162,6 +165,7 @@ function App() {
           <Route path="services" element={<ProfessionalServices />} />
           <Route path="commandes" element={<ProfessionalCommandes />} />
           <Route path="documents" element={<ProfessionalDocuments />} />
+          <Route path="invoices" element={<ProfessionalInvoices />} />
           <Route path="posts" element={<Publication />} />
           <Route path="profile" element={<ProfessionalProfile />} />
           <Route path="reviews" element={<ProfessionalReviews />} />

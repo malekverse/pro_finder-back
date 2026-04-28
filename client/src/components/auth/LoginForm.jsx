@@ -7,12 +7,14 @@ import styles from '../../styles/Form.module.css';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/features/auth/authSlice';
 import Cookies from 'js-cookie';
+import { Eye, EyeOff } from 'lucide-react';
 
 const LoginForm = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const [login, { isLoading, isError, error }] = useLoginMutation();
     const errorMsg = isError ? (error?.data?.message || 'Identifiants invalides') : null;
@@ -80,13 +82,22 @@ const LoginForm = () => {
 
                         <div className={styles.inputGroup}>
                             <label>Mot de passe</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className={styles.passwordWrapper}>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className={styles.eyeButton}
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button

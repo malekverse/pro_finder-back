@@ -23,10 +23,10 @@ const getCompanyFollowers = async (req, res) => {
     const companyId = new mongoose.Types.ObjectId(idToUse);
     const company = await Company.findById(companyId);
     if (!company) return res.status(404).json({ message: "Company not found" });
-    
+
     // On ne récupère que les abonnés ACTIFS (non bloqués) qui n'ont PAS de role_id
-    const followers = await Follow.find({ 
-      company_id: companyId, 
+    const followers = await Follow.find({
+      company_id: companyId,
       role_id: null
     })
       .populate("user_id", "fullName email avatarUrl phone")
@@ -34,7 +34,7 @@ const getCompanyFollowers = async (req, res) => {
 
     // Filtrer manuellement pour être sûr (migration au vol)
     const activeFollowers = followers.filter(f => f.is_blocked !== true);
-      
+
     res.json(activeFollowers);
   } catch (error) {
     console.error("Error fetching followers:", error);
@@ -47,13 +47,13 @@ const getBlockedUsers = async (req, res) => {
     const idToUse = req.companyId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const id = new mongoose.Types.ObjectId(idToUse);
-    
+
     const query = isProfessional ? { professional_id: id, is_blocked: true } : { company_id: id, is_blocked: true };
-    
+
     const blocked = await Follow.find(query)
       .populate("user_id", "fullName email avatarUrl phone")
       .sort({ updatedAt: -1 });
-      
+
     res.json(blocked);
   } catch (error) {
     console.error("Error fetching blocked users:", error);
@@ -78,9 +78,9 @@ const toggleBlockFollower = async (req, res) => {
     follow.is_blocked = !follow.is_blocked;
     await follow.save();
 
-    res.json({ 
-      message: follow.is_blocked ? "Utilisateur bloqué" : "Utilisateur débloqué", 
-      is_blocked: follow.is_blocked 
+    res.json({
+      message: follow.is_blocked ? "Utilisateur bloqué" : "Utilisateur débloqué",
+      is_blocked: follow.is_blocked
     });
   } catch (error) {
     console.error("Error toggling block status:", error);
@@ -147,8 +147,9 @@ const getPublicCompanyProfile = async (req, res) => {
         const cityDoc = await City.findById(company.city).select("name").lean();
         cityName = cityDoc?.name || null;
       }
-    } catch (e) { 
-      console.error("Error populating profile address", e); }
+    } catch (e) {
+      console.error("Error populating profile address", e);
+    }
 
     res.json({
       _id: company._id,
@@ -178,13 +179,13 @@ const updateCompanyProfile = async (req, res) => {
   const company = await Company.findById(companyId);
   if (!company) return res.status(404).json({ message: "Company not found" });
 
-  company.companyName  = companyName  || company.companyName;
-  company.phone        = phone        || company.phone;
-  company.website      = website      || company.website;
-  company.description  = description  || company.description;
-  company.country      = country      || company.country;
-  company.region       = region       || company.region;
-  company.city         = city         || company.city;
+  company.companyName = companyName || company.companyName;
+  company.phone = phone || company.phone;
+  company.website = website || company.website;
+  company.description = description || company.description;
+  company.country = country || company.country;
+  company.region = region || company.region;
+  company.city = city || company.city;
 
   // Gestion logo
   const logoFile = req.files?.find(f => f.fieldname === 'logo');
@@ -215,8 +216,8 @@ const getCompanyUsers = async (req, res) => {
   try {
     const idToUse = req.companyId || req.user;
     const companyId = new mongoose.Types.ObjectId(idToUse);
-    const follows = await Follow.find({ 
-      company_id: companyId, 
+    const follows = await Follow.find({
+      company_id: companyId,
       role_id: { $ne: null }
     })
       .populate("user_id", "fullName email avatarUrl phone")
@@ -352,7 +353,7 @@ const getSuggestedCompanies = async (req, res) => {
     const userId = req.user;
 
     // 1. Companies déjà suivies
-    const followed = await Follow.find({ user_id: userId, company_id: { $ne: null } }).lean();
+    const followed = await Follow.find({ user_id: userId, company_id: { $ne: null } }).lean()
     const followedIds = followed.map((f) => new mongoose.Types.ObjectId(f.company_id));
 
     // 2. Companies aléatoires non suivies avec nombre de followers et adresse
@@ -374,10 +375,10 @@ const getSuggestedCompanies = async (req, res) => {
       },
       {
         $lookup: {
-          from: "follows", 
+          from: "follows",
           let: { companyId: "$_id" },
           pipeline: [
-            { $match: { $expr: { $and: [ { $eq: ["$company_id", "$$companyId"] }, { $ne: ["$is_blocked", true] } ] } } }
+            { $match: { $expr: { $and: [{ $eq: ["$company_id", "$$companyId"] }, { $ne: ["$is_blocked", true] }] } } }
           ],
           as: "followers"
         }
@@ -447,7 +448,7 @@ const searchCompanies = async (req, res) => {
     // Filtre texte amélioré (Recherche multi-critères)
     if (q && q.trim() !== "") {
       const keywords = q.trim().split(/\s+/);
-      
+
       // On prépare des recherches pour chaque mot-clé
       const Category = mongoose.model("Category");
       const SubCategory = mongoose.model("SubCategory");
@@ -459,13 +460,13 @@ const searchCompanies = async (req, res) => {
       const keywordFilters = await Promise.all(keywords.map(async (kw) => {
         // Pour chaque mot-clé, on trouve les IDs correspondants
         const cats = await Category.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const subs = await SubCategory.find({ 
-          $or: [{ name: { $regex: kw, $options: "i" } }, { category_id: { $in: cats.map(c => c._id) } }] 
+        const subs = await SubCategory.find({
+          $or: [{ name: { $regex: kw, $options: "i" } }, { category_id: { $in: cats.map(c => c._id) } }]
         }).select("_id");
-        const servs = await Service.find({ 
-          $or: [{ name: { $regex: kw, $options: "i" } }, { subcategory_id: { $in: subs.map(s => s._id) } }] 
+        const servs = await Service.find({
+          $or: [{ name: { $regex: kw, $options: "i" } }, { subcategory_id: { $in: subs.map(s => s._id) } }]
         }).select("_id");
-        
+
         const countries = await Country.find({ name: { $regex: kw, $options: "i" } }).select("_id");
         const regions = await Region.find({ name: { $regex: kw, $options: "i" } }).select("_id");
         const cities = await City.find({ name: { $regex: kw, $options: "i" } }).select("_id");
@@ -516,7 +517,7 @@ const searchCompanies = async (req, res) => {
         const serviceId = new mongoose.Types.ObjectId(service);
         query.services = { $in: [serviceId] };
       } catch (e) {
-        query.services = service; 
+        query.services = service;
       }
     } else if (subCategory && subCategory !== "") {
       const Service = mongoose.model("Service");
@@ -558,7 +559,7 @@ const searchCompanies = async (req, res) => {
 
         return nameA.localeCompare(nameB);
       });
-      
+
       // Limiter à 20 résultats après le tri
       companies = companies.slice(0, 20);
     }
@@ -572,7 +573,7 @@ const searchCompanies = async (req, res) => {
     const companiesWithDetails = await Promise.all(
       companies.map(async (company) => {
         const followersCount = await Follow.countDocuments({ company_id: company._id, is_blocked: { $ne: true } });
-        
+
         // Récupérer les stats d'avis
         const stats = await Review.aggregate([
           { $match: { company_id: company._id } },
@@ -592,7 +593,7 @@ const searchCompanies = async (req, res) => {
 
         let cName = company.country, rName = company.region, cityName = company.city;
         let categoryName = "Multi-services";
-        
+
         try {
           // Résolution adresse
           if (company.country && mongoose.isValidObjectId(company.country)) {
@@ -626,8 +627,8 @@ const searchCompanies = async (req, res) => {
           }
         } catch (e) { console.error("Error populating details", e); }
 
-        return { 
-          ...company, 
+        return {
+          ...company,
           followersCount,
           rating,
           country: cName,
@@ -661,21 +662,23 @@ const getRecommendedCompanies = async (req, res) => {
       { $limit: 6 }
     ]);
 
+
     const topCompanyIds = topReviews.map(r => r._id).filter(id => id !== null);
 
+
     // 2. Récupérer les détails des entreprises
-    const companies = await Company.find({ 
+    const companies = await Company.find({
       _id: { $in: topCompanyIds },
-      Status: "active" 
+      Status: "active"
     })
-    .select("companyName logoUrl city region country description")
-    .lean();
+      .select("companyName logoUrl city region country description")
+      .lean();
 
     // 3. Enrichir avec les stats et les noms de localisation
     const enriched = await Promise.all(
       companies.map(async (company) => {
-        const reviewStat = topReviews.find(r => r._id && r._id.toString() === company._id.toString());
-        
+      const reviewStat = topReviews.find(r => r._id && r._id.toString() === company._id.toString());
+
         let cityName = company.city;
         if (company.city && mongoose.isValidObjectId(company.city)) {
           const cityDoc = await mongoose.model("City").findById(company.city).select("name").lean();
@@ -761,9 +764,9 @@ const createScrapedCompany = async (req, res) => {
 
     // Lien vers la page de revendication du front-end
     const claimUrl = `${process.env.CLIENT_URL || 'http://localhost:3001'}/claim?token=${claimToken}`;
-    
+
     // Pour faciliter les tests locaux
-   
+
 
     // Envoi de l'e-mail d'invitation automatiquement
     const htmlEmail = `
@@ -811,7 +814,7 @@ const claimCompanyProfile = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || "default_secret");
-    
+
     const company = await Company.findById(decoded.companyId);
     if (!company) {
       return res.status(404).json({ message: "Entreprise introuvable." });
@@ -858,7 +861,7 @@ const getClaimPreview = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || "default_secret");
-    
+
     const company = await Company.findById(decoded.companyId)
       .populate("services")
       .populate("country")
@@ -966,25 +969,25 @@ const requestClaim = async (req, res) => {
 
     if (!emailSent) {
       // On retourne quand même un succès partiel pour ne pas bloquer le développeur
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         message: "Demande générée avec succès (Mode Test / Console).",
         warning: "L'e-mail n'a pas pu être envoyé, mais le lien est disponible dans la console du serveur.",
-        maskedEmail 
+        maskedEmail
       });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "L'e-mail de vérification a été envoyé.",
-      maskedEmail 
+      maskedEmail
     });
 
   } catch (error) {
     console.error("Erreur requestClaim:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Erreur serveur lors de la demande de revendication.",
-      details: error.message 
+      details: error.message
     });
   }
 };

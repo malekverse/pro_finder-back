@@ -91,6 +91,7 @@ const ProfessionalPublicProfile = () => {
   const [serviceForDetail, setServiceForDetail] = useState(null);
   const [selectedItemForAction, setSelectedItemForAction] = useState(null);
   const [actionType, setActionType] = useState(null);
+  const [prefilledActionData, setPrefilledActionData] = useState(null);
 
   // Review Logic
   const [reviewRating, setReviewRating] = useState(5);
@@ -312,11 +313,20 @@ const ProfessionalPublicProfile = () => {
           setOrderSuccess(true);
         }
       } else {
+        // Formater la date en YYYY-MM-DD pour éviter les décalages de fuseau horaire
+        let formattedDate = data.date;
+        if (data.date instanceof Date) {
+          const y = data.date.getFullYear();
+          const m = String(data.date.getMonth() + 1).padStart(2, '0');
+          const d = String(data.date.getDate()).padStart(2, '0');
+          formattedDate = `${y}-${m}-${d}`;
+        }
+
         await createReservation({
-          professionalId,
+          professionalId: professional._id,
           serviceId: selectedItemForAction._id,
-          date: data.date,
-          timeSlot: data.time,
+          date: formattedDate,
+          timeSlot: data.time || data.bookingSlot,
           notes: data.note,
         }).unwrap();
         setResSuccess(true);
@@ -332,9 +342,10 @@ const ProfessionalPublicProfile = () => {
     }
   };
 
-  const handleAction = (item, type) => {
+  const handleAction = (item, type, prefilledData = null) => {
     setSelectedItemForAction(item);
     setActionType(type);
+    setPrefilledActionData(prefilledData);
     setProductForDetail(null);
     setServiceForDetail(null);
   };
@@ -529,7 +540,9 @@ const ProfessionalPublicProfile = () => {
             ) : (
               proServices.map(service => (
                 <div key={service._id} style={s.itemCard}>
-                  <img src={toImageUrl(service.imageService)} alt={service.name} style={s.itemImg} />
+                  {service.imagesServices?.[0] && (
+                    <img src={toImageUrl(service.imagesServices[0])} alt={service.name} style={s.itemImg} />
+                  )}
                   <div style={s.itemContent}>
                     <h4 style={s.itemName}>{service.name}</h4>
                     <div style={s.itemMeta}>
@@ -553,7 +566,9 @@ const ProfessionalPublicProfile = () => {
             ) : (
               products.map(product => (
                 <div key={product._id} style={s.itemCard}>
-                  <img src={toImageUrl(product.imageProduct)} alt={product.name} style={s.itemImg} />
+                  {product.imagesProduct?.[0] && (
+                    <img src={toImageUrl(product.imagesProduct[0])} alt={product.name} style={s.itemImg} />
+                  )}
                   <div style={s.itemContent}>
                     <h4 style={s.itemName}>{product.name}</h4>
                     <div style={s.itemMeta}>
@@ -662,7 +677,7 @@ const ProfessionalPublicProfile = () => {
         <ProductDetail 
           product={productForDetail}
           onClose={() => setProductForDetail(null)}
-          onOrder={(p) => handleAction(p, 'product')}
+          onOrder={(selection) => handleAction(selection, 'product', selection)}
         />
       )}
 
@@ -670,6 +685,7 @@ const ProfessionalPublicProfile = () => {
         <ActionModal 
           type={actionType}
           item={selectedItemForAction}
+          prefilledData={prefilledActionData}
           user={user}
           onClose={() => setSelectedItemForAction(null)}
           onSubmit={handleSubmitAction}

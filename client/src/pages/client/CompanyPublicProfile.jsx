@@ -92,6 +92,7 @@ const CompanyPublicProfile = () => {
   const [serviceForDetail, setServiceForDetail] = useState(null);
   const [selectedItemForAction, setSelectedItemForAction] = useState(null);
   const [actionType, setActionType] = useState(null);
+  const [prefilledActionData, setPrefilledActionData] = useState(null);
 
   // Review Logic
   const [reviewRating, setReviewRating] = useState(5);
@@ -318,12 +319,20 @@ const CompanyPublicProfile = () => {
         } else {
           setOrderSuccess(true);
         }
-      } else {
+        // Formater la date en YYYY-MM-DD pour éviter les décalages de fuseau horaire
+        let formattedDate = data.date;
+        if (data.date instanceof Date) {
+          const y = data.date.getFullYear();
+          const m = String(data.date.getMonth() + 1).padStart(2, '0');
+          const d = String(data.date.getDate()).padStart(2, '0');
+          formattedDate = `${y}-${m}-${d}`;
+        }
+
         await createReservation({
           companyId,
           serviceId: selectedItemForAction._id,
-          date: data.date,
-          timeSlot: data.time,
+          date: formattedDate,
+          timeSlot: data.time || data.bookingSlot,
           notes: data.note,
         }).unwrap();
         setResSuccess(true);
@@ -339,9 +348,10 @@ const CompanyPublicProfile = () => {
     }
   };
 
-  const handleAction = (item, type) => {
+  const handleAction = (item, type, prefilledData = null) => {
     setSelectedItemForAction(item);
     setActionType(type);
+    setPrefilledActionData(prefilledData);
     setProductForDetail(null);
     setServiceForDetail(null);
   };
@@ -775,7 +785,7 @@ const CompanyPublicProfile = () => {
         <ServiceDetail 
           service={serviceForDetail}
           onClose={() => setServiceForDetail(null)}
-          onReserve={(s) => handleAction(s, 'service')}
+          onReserve={(selection) => handleAction(selection, 'service', selection)}
         />
       )}
 
@@ -793,6 +803,7 @@ const CompanyPublicProfile = () => {
         <ActionModal 
           type={actionType}
           item={selectedItemForAction}
+          prefilledData={prefilledActionData}
           user={user}
           onClose={() => setSelectedItemForAction(null)}
           onSubmit={handleSubmitAction}
@@ -833,7 +844,7 @@ const CompanyPublicProfile = () => {
                 <p style={{ fontSize: '14px', color: '#047857', marginTop: '5px' }}>L'équipe de modération va examiner votre demande.</p>
               </div>
             ) : (
-              <form onSubmit={handleReport}>
+             <form onSubmit={handleReport}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
                   {company.logoUrl ? (
                     <img src={toImageUrl(company.logoUrl)} alt="" style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover' }} />
@@ -1000,23 +1011,45 @@ const s = {
   cover: { height: 200, background: "linear-gradient(120deg, #dbeafe, #e2e8f0)" },
   coverImg: { width: "100%", height: "100%", objectFit: "cover" },
   header: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: 14,
-    padding: "0 20px 16px",
-    marginTop: -48,
-    flexWrap: "wrap",
+    padding: '0 40px 30px',
+    marginTop: '-50px',
+    display: 'flex',
+    gap: '24px',
+    alignItems: 'flex-end',
+    position: 'relative',
+    flexWrap: 'wrap',
   },
   logo: {
-    width: 96, height: 96, borderRadius: 14,
-    border: "4px solid #fff", objectFit: "cover", background: "#fff", flexShrink: 0,
+    width: '120px',
+    height: '120px',
+    borderRadius: '30px',
+    border: '6px solid white',
+    background: 'white',
+    objectFit: 'cover',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+    flexShrink: 0,
   },
   logoFallback: {
-    width: 96, height: 96, borderRadius: 14,
-    border: "4px solid #fff", background: "#e2e8f0", color: "#475569",
-    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+    width: '120px',
+    height: '120px',
+    borderRadius: '30px',
+    border: '6px solid white',
+    background: '#f1f5f9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#94a3b8',
+    flexShrink: 0,
   },
-  name: { margin: "0 0 4px", color: "#0f172a", fontSize: 26, fontWeight: 800 },
+
+  name: { 
+    margin: "0 0 5px", 
+    color: "#1e293b", 
+    fontSize: "32px", 
+    fontWeight: "900",
+    textAlign: "left",
+    lineHeight: "1.2"
+  },
   ratingBadge: {
     display: 'flex',
     alignItems: 'center',

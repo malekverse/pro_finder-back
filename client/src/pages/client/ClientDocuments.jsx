@@ -116,166 +116,287 @@ const ClientDocuments = () => {
 
       <div className={styles.content}>
         {activeTab === "quotes" ? (
-          loadingQuotes ? <div className={styles.loader}><Loader2 className="animate-spin" /></div> :
-          quotes.length === 0 ? <div className={styles.empty}><FileSpreadsheet size={48} /><p>Aucun devis reçu.</p></div> :
-          <div className={styles.grid}>
-            {quotes.map(quote => {
-              const style = getStatusStyle(quote.status);
-              return (
-                <div key={quote._id} className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <div className={styles.orderId}>{quote.quoteNumber}</div>
-                    <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', background: style.bg, color: style.color }}>
-                      {style.label}
-                    </span>
-                  </div>
-                  <div className={styles.cardBody}>
-                    <div className={styles.userSection}>
-                      <Building2 size={16} />
-                      <div className={styles.userName}>{quote.companyId?.companyName}</div>
+          loadingQuotes ? (
+            <div className={styles.loader}><Loader2 className="animate-spin" /></div>
+          ) : quotes.length === 0 ? (
+            <div className={styles.empty}><FileSpreadsheet size={48} /><p>Aucun devis reçu.</p></div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+              {[
+                { title: "Action requise", status: "sent", icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
+                { title: "Devis Acceptés", status: "accepted", icon: <CheckCircle2 size={20} color="#10b981" />, bg: "#f0fdf4" },
+                { title: "Historique (Refusés / Expirés)", status: ["rejected", "expired"], icon: <FileText size={20} color="#94a3b8" />, bg: "#f8fafc" }
+              ].map((section, idx) => {
+                const filtered = quotes.filter(q => Array.isArray(section.status) ? section.status.includes(q.status) : q.status === section.status);
+                if (filtered.length === 0) return null;
+                
+                return (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px 20px', background: section.bg, borderRadius: '12px', borderLeft: `5px solid ${section.icon.props.color}` }}>
+                      {section.icon}
+                      <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{section.title} ({filtered.length})</h2>
                     </div>
-                    <div className={styles.itemsList}>
-                      {quote.items.map((item, i) => (
-                        <div key={i} className={styles.itemRow}>
-                          <span>{item.quantity}x {item.description}</span>
-                          <span>{item.total.toFixed(2)} TND</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className={styles.totalRow} style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontWeight: '800' }}>
-                      <span>Total TTC</span>
-                      <span>{quote.totalAmount.toFixed(2)} TND</span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                      <button 
-                        onClick={() => setSelectedQuote(quote)}
-                        style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #24416b', background: 'white', color: '#24416b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                      >
-                        <Eye size={16} /> Détails
-                      </button>
-                      
-                      {quote.contractId && (
-                        <button 
-                          onClick={() => setActiveTab("contracts")}
-                          style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#1e3a8a', color: 'white', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', boxShadow: '0 4px 12px rgba(30, 58, 138, 0.2)' }}
-                        >
-                          <FileSignature size={16} /> Voir Contrat
-                        </button>
-                      )}
-                      
-                      <button 
-                        onClick={() => generateQuotePDF(quote, quote.companyId)}
-                        style={{ padding: '10px', borderRadius: '10px', border: '1px solid #24416b', background: 'white', color: '#24416b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Télécharger PDF"
-                      >
-                        <Download size={16} />
-                      </button>
-                      
-                      {quote.status === 'sent' && (
-                        <>
-                          <button onClick={() => handleQuoteAction(quote._id, 'accepted')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#10b981', color: 'white', fontWeight: '700', cursor: 'pointer' }}>Accepter</button>
-                          <button onClick={() => handleQuoteAction(quote._id, 'rejected')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #ef4444', background: 'white', color: '#ef4444', fontWeight: '700', cursor: 'pointer' }}>Refuser</button>
-                        </>
-                      )}
+                    <div className={styles.grid}>
+                      {filtered.map(quote => {
+                        const style = getStatusStyle(quote.status);
+                        return (
+                          <div key={quote._id} className={styles.card} style={{ border: quote.status === 'sent' ? '2px solid #f59e0b' : '1px solid #e2e8f0' }}>
+                            <div className={styles.cardHeader}>
+                              <div className={styles.orderId}>{quote.quoteNumber}</div>
+                              <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', background: style.bg, color: style.color }}>
+                                {style.label}
+                              </span>
+                            </div>
+                            <div className={styles.cardBody}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div className={styles.userSection}>
+                                  <Building2 size={16} />
+                                  <div className={styles.userName}>{quote.companyId?.companyName || quote.professionalId?.fullName}</div>
+                                </div>
+                                <div style={{ 
+                                  fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '6px',
+                                  backgroundColor: quote.requiresContract ? '#fff7ed' : '#f0fdf4',
+                                  color: quote.requiresContract ? '#9a3412' : '#15803d',
+                                  display: 'flex', alignItems: 'center', gap: '4px',
+                                  border: `1px solid ${quote.requiresContract ? '#ffedd5' : '#dcfce7'}`
+                                }}>
+                                  <FileText size={12} /> {quote.requiresContract ? 'Contrat obligatoire' : 'Sans contrat'}
+                                </div>
+                              </div>
+                              <div className={styles.itemsList}>
+                                {quote.items.map((item, i) => (
+                                  <div key={i} className={styles.itemRow}>
+                                    <span>{item.quantity}x {item.description}</span>
+                                    <span>{item.total.toFixed(2)} TND</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className={styles.totalRow} style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontWeight: '800' }}>
+                                <span>Total TTC</span>
+                                <span>{quote.totalAmount.toFixed(2)} TND</span>
+                              </div>
+                              
+                              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                                <button 
+                                  onClick={() => setSelectedQuote(quote)} 
+                                  style={{ 
+                                    flex: 1, padding: '10px', borderRadius: '12px', border: '1.5px solid #e2e8f0', 
+                                    background: '#fff', color: '#1e293b', fontWeight: '700', cursor: 'pointer', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseOver={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                                >
+                                  <Eye size={16} /> Détails
+                                </button>
+                                
+                                {quote.contractId && (
+                                  <button 
+                                    onClick={() => setActiveTab("contracts")} 
+                                    style={{ 
+                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none', 
+                                      background: '#2563eb', color: 'white', fontWeight: '800', cursor: 'pointer', 
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)', transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 15px rgba(37, 99, 235, 0.3)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.2)'; }}
+                                  >
+                                    <FileSignature size={16} /> Contrat
+                                  </button>
+                                )}
 
-                      {quote.status === 'accepted' && !quote.requiresContract && (
-                            <button 
-                              onClick={() => handlePayment(quote, 'quote')}
-                              disabled={isPaying}
-                              style={{
-                                flex: 1, padding: '10px', borderRadius: '10px',
-                                border: 'none', background: '#fbbf24', color: '#000', fontWeight: '800',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                opacity: isPaying ? 0.7 : 1
-                              }}
-                            >
-                              <CreditCard size={18} /> {isPaying ? 'Chargement...' : 'Payer maintenant'}
-                            </button>
-                          )}
+                                <button 
+                                  onClick={() => generateQuotePDF(quote, quote.companyId)} 
+                                  style={{ 
+                                    width: '42px', height: '42px', borderRadius: '12px', border: '1.5px solid #e2e8f0', 
+                                    background: '#fff', color: '#64748b', cursor: 'pointer', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseOver={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#1e293b'; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#64748b'; }}
+                                  title="Télécharger PDF"
+                                >
+                                  <Download size={18} />
+                                </button>
+                                
+                                {quote.status === 'sent' && (
+                                  <div style={{ display: 'flex', gap: '8px', flex: 1.5 }}>
+                                    <button 
+                                      onClick={() => handleQuoteAction(quote._id, 'accepted')} 
+                                      style={{ 
+                                        flex: 1, padding: '10px', borderRadius: '12px', border: 'none', 
+                                        background: '#10b981', color: 'white', fontWeight: '800', cursor: 'pointer',
+                                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)', transition: 'all 0.2s'
+                                      }}
+                                      onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 15px rgba(16, 185, 129, 0.3)'; }}
+                                      onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.2)'; }}
+                                    >
+                                      Accepter
+                                    </button>
+                                    <button 
+                                      onClick={() => handleQuoteAction(quote._id, 'rejected')} 
+                                      style={{ 
+                                        flex: 1, padding: '10px', borderRadius: '12px', border: '1.5px solid #fee2e2', 
+                                        background: '#fff', color: '#ef4444', fontWeight: '700', cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                      onMouseOver={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+                                      onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; }}
+                                    >
+                                      Refuser
+                                    </button>
+                                  </div>
+                                )}
+
+                                {quote.status === 'accepted' && !quote.requiresContract && !quote.isPaid && (
+                                  <button 
+                                    onClick={() => handlePayment(quote, 'quote')} 
+                                    disabled={isPaying} 
+                                    style={{ 
+                                      flex: 1.5, padding: '10px', borderRadius: '12px', border: 'none', 
+                                      background: '#fbbf24', color: '#000', fontWeight: '800', cursor: 'pointer', 
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                      boxShadow: '0 4px 12px rgba(251, 191, 36, 0.2)', transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 15px rgba(251, 191, 36, 0.3)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.2)'; }}
+                                  >
+                                    <CreditCard size={18} /> Payer
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )
         ) : (
-          loadingContracts ? <div className={styles.loader}><Loader2 className="animate-spin" /></div> :
-          contracts.length === 0 ? <div className={styles.empty}><FileSignature size={48} /><p>Aucun contrat en cours.</p></div> :
-          <div className={styles.grid}>
-            {contracts.map(contract => {
-              const style = getStatusStyle(contract.status);
-              return (
-                <div key={contract._id} className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <div className={styles.orderId}>{contract.contractNumber}</div>
-                    {contract.quoteId && (
-                      <span style={{ fontSize: '11px', color: '#64748b', marginLeft: '10px' }}>
-                        Lié au devis: {contract.quoteId.quoteNumber}
-                      </span>
-                    )}
-                    <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', background: style.bg, color: style.color }}>
-                      {style.label}
-                    </span>
-                  </div>
-                  <div className={styles.cardBody}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '700' }}>{contract.title}</h3>
-                    <div className={styles.userSection}>
-                      <Building2 size={16} />
-                      <div className={styles.userName}>{contract.companyId?.companyName}</div>
-                    </div>
-                    <div style={{ margin: '15px 0', fontSize: '13px', color: '#64748b', background: '#f8fafc', padding: '10px', borderRadius: '8px', borderLeft: '4px solid #24416b' }}>
-                      {contract.content.substring(0, 100)}...
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '10px' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Calendar size={14} /> Début: {new Date(contract.startDate).toLocaleDateString()}</span>
-                      <span style={{ fontWeight: '700' }}>{contract.totalValue.toFixed(2)} TND</span>
-                    </div>
+          loadingContracts ? (
+            <div className={styles.loader}><Loader2 className="animate-spin" /></div>
+          ) : contracts.length === 0 ? (
+            <div className={styles.empty}><FileSignature size={48} /><p>Aucun contrat disponible.</p></div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+               {[
+                { title: "À signer d'urgence", status: ["pending_signature", "pending"], icon: <FileSignature size={20} color="#f59e0b" />, bg: "#fffbeb" },
+                { title: "Contrats Signés / Actifs", status: ["signed", "active"], icon: <CheckCircle2 size={20} color="#10b981" />, bg: "#f0fdf4" },
+                { title: "Archives", status: ["completed", "cancelled", "rejected"], icon: <FileText size={20} color="#94a3b8" />, bg: "#f8fafc" }
+              ].map((section, idx) => {
+                 const filtered = contracts.filter(c => Array.isArray(section.status) ? section.status.includes(c.status) : c.status === section.status);
+                 if (filtered.length === 0) return null;
 
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                      <button 
-                        onClick={() => setSelectedContract(contract)}
-                        style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #24416b', background: 'white', color: '#24416b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                      >
-                        <Eye size={16} /> Lire
-                      </button>
-                      
-                       {contract.status === 'signed' && (
-                        <button 
-                          onClick={() => generateContractPDF(contract, contract.companyId)}
-                          style={{ padding: '10px', borderRadius: '10px', border: '1px solid #24416b', background: 'white', color: '#24416b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title="Télécharger PDF"
-                        >
-                          <Download size={16} />
-                        </button>
-                      )}
+                 return (
+                   <div key={idx}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px 20px', background: section.bg, borderRadius: '12px', borderLeft: `5px solid ${section.icon.props.color}` }}>
+                        {section.icon}
+                        <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{section.title} ({filtered.length})</h2>
+                      </div>
+                      <div className={styles.grid}>
+                        {filtered.map(contract => (
+                          <div key={contract._id} className={styles.card} style={{ border: contract.status === 'pending_signature' ? '2px solid #f59e0b' : '1px solid #e2e8f0' }}>
+                            <div className={styles.cardHeader}>
+                              <div className={styles.orderId}>{contract.contractNumber}</div>
+                              <span style={{ 
+                                padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+                                background: getStatusStyle(contract.status).bg,
+                                color: getStatusStyle(contract.status).color
+                              }}>
+                                {getStatusStyle(contract.status).label}
+                              </span>
+                            </div>
+                            <div className={styles.cardBody}>
+                              <div className={styles.userSection}>
+                                <Building2 size={16} />
+                                <div className={styles.userName}>{contract.companyId?.companyName || contract.professionalId?.fullName}</div>
+                              </div>
+                              <h4 style={{ margin: '15px 0 5px', fontSize: '15px', fontWeight: '800', color: '#1e293b' }}>{contract.title}</h4>
+                              <div style={{ display: 'flex', gap: '15px', fontSize: '12px', color: '#64748b', marginBottom: '15px' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={14} /> {new Date(contract.startDate).toLocaleDateString()}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '700', color: '#24416b' }}><DollarSign size={14} /> {contract.totalValue.toFixed(2)} TND</span>
+                              </div>
+                              
+                              <div style={{ display: 'flex', gap: '10px' }}>
+                                <button 
+                                  onClick={() => setSelectedContract(contract)} 
+                                  style={{ 
+                                    flex: 1, padding: '10px', borderRadius: '12px', border: '1.5px solid #e2e8f0', 
+                                    background: '#fff', color: '#1e293b', fontWeight: '700', cursor: 'pointer', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseOver={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                                >
+                                  <Eye size={16} /> Lire
+                                </button>
+                                
+                                {contract.status === 'signed' && (
+                                  <button 
+                                    onClick={() => generateContractPDF(contract, contract.companyId)} 
+                                    style={{ 
+                                      width: '42px', height: '42px', borderRadius: '12px', border: '1.5px solid #e2e8f0', 
+                                      background: '#fff', color: '#64748b', cursor: 'pointer', 
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#1e293b'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#64748b'; }}
+                                    title="Télécharger PDF"
+                                  >
+                                    <Download size={18} />
+                                  </button>
+                                )}
 
-                      {contract.status === 'signed' && (
-                        <button 
-                          onClick={() => handlePayment(contract, 'contract')}
-                          disabled={isPaying}
-                          style={{
-                            flex: 1.5, padding: '10px', borderRadius: '10px',
-                            border: 'none', background: '#fbbf24', color: '#000', fontWeight: '800',
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                            opacity: isPaying ? 0.7 : 1
-                          }}
-                        >
-                          <CreditCard size={18} /> {isPaying ? 'Chargement...' : 'Payer'}
-                        </button>
-                      )}
-                      
-                      {contract.status === 'pending_signature' && (
-                        <button onClick={() => handleSignContract(contract._id)} style={{ flex: 1.5, padding: '10px', borderRadius: '10px', border: 'none', background: '#24416b', color: 'white', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          <FileSignature size={18} /> Signer
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                                {['signed', 'active'].includes(contract.status) && !contract.isPaid && (
+                                  <button 
+                                    onClick={() => handlePayment(contract, 'contract')} 
+                                    disabled={isPaying} 
+                                    style={{ 
+                                      flex: 1.5, padding: '10px', borderRadius: '12px', border: 'none', 
+                                      background: '#fbbf24', color: '#000', fontWeight: '800', cursor: 'pointer', 
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                      boxShadow: '0 4px 12px rgba(251, 191, 36, 0.2)', transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 15px rgba(251, 191, 36, 0.3)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.2)'; }}
+                                  >
+                                    <CreditCard size={18} /> Payer
+                                  </button>
+                                )}
+
+                                {contract.status === 'pending_signature' && (
+                                  <button 
+                                    onClick={() => handleSignContract(contract._id)} 
+                                    style={{ 
+                                      flex: 1.5, padding: '10px', borderRadius: '12px', border: 'none', 
+                                      background: '#24416b', color: 'white', fontWeight: '700', cursor: 'pointer', 
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                      boxShadow: '0 4px 12px rgba(36, 65, 107, 0.2)', transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 15px rgba(36, 65, 107, 0.3)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(36, 65, 107, 0.2)'; }}
+                                  >
+                                    <FileSignature size={18} /> Signer
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+                 );
+              })}
+            </div>
+          )
         )}
       </div>
 

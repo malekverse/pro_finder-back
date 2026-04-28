@@ -12,7 +12,9 @@ const TimeSlotPicker = ({ slots, selectedSlot, onSlotSelect, isLoading }) => {
     );
   }
 
-  if (!slots || slots.length === 0) {
+  const availableSlots = slots?.filter(slot => slot.isAvailable) || [];
+  
+  if (!isLoading && availableSlots.length === 0) {
     return (
       <div style={s.emptyState}>
         <Ban size={40} color="#94a3b8" />
@@ -25,13 +27,12 @@ const TimeSlotPicker = ({ slots, selectedSlot, onSlotSelect, isLoading }) => {
     <div style={s.container}>
       <h4 style={s.label}>Choisissez une heure :</h4>
       <div style={s.grid}>
-        {slots.map((slot) => (
+        {availableSlots.map((slot) => (
           <button
             key={slot.time}
-            disabled={!slot.isAvailable}
             style={{
               ...s.slotBtn,
-              ...(slot.isAvailable ? s.available : s.booked),
+              ...s.available,
               ...(selectedSlot === slot.time ? s.selected : {})
             }}
             onClick={() => onSlotSelect(slot.time)}

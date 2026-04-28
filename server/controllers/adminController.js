@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const Company = require("../models/company"); 
+const Company = require("../models/company");
 const Professional = require("../models/Professional");
 const Activity = require("../models/Activity");
 const Category = require("../models/Category");
@@ -17,7 +17,7 @@ const getDashboard = async (req, res) => {
     const totalCategories = await Category.countDocuments();
     const totalServices = await Service.countDocuments();
     const totalReports = await Report.countDocuments({ status: "pending" });
-    
+
     const pendingCompanies = await Company.countDocuments({ Status: "pending" });
     const verifiedCompanies = await Company.countDocuments({ Status: "active" });
 
@@ -36,7 +36,7 @@ const getDashboard = async (req, res) => {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const nextD = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      
+
       const userCount = await User.countDocuments({ createdAt: { $lt: nextD } });
       const companyCount = await Company.countDocuments({ createdAt: { $lt: nextD } });
 
@@ -66,10 +66,8 @@ const getDashboard = async (req, res) => {
         users: totalUsers,
         companies: totalCompanies,
         professionals: totalProfessionals,
-        pendingCompanies,
-        pendingProfessionals,
-        villes: totalCities, 
-        categories: totalCategories, 
+        villes: totalCities,
+        categories: totalCategories,
         services: totalServices,
         reports: totalReports
       }
@@ -93,13 +91,13 @@ const getActivities = async (req, res) => {
 
 const changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const adminId = req.user; 
+  const adminId = req.user;
 
   // Validation du nouveau mot de passe (min 8 caractères, 1 lettre, 1 chiffre, 1 caractère spécial)
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
   if (!passwordRegex.test(newPassword)) {
-    return res.status(400).json({ 
-      message: "Nouveau mot de passe non conforme : il doit contenir au moins 8 caractères, dont une lettre, un chiffre et un caractère spécial (@$!%*#?&)." 
+    return res.status(400).json({
+      message: "Nouveau mot de passe non conforme : il doit contenir au moins 8 caractères, dont une lettre, un chiffre et un caractère spécial (@$!%*#?&)."
     });
   }
 
@@ -179,6 +177,7 @@ const verifyCompany = async (req, res) => {
 
     res.json({ message: "Company verified successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error verifying company" });
   }
 };
@@ -188,66 +187,67 @@ const getPendingCompanies = async (req, res) => {
     const pendingCompanies = await Company.find({ Status: "pending" });
     res.json(pendingCompanies);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error fetching pending companies" });
   }
 };
 
 const rejectCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const { reason } = req.body;
+
+    const company = await Company.findById(companyId);
+    if (!company) return res.status(404).json({ message: "Company not found" });
+
+    const name = company.companyName;
+
+    // Au lieu de supprimer, on change le statut et on garde le motif
+    company.Status = "rejected";
+    company.rejectionReason = reason || "Motif non spécifié";
+    await company.save();
+
+    // Envoyer l'email de refus
     try {
-        const { companyId } = req.params;
-        const { reason } = req.body;
-
-        const company = await Company.findById(companyId);
-        if (!company) return res.status(404).json({ message: "Company not found" });
-
-        const name = company.companyName;
-        
-        // Au lieu de supprimer, on change le statut et on garde le motif
-        company.Status = "rejected";
-        company.rejectionReason = reason || "Motif non spécifié";
-        await company.save();
-
-        // Envoyer l'email de refus
-        try {
-          await sendStatusEmail(company.email, name, "rejected", reason);
-        } catch (emailErr) {
-          console.error("Email notification failed:", emailErr);
-        }
-
-        await Activity.create({
-          adminId: req.user,
-          action: "Refus d'entreprise",
-          target: `${name} (Motif: ${reason || 'Non spécifié'})`,
-          status: "error"
-        });
-
-        res.status(200).json({ message: `Entreprise refusée. Motif : ${reason || 'Non spécifié'}` });
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors du rejet de l'entreprise." });
+      await sendStatusEmail(company.email, name, "rejected", reason);
+    } catch (emailErr) {
+      console.error("Email notification failed:", emailErr);
     }
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Refus d'entreprise",
+      target: `${name} (Motif: ${reason || 'Non spécifié'})`,
+      status: "error"
+    });
+
+    res.status(200).json({ message: `Entreprise refusée. Motif : ${reason || 'Non spécifié'}` });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors du rejet de l'entreprise." });
+  }
 };
 const resolveCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
     const { reason } = req.body;
 
-     const company = await Company.findById(companyId);
-        if (!company) return res.status(404).json({ message: "Company not found" });
+    const company = await Company.findById(companyId);
+    if (!company) return res.status(404).json({ message: "Company not found" });
 
-        const name = company.companyName;
-        company.Status = "active ";
-        await company.save();
-        
-        await Activity.create({
-          adminId: req.user,
-          action: "Résolution d'entreprise",
-          target: `${name} (Motif: ${reason || 'Non spécifié'})`,
-          status: "success"
-        });
-        
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors du résolution de l'entreprise." });
-    }
+    const name = company.companyName;
+    company.Status = "active ";
+    await company.save();
+
+    await Activity.create({
+      adminId: req.user,
+      action: "Résolution d'entreprise",
+      target: `${name} (Motif: ${reason || 'Non spécifié'})`,
+      status: "success"
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors du résolution de l'entreprise." });
+  }
 };
 
 const contactCompany = async (req, res) => {
@@ -255,23 +255,29 @@ const contactCompany = async (req, res) => {
     const { companyId } = req.params;
     const { message, type } = req.body;
 
+    console.log(`[contactCompany] Tentative d'envoi d'email à l'entreprise ID: ${companyId}`);
+
     const company = await Company.findById(companyId);
     if (!company) {
+      console.log(`[contactCompany] Entreprise non trouvée avec l'ID: ${companyId}`);
       return res.status(404).json({ message: "Entreprise non trouvée" });
     }
 
     if (!company.email) {
+      console.log(`[contactCompany] Email manquant pour l'entreprise: ${company.companyName}`);
       return res.status(400).json({ message: "L'entreprise n'a pas d'adresse email enregistrée." });
     }
 
+    console.log(`[contactCompany] Envoi d'un email de type '${type}' à ${company.email}`);
 
     try {
       await sendStatusEmail(company.email, company.companyName, type || "manual", message);
     } catch (emailError) {
-      return res.status(500).json({ 
-        message: "Erreur Nodemailer", 
+      console.error("[contactCompany] Erreur Nodemailer détaillée:", emailError.message);
+      return res.status(500).json({
+        message: "Erreur Nodemailer",
         error: emailError.message,
-        details: "Vérifiez vos identifiants EMAIL_USER et EMAIL_PASS. Si vous utilisez Gmail, avez-vous créé un 'Mot de passe d'application' ?" 
+        details: "Vérifiez vos identifiants EMAIL_USER et EMAIL_PASS. Si vous utilisez Gmail, avez-vous créé un 'Mot de passe d'application' ?"
       });
     }
 
@@ -284,6 +290,7 @@ const contactCompany = async (req, res) => {
 
     res.json({ message: "Email envoyé avec succès" });
   } catch (err) {
+    console.error("[contactCompany] Erreur générale:", err);
     res.status(500).json({ message: "Erreur serveur lors de l'envoi de l'email", error: err.message });
   }
 };
@@ -301,6 +308,7 @@ const contactProfessional = async (req, res) => {
     try {
       await sendStatusEmail(professional.email, professional.fullName, type || "manual", message);
     } catch (emailError) {
+      console.error("[contactProfessional] Erreur Nodemailer:", emailError.message);
       return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
     }
 
@@ -322,6 +330,7 @@ const getPendingProfessionals = async (req, res) => {
     const pending = await Professional.find({ Status: "pending" });
     res.json(pending);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error fetching pending professionals" });
   }
 };
@@ -349,6 +358,7 @@ const verifyProfessional = async (req, res) => {
 
     res.json({ message: "Professional verified successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error verifying professional" });
   }
 };

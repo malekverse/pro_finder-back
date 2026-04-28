@@ -90,6 +90,34 @@
   color: #1e293b;
 }
 
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper input {
+  padding-right: 50px; /* Espace pour l'icône */
+}
+
+.eyeButton {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.eyeButton:hover {
+  color: #1E3A5F;
+}
+
 .inputGroup input:focus, .selectInput:focus {
   border-color: #1E3A5F;
   background: #ffffff;

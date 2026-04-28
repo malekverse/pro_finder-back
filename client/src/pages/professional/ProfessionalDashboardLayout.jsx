@@ -35,6 +35,7 @@ const ProfessionalDashboardLayout = () => {
     { path: "/professional/services", label: "Mes Services", icon: <Wrench size={20} />, show: true },
     { path: "/professional/commandes", label: "Commandes & RDV", icon: <Calendar size={20} />, show: true },
     { path: "/professional/documents", label: "Documents", icon: <FileText size={20} />, show: true },
+    { path: "/professional/invoices", label: "Mes Factures", icon: <FileSpreadsheet size={20} />, show: true },
     { path: "/professional/posts", label: "Mes Publications", icon: <Newspaper size={20} />, show: true },
     { path: "/professional/reviews", label: "Avis clients", icon: <Star size={20} />, show: true },
     { path: "/professional/users", label: "Gestion des accès", icon: <Users size={20} />, show: true },
