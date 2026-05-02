@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { logOut } from "../../redux/features/auth/authSlice";
 import { apiSlice } from "../../redux/app/api/apiSlice";
 import {
@@ -300,14 +300,15 @@ const GlobalSearchBar = ({ onFilterChange, onAction }) => {
 
 const SuggestedCompanies = () => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.account);
+  const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
   const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 30000 });
   const [followCompany] = useFollowCompanyMutation();
   const [followedIds, setFollowedIds] = useState([]);
 
   const handleFollow = async (companyId) => {
     if (!user) {
-      navigate("/auth/login");
+      navigate("/auth/login", { state: { from: location.pathname } });
       return;
     }
     const isFollowed = followedIds.includes(companyId);
@@ -355,7 +356,8 @@ const SuggestedCompanies = () => {
 
 const SuggestedProfessionals = () => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.account);
+  const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
   const { data: suggestions = [], isLoading } = useGetSuggestedProfessionalsQuery(undefined, { pollingInterval: 30000 });
   const [followPro] = useFollowProfessionalMutation();
   const [unfollowPro] = useUnfollowProfessionalMutation();
@@ -363,7 +365,7 @@ const SuggestedProfessionals = () => {
 
   const handleFollow = async (proId) => {
     if (!user) {
-      navigate("/auth/login");
+      navigate("/auth/login", { state: { from: location.pathname } });
       return;
     }
     const isFollowed = followedIds.includes(proId);
@@ -457,7 +459,7 @@ const RecommendedProfessionals = () => {
 
 const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.account);
+  const user = useSelector((state) => state.auth.user);
   const scrollRef = useRef(null);
 
   const handleOrder = (e, product) => {
@@ -516,14 +518,15 @@ const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
 
 const ProductDetail = ({ product, onClose }) => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.account);
+  const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
   const [selectedImg, setSelectedImg] = useState(product?.imagesProduct?.[0] || null);
 
   if (!product) return null;
 
   const handleBuy = () => {
     if (!user) {
-      navigate("/auth/signup");
+      navigate("/auth/login", { state: { from: location.pathname } });
     } else {
       navigate("/user/dashboard");
     }
@@ -650,7 +653,7 @@ const ProductDetail = ({ product, onClose }) => {
 
 const ServiceCarousel = ({ title, services, isLoading, onServiceClick }) => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.account);
+  const user = useSelector((state) => state.auth.user);
   const scrollRef = useRef(null);
 
   const handleReserve = (e, service) => {
@@ -709,14 +712,15 @@ const ServiceCarousel = ({ title, services, isLoading, onServiceClick }) => {
 
 const ServiceDetail = ({ service, onClose }) => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.account);
+  const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
   const [selectedImg, setSelectedImg] = useState(service?.imagesServices?.[0] || null);
 
   if (!service) return null;
 
   const handleBuy = () => {
     if (!user) {
-      navigate("/auth/signup");
+      navigate("/auth/login", { state: { from: location.pathname } });
     } else {
       navigate("/user/dashboard");
     }
@@ -765,7 +769,7 @@ const ServiceDetail = ({ service, onClose }) => {
             <div style={pd.divider} />
 
             <div style={pd.actionRow}>
-              <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleReserve(); }}>RÉSERVER MAINTENANT</button>
+              <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleBuy(); }}>RÉSERVER MAINTENANT</button>
             </div>
 
             <div style={pd.overview}>
@@ -1127,7 +1131,7 @@ const ProfessionalFeed = ({ filters }) => {
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.account);
+  const user = useSelector((state) => state.auth.user);
   const [filters, setFilters] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedService, setSelectedService] = useState(null);

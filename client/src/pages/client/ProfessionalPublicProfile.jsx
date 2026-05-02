@@ -435,7 +435,13 @@ const ProfessionalPublicProfile = () => {
               </button>
               
               <button 
-                onClick={() => setIsReportModalOpen(true)}
+                onClick={() => {
+                  if (!user) {
+                    navigate("/auth/login", { state: { from: location.pathname } });
+                    return;
+                  }
+                  setIsReportModalOpen(true);
+                }}
                 style={s.btnReport}
                 title="Signaler ce professionnel"
               >

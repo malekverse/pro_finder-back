@@ -1,16 +1,23 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Loader, Building2, MapPin, Users } from "lucide-react";
 import { useGetSuggestedCompaniesQuery, useFollowCompanyMutation } from "../../../redux/features/company/companyApiSlice";
 import { toImageUrl } from "../../../utils/imageUtils";
 
 const SuggestedCompanies = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
   const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 10000 });
   const [followCompany, { isLoading: following }] = useFollowCompanyMutation();
   const [followedIds, setFollowedIds] = useState([]);
 
   const handleFollow = async (companyId) => {
+    if (!user) {
+      navigate("/auth/login", { state: { from: location.pathname } });
+      return;
+    }
     const isFollowed = followedIds.includes(companyId);
     try {
       await followCompany({ companyId, isFollowed }).unwrap();
