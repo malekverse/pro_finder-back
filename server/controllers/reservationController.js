@@ -10,9 +10,6 @@ exports.createReservation = async (req, res) => {
   try {
     const { serviceId, companyId, date, timeSlot, notes } = req.body;
     const userId = req.user;
-
-    console.log("🚀 [createReservation] Data received:", { serviceId, companyId, date, timeSlot, userId });
-
     if (!userId) {
       return res.status(401).json({ message: "Vous devez être connecté pour réserver" });
     }
@@ -26,7 +23,6 @@ exports.createReservation = async (req, res) => {
     if (date.includes('T')) {
       const d = new Date(date);
       if (isNaN(d.getTime())) {
-        console.error("❌ [createReservation] Date ISO invalide reçue:", date);
         return res.status(400).json({ message: "Format de date ISO invalide" });
       }
       year = d.getUTCFullYear();
@@ -35,7 +31,6 @@ exports.createReservation = async (req, res) => {
     } else {
       const parts = date.split('-').map(Number);
       if (parts.length !== 3 || parts.some(isNaN)) {
-        console.error("❌ [createReservation] Format YYYY-MM-DD invalide:", date);
         return res.status(400).json({ message: "Format de date YYYY-MM-DD invalide" });
       }
       year = parts[0];
@@ -46,7 +41,6 @@ exports.createReservation = async (req, res) => {
     const normalizedDate = new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
 
     if (isNaN(normalizedDate.getTime())) {
-      console.error("❌ [createReservation] normalizedDate est Invalid Date pour:", { year, month, day });
       return res.status(400).json({ message: "Calcul de date impossible" });
     }
 
@@ -57,7 +51,6 @@ exports.createReservation = async (req, res) => {
     if (!actualCompanyId && !actualProfessionalId) {
       const service = await CompanyService.findById(serviceId);
       if (!service) {
-        console.error("❌ [createReservation] Service non trouvé:", serviceId);
         return res.status(404).json({ message: "Service non trouvé" });
       }
       actualCompanyId = service.companyId;
@@ -80,7 +73,6 @@ exports.createReservation = async (req, res) => {
     const providerId = actualCompanyId || actualProfessionalId;
     
     if (!providerId) {
-      console.error("❌ [createReservation] Aucun prestataire trouvé pour ce service");
       return res.status(400).json({ message: "Impossible d'identifier le prestataire du service" });
     }
 
@@ -116,7 +108,6 @@ exports.createReservation = async (req, res) => {
     });
 
     await newReservation.save();
-    console.log("✅ [createReservation] Reservation saved:", newReservation._id);
 
     // Notify Company (seulement si ce n'est pas le manager qui réserve chez lui-même)
     const isSelfBooking = req.roles?.includes("professional") 
@@ -136,15 +127,13 @@ exports.createReservation = async (req, res) => {
           message: `${user?.fullName || "Un client"} a pris un nouveau rendez-vous.`
         });
       } catch (notifErr) {
-        console.error("⚠️ [createReservation] Erreur lors de la notification:", notifErr);
-        // On ne bloque pas la réponse si seule la notification échoue
+        console.log("Erreur lors de la notification:", notifErr);
       }
     }
 
     res.status(201).json({ message: "Réservation effectuée avec succès", reservation: newReservation });
   } catch (error) {
-    console.error("🔥 [createReservation] Critical Error:", error);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: "Réservation échoué" });
   }
 };
 
@@ -239,21 +228,12 @@ exports.getCompanyReservations = async (req, res) => {
     const hasCompany = !!req.companyId;
     const isProfessional = !hasCompany && req.roles?.includes("professional");
     const id = hasCompany ? req.companyId : req.user;
-    
-    const query = isProfessional ? { professionalId: id } : { companyId: id };
-    
-    console.log(`🔍 [getCompanyReservations] Fetching for ${isProfessional ? 'Pro' : 'Company'}: ${id}`);
-
+       const query = isProfessional ? { professionalId: id } : { companyId: id };
     const reservations = await Reservation.find(query)
       .populate("userId", "fullName email avatarUrl phone")
       .populate("serviceId", "name price duration")
       .sort({ createdAt: -1 })
       .lean();
-
-    console.log(`📊 [getCompanyReservations] Found ${reservations.length} reservations`);
-    if (reservations.length > 0) {
-      console.log(`   - First reservation status: ${reservations[0].status}, date: ${reservations[0].date}`);
-    }
 
     // Fetch quotes for these reservations
     const Quote = require("../models/Quote");
@@ -335,9 +315,7 @@ exports.updateReservationStatus = async (req, res) => {
 // Common: Get available slots for a specific service and date
 exports.getAvailableSlots = async (req, res) => {
   try {
-    const { serviceId, date } = req.query; // date string (YYYY-MM-DD)
-    console.log(`[getAvailableSlots] Req for Service: ${serviceId}, Date: ${date}`);
-    
+    const { serviceId, date } = req.query; // date string (YYYY-MM-DD)    
     if (!serviceId || !date) {
       return res.status(400).json({ message: "serviceId and date are required" });
     }
@@ -377,9 +355,7 @@ exports.getAvailableSlots = async (req, res) => {
     if (isNaN(startOfDay.getTime())) {
       return res.status(400).json({ message: "Format de date invalide" });
     }
-    
-    console.log(`[getAvailableSlots] Searching for Provider between: ${startOfDay.toISOString()} AND ${endOfDay.toISOString()}`);
-
+  
     // Fetch existing reservations or blocks for the PROVIDER (not just the service)
     // Include pending, confirmed, paid, completed, and blocked
     const providerQuery = [];
@@ -394,9 +370,6 @@ exports.getAvailableSlots = async (req, res) => {
         status: { $in: ["confirmed", "paid", "completed", "blocked"] }
       });
     }
-
-    console.log(`[getAvailableSlots] Found ${existingReservations.length} occupied slots for provider`);
-
     const bookedSlots = existingReservations.map(r => r.timeSlot);
 
     // Map all potential slots to availability status

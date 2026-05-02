@@ -5,7 +5,6 @@ export const companyApiSlice = apiSlice.injectEndpoints({
 
     getCompanyProfile: builder.query({
       query: (companyId) => {
-        console.log("Fetching profile for companyId:", companyId);
         return {
           url: "company/profile",
           params: { _c: companyId }

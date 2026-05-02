@@ -57,10 +57,4 @@ router.delete("/:id/comment/:commentId",
   postController.deleteComment
 );
 
-// ── Partage ───────────────────────────────────────────────────────────────
-router.post("/:id/share", 
-  checkPermission("like_post"),
-  postController.sharePost
-);
-
 module.exports = router;

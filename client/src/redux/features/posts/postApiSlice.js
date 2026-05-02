@@ -77,12 +77,6 @@ export const postsApiSlice = apiSlice.injectEndpoints({
       query: ({ postId, commentId }) => ({ url: `posts/${postId}/comment/${commentId}`, method: "DELETE" }),
       invalidatesTags: ["Post"],
     }),
-
-    sharePost: builder.mutation({
-      query: (id) => ({ url: `posts/${id}/share`, method: "POST" }),
-      invalidatesTags: ["Post"],
-    }),
-
   }),
 });
 
@@ -99,5 +93,4 @@ export const {
   useToggleLikeMutation,
   useAddCommentMutation,
   useDeleteCommentMutation,
-  useSharePostMutation,
 } = postsApiSlice;

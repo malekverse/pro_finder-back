@@ -168,7 +168,7 @@ const ProfessionalCommandes = () => {
               {[
                 { title: "Nouvelles Commandes", status: ["pending", "paid"], icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
                 { title: "En cours de traitement", status: ["confirmed", "shipped"], icon: <Truck size={20} color="#3b82f6" />, bg: "#eff6ff" },
-                { title: "Terminées / Annulées", status: ["delivered", "cancelled"], icon: <Package size={20} color="#94a3b8" />, bg: "#f8fafc" }
+                { title: "Terminées", status: ["delivered"], icon: <Package size={20} color="#94a3b8" />, bg: "#f8fafc" }
               ].map((section, idx) => {
                 const filtered = orders.filter(o => section.status.includes(o.status));
                 if (filtered.length === 0) return null;

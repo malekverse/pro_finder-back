@@ -293,25 +293,7 @@ const deleteComment = async (req, res) => {
   }
 };
 
-// ─── PARTAGER UN POST ─────────────────────────────────────────────────────
-const sharePost = async (req, res) => {
-  try {
-    const { Post } = getModels();
-    const post = await Post.findOne({ _id: req.params.id, isDeleted: false });
-    if (!post) return res.status(404).json({ message: "Post non trouvé" });
 
-    if (!post.shares.includes(req.user)) {
-      post.shares.push(req.user);
-      post.sharesCount += 1;
-      await post.save();
-    }
-
-    res.json({ sharesCount: post.sharesCount });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
-  }
-};
 
 // ─── MES POSTS ────────────────────────────────────────────────────────────
 const getMyPosts = async (req, res) => {
@@ -443,5 +425,5 @@ const populatePost = async (postId) => {
 
 module.exports = {
   createPost, getAllPosts, getPost, updatePost, deletePost,
-  toggleLike, addComment, deleteComment, sharePost, getMyPosts, getPostsByCompany,
+  toggleLike, addComment, deleteComment, getMyPosts, getPostsByCompany,
 };

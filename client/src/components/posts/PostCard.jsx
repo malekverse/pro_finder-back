@@ -5,7 +5,6 @@ import {
   useToggleLikeMutation,
   useAddCommentMutation,
   useDeleteCommentMutation,
-  useSharePostMutation,
   useDeletePostMutation,
   useUpdatePostMutation,
 } from "../../redux/features/posts/postApiSlice";
@@ -198,7 +197,6 @@ const PostCard = ({ post, onDeleted }) => {
   const [toggleLike]    = useToggleLikeMutation();
   const [addComment]    = useAddCommentMutation();
   const [deleteComment] = useDeleteCommentMutation();
-  const [sharePost]     = useSharePostMutation();
   const [deletePost]    = useDeletePostMutation();
 
   const [showComments,  setShowComments]  = useState(false);
@@ -262,11 +260,7 @@ const PostCard = ({ post, onDeleted }) => {
     try { await deleteComment({ postId: post._id, commentId }).unwrap(); } catch (err) { console.error(err); }
   };
 
-  const handleShare = async () => {
-    try { await sharePost(post._id).unwrap(); } catch (err) { console.error(err); }
-  };
-
-  const handleDelete = async () => {
+   const handleDelete = async () => {
     setMenuOpen(false);
     setDeleteConfirm(false);
     try {
@@ -413,10 +407,6 @@ const PostCard = ({ post, onDeleted }) => {
           <button onClick={() => setShowComments(!showComments)} style={s.actionBtn}>
             <MessageCircle size={17} strokeWidth={1.8} />
             Commenter
-          </button>
-          <button onClick={handleShare} style={s.actionBtn}>
-            <Repeat2 size={17} strokeWidth={1.8} />
-            Partager
           </button>
         </div>
 
