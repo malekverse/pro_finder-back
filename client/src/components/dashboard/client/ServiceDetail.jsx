@@ -100,7 +100,6 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
                 <span style={{...pd.status, color: '#10b981'}}>
                   <Clock size={16} /> DURÉE: {formatDuration(service.duration)}
                 </span>
-                <span style={pd.sku}>SKU: {service._id.slice(-8).toUpperCase()}</span>
               </div>
 
               <div style={pd.divider} />
@@ -151,7 +150,7 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
                 >
                   {!selectedDate || !selectedSlot ? "CHOISISSEZ UNE DATE & HEURE" : "CONFIRMER LA RÉSERVATION"}
                 </button>
-                <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
+
               </div>
             </div>
 
@@ -162,7 +161,7 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
                     {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
                       <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
                     ) : (
-                      <Building2 size={24} color="#94a3b8" />
+                      <Building2 size={24} color="#1c79faff" />
                     )}
                   </div>
                   <div>
@@ -202,6 +201,15 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
               </p>
           </div>
         </div>
+        <style>{`
+          button:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+          }
+          button:active:not(:disabled) {
+            transform: translateY(0);
+          }
+        `}</style>
       </div>
     </div>
   );
@@ -224,7 +232,6 @@ const pd = {
   currentPrice: { fontSize: '24px', fontWeight: '800', color: '#1E3A5F' },
   statusRow: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' },
   status: { display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '700', color: '#10b981' },
-  sku: { fontSize: '12px', fontWeight: '600', color: '#94a3b8' },
   divider: { height: '1px', background: '#e2e8f0', margin: '25px 0' },
   qtySection: { marginBottom: '25px' },
   qtyLabel: { fontSize: '12px', fontWeight: '800', color: '#64748b', display: 'block', marginBottom: '10px', textTransform: 'uppercase' },
@@ -232,19 +239,19 @@ const pd = {
   qtyBtn: { width: '40px', height: '40px', background: '#fff', border: 'none', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#1E3A5F', transition: '0.2s' },
   qtyInput: { width: '50px', height: '40px', border: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', textAlign: 'center', fontSize: '14px', fontWeight: '700', color: '#1E3A5F' },
   actionRow: { display: 'flex', gap: '15px', marginBottom: '35px', marginTop: '20px' },
-  buyBtn: { flex: 1, height: '52px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
-  wishBtn: { width: '52px', height: '52px', background: '#f1f5f9', border: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' },
+  buyBtn: { flex: 1, height: '52px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 4px 6px -1px rgba(30, 58, 95, 0.2)', textTransform: 'uppercase', letterSpacing: '0.05em' },
   bookingSection: { 
-    background: '#f8fafc', padding: '25px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '25px' 
+    background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '25px',
+    boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)'
   },
-  bookingHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' },
-  bookingTitle: { fontSize: '16px', fontWeight: '800', color: '#1E3A5F', margin: 0 },
-  bookingContent: { display: 'flex', gap: '30px', flexWrap: 'wrap' },
-  calendarWrapper: { flex: 1, minWidth: '300px' },
+  bookingHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' },
+  bookingTitle: { fontSize: '15px', fontWeight: '800', color: '#1E3A5F', margin: 0 },
+  bookingContent: { display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' },
+  calendarWrapper: { flex: '0 0 280px' },
   slotsWrapper: { flex: 1, minWidth: '200px' },
-  stepLabel: { fontSize: '13px', fontWeight: '700', color: '#64748b', marginBottom: '12px' },
-  noteSection: { marginTop: '25px', padding: '20px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' },
-  noteArea: { width: '100%', minHeight: '100px', padding: '15px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', color: '#1e293b', outline: 'none', transition: '0.2s', resize: 'vertical' },
+  stepLabel: { fontSize: '12px', fontWeight: '800', color: '#64748b', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.025em' },
+  noteSection: { marginTop: '20px', padding: '15px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' },
+  noteArea: { width: '100%', minHeight: '80px', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#1e293b', outline: 'none', transition: '0.2s', resize: 'vertical' },
   scrollArea: { flex: 1, overflowY: 'auto', paddingBottom: '20px' },
   bottomSection: { padding: '0 40px 40px' },
   descriptionText: { fontSize: '15px', color: '#475569', lineHeight: '1.7', margin: 0 },

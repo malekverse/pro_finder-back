@@ -66,7 +66,6 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
           <div style={pd.midCol}>
             <div style={pd.breadcrumb}>
               <span style={pd.categoryTag}>Produit</span>
-              <span style={pd.sku}>SKU: {product._id.slice(-8).toUpperCase()}</span>
             </div>
             
             <h1 style={pd.title}>{product.name}</h1>
@@ -85,7 +84,7 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
                   {[1, 2, 3, 4].map(s => <Star key={s} size={14} fill="#fbbf24" color="#fbbf24" />)}
                   <Star size={14} color="#cbd5e1" />
                 </div>
-                <span style={pd.ratingLabel}>4.0 (12 avis)</span>
+                <span style={pd.ratingLabel}>4.0</span>
               </div>
             </div>
 
@@ -146,18 +145,6 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
                 <div style={{ flex: 1 }}>
                   <h4 style={pd.sellerName}>{product.companyId?.companyName || product.professionalId?.fullName || 'Boutique Pro'}</h4>
                   <div style={pd.sellerTag}>Vendeur Vérifié</div>
-                </div>
-              </div>
-              
-              <div style={pd.sellerStats}>
-                <div style={pd.statItem}>
-                  <span style={pd.statValue}>4.8</span>
-                  <span style={pd.statLabel}>Note</span>
-                </div>
-                <div style={pd.statDivider} />
-                <div style={pd.statItem}>
-                  <span style={pd.statValue}>+100</span>
-                  <span style={pd.statLabel}>Ventes</span>
                 </div>
               </div>
 
@@ -231,7 +218,6 @@ const pd = {
   midCol: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px' },
   breadcrumb: { display: 'flex', alignItems: 'center', gap: '12px' },
   categoryTag: { background: '#eff6ff', color: '#3b82f6', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' },
-  sku: { fontSize: '11px', fontWeight: '600', color: '#94a3b8', letterSpacing: '0.5px' },
   title: { fontSize: '32px', fontWeight: '800', color: '#0f172a', margin: '0', lineHeight: 1.2 },
   priceSection: { display: 'flex', alignItems: 'baseline', gap: '12px', margin: '8px 0' },
   currentPrice: { fontSize: '28px', fontWeight: '800', color: '#1E3A5F' },

@@ -94,21 +94,22 @@ const CalendarPicker = ({ selectedDate, onDateSelect }) => {
 const s = {
   calendar: {
     background: '#fff',
-    borderRadius: '16px',
-    padding: '20px',
+    borderRadius: '12px',
+    padding: '12px',
     border: '1px solid #e2e8f0',
     width: '100%',
-    maxWidth: '350px'
+    maxWidth: '350px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px'
+    marginBottom: '12px'
   },
   monthLabel: {
     fontWeight: '800',
-    fontSize: '16px',
+    fontSize: '14px',
     color: '#1E3A5F'
   },
   navBtn: {
@@ -122,28 +123,28 @@ const s = {
   daysGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(7, 1fr)',
-    gap: '8px'
+    gap: '4px'
   },
   dayHeader: {
     textAlign: 'center',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: '700',
-    color: '#94a3b8',
-    paddingBottom: '10px',
+    color: '#4f5d6fff',
+    paddingBottom: '1px',
     textTransform: 'uppercase'
   },
   dayCell: {
-    height: '40px',
+    height: '25px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: '10px',
-    fontSize: '14px',
+    borderRadius: '8px',
+    fontSize: '12px',
     fontWeight: '600',
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   },
-  emptyDay: { height: '40px' },
-  pastDay: { color: '#cbd5e1', cursor: 'default' },
+  emptyDay: { height: '25px' },
+  pastDay: { color: '#cbd5e1', cursor: 'default', fontSize: '12px' },
   clickableDay: { color: '#475569', cursor: 'pointer' },
   selectedDay: { zIndex: 2 }
 };

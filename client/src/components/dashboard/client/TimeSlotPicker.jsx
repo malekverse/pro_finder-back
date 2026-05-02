@@ -25,11 +25,11 @@ const TimeSlotPicker = ({ slots, selectedSlot, onSlotSelect, isLoading }) => {
 
   return (
     <div style={s.container}>
-      <h4 style={s.label}>Choisissez une heure :</h4>
       <div style={s.grid}>
         {availableSlots.map((slot) => (
           <button
             key={slot.time}
+            className="slot-btn"
             style={{
               ...s.slotBtn,
               ...s.available,
@@ -55,24 +55,23 @@ const TimeSlotPicker = ({ slots, selectedSlot, onSlotSelect, isLoading }) => {
 };
 
 const s = {
-  container: { width: '100%' },
-  label: { fontSize: '14px', fontWeight: '800', color: '#1E3A5F', marginBottom: '15px' },
+  container: { width: '100%', padding: '2px' },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '10px'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(65px, 1fr))',
+    gap: '8px'
   },
   slotBtn: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '8px',
-    height: '45px',
-    borderRadius: '10px',
+    gap: '3px',
+    height: '24px',
+    borderRadius: '12px',
     borderWidth: '1px',
     borderStyle: 'solid',
     borderColor: '#e2e8f0',
-    fontSize: '14px',
+    fontSize: '12px',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',

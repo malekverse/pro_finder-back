@@ -569,7 +569,7 @@ const ProductDetail = ({ product, onClose }) => {
               <span style={{ ...pd.status, color: product.stock > 0 ? '#10b981' : '#ef4444' }}>
                 <CheckCircle2 size={16} /> {product.stock > 0 ? 'EN STOCK' : 'RUPTURE'}
               </span>
-              <span style={pd.sku}>SKU: {product._id.slice(-8).toUpperCase()}</span>
+             
             </div>
 
             <div style={pd.divider} />
@@ -585,7 +585,6 @@ const ProductDetail = ({ product, onClose }) => {
 
             <div style={pd.actionRow}>
               <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleBuy(); }}>ACHETER</button>
-              <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
             </div>
 
             <div style={pd.overview}>
@@ -760,14 +759,13 @@ const ServiceDetail = ({ service, onClose }) => {
               <span style={{ ...pd.status, color: '#10b981' }}>
                 <Clock size={16} /> DURÉE: {service.duration} min
               </span>
-              <span style={pd.sku}>SKU: {service._id.slice(-8).toUpperCase()}</span>
+             
             </div>
 
             <div style={pd.divider} />
 
             <div style={pd.actionRow}>
               <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleReserve(); }}>RÉSERVER MAINTENANT</button>
-              <button type="button" style={pd.wishBtn}><Heart size={20} /></button>
             </div>
 
             <div style={pd.overview}>
@@ -1296,7 +1294,6 @@ const pd = {
   currentPrice: { fontSize: '28px', fontWeight: '800', color: '#ff6b00' },
   statusRow: { display: 'flex', gap: '20px', alignItems: 'center' },
   status: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#10b981' },
-  sku: { fontSize: '13px', color: '#64748b', fontWeight: '500' },
   divider: { height: '1px', background: '#e2e8f0', margin: '5px 0' },
   qtySection: { display: 'flex', alignItems: 'center', gap: '20px' },
   qtyLabel: { fontSize: '13px', fontWeight: '700', color: '#1e293b' },
@@ -1306,7 +1303,6 @@ const pd = {
   actionRow: { display: 'flex', gap: '15px', marginTop: '10px' },
   buyBtn: { flex: 1, padding: '14px', background: '#ff6b00', color: '#fff', border: 'none', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase' },
   cartBtn: { flex: 1, padding: '14px', background: '#fff', color: '#ff6b00', border: '1px solid #ff6b00', borderRadius: '30px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: '0.2s', textTransform: 'uppercase' },
-  wishBtn: { width: '48px', height: '48px', border: '1px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff6b00', cursor: 'pointer' },
   overview: { marginTop: '20px' },
   overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#1e293b', margin: '0 0 10px' },
   specs: { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', color: '#475569' },
