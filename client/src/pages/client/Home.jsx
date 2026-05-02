@@ -7,13 +7,6 @@ import {
   useGetSuggestedCompaniesQuery,
   useFollowCompanyMutation,
   useSearchCompaniesQuery,
-  useGetCountriesQuery,
-  useGetRegionsQuery,
-  useGetCitiesByRegionQuery,
-  useGetCategoriesQuery,
-  useGetSubCategoriesQuery,
-  useGetServicesBySubQuery,
-  useGetServicesQuery,
   useGetRecommendedCompaniesQuery,
 } from "../../redux/features/company/companyApiSlice";
 import {
@@ -32,7 +25,7 @@ import {
 import {
   Loader, Users, ChevronDown, LogOut,
   Home as HomeIcon, User, Building2, MapPin, Search, X,
-  Briefcase, Tag, ChevronRight, Heart, Wrench, Zap, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock
+  Briefcase, Tag, ChevronRight, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock
 } from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
@@ -135,168 +128,6 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
   );
 };
 
-const GlobalSearchBar = ({ onFilterChange, onAction }) => {
-  const [q, setQ] = useState("");
-  const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
-  const [city, setCity] = useState("");
-  const [category, setCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
-  const [service, setService] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-
-  const { data: countries = [] } = useGetCountriesQuery(undefined, { pollingInterval: 30000 });
-  const { data: regionsData } = useGetRegionsQuery(country, { skip: !country, pollingInterval: 30000 });
-  const regions = regionsData?.regions || [];
-  const { data: cities = [] } = useGetCitiesByRegionQuery(region, { skip: !region, pollingInterval: 30000 });
-
-  const { data: categories = [] } = useGetCategoriesQuery(undefined, { pollingInterval: 30000 });
-
-  const handleSearch = () => {
-    setIsSearching(true);
-    const filters = {
-      q,
-      country,
-      region,
-      city,
-      category,
-      subCategory,
-      service
-    };
-    onFilterChange(filters);
-    setTimeout(() => setIsSearching(false), 800);
-  };
-
-  const quickTags = [
-    { label: "Médecins", icon: <Heart size={14} color="#ef4444" />, name: "Santé" },
-    { label: "Plombiers", icon: <Wrench size={14} />, name: "Plomberie" },
-    { label: "Avocats", icon: <Briefcase size={14} />, name: "Juridique" },
-    { label: "Électriciens", icon: <Zap size={14} color="#fea809ff" />, name: "Électricité" },
-    { label: "Transport", icon: <Store size={14} />, name: "Transport" },
-  ];
-
-  const handleQuickTagClick = (e, tagName) => {
-    e.preventDefault();
-    setQ(tagName);
-    onFilterChange({
-      q: tagName,
-      category: "",
-      subCategory: "",
-      service: "",
-      country,
-      region,
-      city
-    });
-  };
-
-  return (
-    <div style={sr.heroSection}>
-      <div style={sr.heroContent}>
-        <h1 style={sr.heroTitle}>Trouvez un professionnel <strong>ou une entreprise</strong></h1>
-        <p style={sr.heroSubtitle}>La première plateforme de mise en relation entre professionnels et clients en Tunisie.</p>
-
-        <div style={sr.searchContainer}>
-          {/* LIGNE 1 : MOT-CLÉ ET TAXONOMIE */}
-          <div style={sr.searchBarRow}>
-            <div style={{ ...sr.filterGroup, flex: 1.5 }}>
-              <Search size={18} color="#1E3A5F" />
-              <input
-                type="text"
-                placeholder="Que recherchez-vous ? (ex: plombier, avocat...)"
-                style={sr.inputOld}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <div style={sr.divider} />
-            <div style={sr.filterGroup}>
-              <Tag size={18} color="#1E3A5F" />
-              <select style={sr.selectOld} value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(""); setService(""); }}>
-                <option value="">Toutes les catégories</option>
-                {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
-              <ChevronDown size={14} color="#94a3b8" />
-            </div>
-          </div>
-
-          {/* LIGNE 2 : GÉOGRAPHIE */}
-          <div style={sr.searchBarRow}>
-            <div style={sr.filterGroup}>
-              <MapPin size={18} color="#1E3A5F" />
-              <select style={sr.selectOld} value={country} onChange={(e) => { setCountry(e.target.value); setRegion(""); setCity(""); }}>
-                <option value="">Tous les pays</option>
-                {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
-              <ChevronDown size={14} color="#94a3b8" />
-            </div>
-            <div style={sr.divider} />
-            <div style={sr.filterGroup}>
-              <select style={sr.selectOld} value={region} onChange={(e) => { setRegion(e.target.value); setCity(""); }} disabled={!country}>
-                <option value="">Toutes les régions</option>
-                {regions.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-              </select>
-              <ChevronDown size={14} color="#94a3b8" />
-            </div>
-            <div style={sr.divider} />
-            <div style={sr.filterGroup}>
-              <select style={sr.selectOld} value={city} onChange={(e) => setCity(e.target.value)} disabled={!region}>
-                <option value="">Toutes les villes</option>
-                {cities.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
-              <ChevronDown size={14} color="#94a3b8" />
-            </div>
-
-            <button type="button" style={sr.searchBtnOld} onClick={(e) => { e.preventDefault(); handleSearch(); }} disabled={isSearching}>
-              {isSearching ? <Loader size={18} className="animate-spin" /> : "Rechercher"}
-            </button>
-          </div>
-        </div>
-
-        <div style={sr.quickTags}>
-          {quickTags.map((tag, idx) => (
-            <button key={idx} type="button" style={sr.tagBtn} onClick={(e) => handleQuickTagClick(e, tag.name || tag.label)}>
-              {tag.icon}
-              {tag.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={sr.showcaseGrid}>
-        {/* CARTE 1: CHERCHER EXPERT */}
-        <div className="showcase-card" style={{ ...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1521791136064-7986c2959210?auto=format&fit=crop&w=800&q=80")' }} onClick={() => onAction('professionals')}>
-          <div style={sr.cardContent}>
-            <span style={{ ...sr.cardTag, background: '#10b981' }}>Experts</span>
-            <h3>Trouver un Expert</h3>
-            <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Besoin d'un conseil ? Trouvez le professionnel indépendant idéal pour vos projets.</p>
-            <button style={{ ...sr.cardBtn, background: '#10b981' }} onClick={(e) => { e.stopPropagation(); onAction('professionals'); }}>Chercher un expert</button>
-          </div>
-        </div>
-
-        {/* CARTE 2: CHERCHER SOCIÉTÉ */}
-        <div className="showcase-card" style={{ ...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80")' }} onClick={() => onAction('companies')}>
-          <div style={sr.cardContent}>
-            <span style={{ ...sr.cardTag, background: '#f59e0b' }}>Sociétés</span>
-            <h3>Chercher une Société</h3>
-            <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Découvrez les entreprises locales, explorez leurs produits et suivez leurs actualités.</p>
-            <button style={{ ...sr.cardBtn, background: '#f59e0b' }} onClick={(e) => { e.stopPropagation(); onAction('companies'); }}>Voir les sociétés</button>
-          </div>
-        </div>
-
-        {/* CARTE 3: DEVENIR PRESTATAIRE */}
-        <div className="showcase-card" style={{ ...sr.showcaseCard, background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80")' }} onClick={() => onAction('join')}>
-          <div style={sr.cardContent}>
-            <span style={{ ...sr.cardTag, background: '#3b82f6' }}>Partenariat</span>
-            <h3>Booster votre Activité</h3>
-            <p style={{ fontSize: '13px', opacity: 0.9, margin: '8px 0 15px' }}>Vous êtes un pro ? Rejoignez ProFinder pour trouver de nouveaux clients dès aujourd'hui.</p>
-            <button style={{ ...sr.cardBtn, background: '#3b82f6' }} onClick={(e) => { e.stopPropagation(); onAction('join'); }}>Devenir partenaire</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const SuggestedCompanies = () => {
   const navigate = useNavigate();
@@ -1132,7 +963,6 @@ const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-  const [filters, setFilters] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [searchTab, setSearchTab] = useState("companies"); // 'companies' | 'professionals'
@@ -1186,9 +1016,6 @@ const Home = () => {
         activeTab={isShowingResults ? searchTab : null}
       />
       <div style={p.layout}>
-        <div style={p.searchWrap}>
-          <GlobalSearchBar onFilterChange={(f) => { setFilters(f); setIsShowingResults(true); }} onAction={handleAction} />
-        </div>
 
         <div style={p.contentWrapper}>
           <main style={p.main}>
@@ -1243,9 +1070,9 @@ const Home = () => {
                 </div>
 
                 {searchTab === "companies" ? (
-                  <CompanyFeed filters={filters} />
+                  <CompanyFeed filters={{}} />
                 ) : (
-                  <ProfessionalFeed filters={filters} />
+                  <ProfessionalFeed filters={{}} />
                 )}
               </div>
             )}
@@ -1499,184 +1326,12 @@ const p = {
     alignItems: 'flex-start'
   },
   main: { flex: 1, minWidth: 0 },
-  searchWrap: {
-    marginBottom: 40,
-    padding: '40px',
-    background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
-    borderRadius: '24px'
-  },
   feedHeader: { display: "flex", alignItems: "center", gap: 10, marginBottom: 20 },
   feedTitle: { fontWeight: 800, fontSize: 20, color: "#0f172a", margin: 0 },
   feedScroll: { display: 'flex', flexDirection: 'column', gap: 20 },
   rightSidebar: { width: 320, flexShrink: 0, position: "sticky", top: 90 },
 };
 
-const sr = {
-  heroSection: {
-    padding: '60px 20px',
-    background: 'linear-gradient(135deg, #1E3A5F 0%, #24416b 100%)',
-    borderRadius: '0 0 40px 40px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '40px',
-    marginBottom: '40px'
-  },
-  heroContent: {
-    textAlign: 'center',
-    maxWidth: '900px',
-    color: '#fff'
-  },
-  heroTitle: {
-    fontSize: '36px',
-    fontWeight: '900',
-    marginBottom: '16px',
-    letterSpacing: '-1px'
-  },
-  heroSubtitle: {
-    fontSize: '18px',
-    opacity: 0.9,
-    marginBottom: '30px'
-  },
-  searchContainer: {
-    maxWidth: '900px',
-    margin: '0 auto',
-    background: '#fff',
-    borderRadius: '24px',
-    padding: '10px',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    border: '1px solid #f1f5f9'
-  },
-  searchBarRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
-    padding: '5px'
-  },
-  filterGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '0 15px',
-    flex: 1,
-    minWidth: 0
-  },
-  inputOld: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1E3A5F',
-    background: 'transparent',
-    padding: '10px 0'
-  },
-  selectOld: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1E3A5F',
-    background: 'transparent',
-    cursor: 'pointer',
-    appearance: 'none',
-    width: '100%',
-    padding: '10px 0'
-  },
-  divider: {
-    width: '1px',
-    height: '24px',
-    background: '#e2e8f0',
-    flexShrink: 0
-  },
-  searchBtnOld: {
-    background: '#3b82f6',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    padding: '12px 30px',
-    fontSize: '15px',
-    fontWeight: '800',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)',
-    marginLeft: '5px',
-    flexShrink: 0
-  },
-  quickTags: {
-    display: 'flex',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: '12px',
-    marginTop: '25px'
-  },
-  tagBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 20px',
-    borderRadius: '12px',
-    background: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
-    color: '#fff',
-    fontSize: '14px',
-    fontWeight: '700',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  },
-  showcaseGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '20px',
-    width: '100%',
-    maxWidth: '1100px'
-  },
-  showcaseCard: {
-    height: '240px',
-    borderRadius: '24px',
-    padding: '24px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-    cursor: 'pointer',
-    transition: 'transform 0.3s ease'
-  },
-  cardContent: {
-    position: 'relative',
-    zIndex: 2,
-    color: '#fff'
-  },
-  cardTag: {
-    background: '#3b82f6',
-    padding: '4px 12px',
-    borderRadius: '8px',
-    fontSize: '12px',
-    fontWeight: '800',
-    marginBottom: '10px',
-    display: 'inline-block'
-  },
-  cardBtn: {
-    marginTop: '15px',
-    background: '#fff',
-    color: '#1e293b',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '10px',
-    fontSize: '13px',
-    fontWeight: '800',
-    cursor: 'pointer'
-  }
-};
 
 const f = {
   center: { display: "flex", flexDirection: "column", alignItems: "center", gap: 15, padding: "80px 0" },
