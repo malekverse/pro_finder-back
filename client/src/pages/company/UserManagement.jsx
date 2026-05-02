@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { selectPermissions } from "../../redux/features/auth/authSlice";
@@ -24,6 +25,9 @@ const UserManagement = () => {
   const { data: followers = [], refetch: refetchFollowers } = useGetCompanyFollowersQuery(undefined, { pollingInterval: 3000 });
   const { data: blockedUsers = [], refetch: refetchBlocked } = useGetBlockedUsersQuery(undefined, { pollingInterval: 3000 });
   const [toggleBlock, { isLoading: isBlocking }] = useToggleBlockFollowerMutation();
+  
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [userToToggle, setUserToToggle] = useState(null);
   const [roles, setRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const token = useSelector((state) => state.auth.token) || localStorage.getItem("accessToken");
@@ -49,9 +53,17 @@ const UserManagement = () => {
     listRef.current?.refetchUsers();
   };
 
-  const handleToggleBlock = async (followId) => {
+  const initiateToggleBlock = (follower) => {
+    setUserToToggle(follower);
+    setShowConfirm(true);
+  };
+
+  const confirmToggleBlock = async () => {
+    if (!userToToggle) return;
     try {
-      await toggleBlock(followId).unwrap();
+      await toggleBlock(userToToggle._id).unwrap();
+      setShowConfirm(false);
+      setUserToToggle(null);
     } catch (err) {
       console.error("Erreur blocage:", err);
     }
@@ -214,7 +226,7 @@ const UserManagement = () => {
                       <td style={{ padding: '15px', textAlign: 'center' }}>
                         {canBlock && (
                           <button 
-                            onClick={() => handleToggleBlock(f._id)}
+                            onClick={() => initiateToggleBlock(f)}
                             disabled={isBlocking}
                             style={{ 
                               padding: '8px', borderRadius: '8px', border: '1px solid',
@@ -237,6 +249,67 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL CONFIRMATION BLOCAGE */}
+      <AnimatePresence>
+        {showConfirm && (
+          <div style={{ 
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            zIndex: 1000, backdropFilter: 'blur(4px)'
+          }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{ 
+                background: 'white', padding: '30px', borderRadius: '16px', maxWidth: '400px', width: '90%',
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)'
+              }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ 
+                  width: '60px', height: '60px', borderRadius: '50%', 
+                  background: userToToggle?.is_blocked ? '#f0fdf4' : '#fef2f2',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px'
+                }}>
+                  {userToToggle?.is_blocked ? <UserCheck size={30} color="#16a34a" /> : <Ban size={30} color="#ef4444" />}
+                </div>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '1.2rem' }}>
+                  {userToToggle?.is_blocked ? 'Débloquer l\'utilisateur ?' : 'Bloquer l\'utilisateur ?'}
+                </h3>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  Êtes-vous sûr de vouloir {userToToggle?.is_blocked ? 'débloquer' : 'bloquer'} <strong>{userToToggle?.user_id?.fullName}</strong> ? 
+                  {!userToToggle?.is_blocked && " Cet utilisateur ne pourra plus suivre vos activités."}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => setShowConfirm(false)}
+                  style={{ 
+                    flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0',
+                    background: 'white', color: '#64748b', fontWeight: '600', cursor: 'pointer'
+                  }}
+                >
+                  Annuler
+                </button>
+                <button 
+                  onClick={confirmToggleBlock}
+                  disabled={isBlocking}
+                  style={{ 
+                    flex: 1, padding: '12px', borderRadius: '10px', border: 'none',
+                    background: userToToggle?.is_blocked ? '#16a34a' : '#ef4444', 
+                    color: 'white', fontWeight: '600', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                  }}
+                >
+                  {isBlocking ? 'Traitement...' : 'Confirmer'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* MODAL AJOUT UTILISATEUR */}
       {showModal && (

@@ -342,9 +342,6 @@ const Profile = () => {
             </div>
             
             <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button style={s.fbSidebarBtn} onClick={() => navigate("/purchases")}>
-                <ShoppingBag size={18} /> Mes Achats
-              </button>
               {canAccessDashboard && (
                 <button style={{ ...s.fbSidebarBtn, background: '#eff6ff', color: '#1E3A5F' }} onClick={() => setShowCompanyModal(true)}>
                   <Building2 size={18} /> Dashboard Pro
