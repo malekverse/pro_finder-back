@@ -41,8 +41,9 @@ const updateCategory = async (req, res) => {
     const { id } = req.params;
     const { name, type } = req.body;
     const category = await Category.findByIdAndUpdate(id, { name, type }, { new: true });
-    if (!category){
-        return res.status(404).json({ message: "Category not found" });}
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
 
     if (req.user) {
       await Activity.create({
@@ -64,7 +65,7 @@ const updateCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Vérifier si des entreprises sont liées à cette catégorie via leurs services
     const Company = require("../../models/company");
     const Service = require("../../models/Service");
@@ -80,10 +81,10 @@ const deleteCategory = async (req, res) => {
 
     // 3. Vérifier si une entreprise utilise l'un de ces services
     const linkedCompany = await Company.findOne({ services: { $in: serviceIds } });
-    
+
     if (linkedCompany) {
-      return res.status(400).json({ 
-        message: "Suppression impossible : des entreprises sont liées à cette catégorie ou à ses services." 
+      return res.status(400).json({
+        message: "Suppression impossible : des entreprises sont liées à cette catégorie ou à ses services."
       });
     }
 
@@ -110,9 +111,9 @@ const deleteCategory = async (req, res) => {
   }
 };
 
-module.exports ={
-    getCategories,
-    createCategorie,
-    updateCategory,
-    deleteCategory
+module.exports = {
+  getCategories,
+  createCategorie,
+  updateCategory,
+  deleteCategory
 }

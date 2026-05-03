@@ -1,8 +1,3 @@
-/**
- * Flouci Payment Service
- * Handles interaction with Flouci API
- */
-
 const FLOUCI_API_BASE = "https://developers.flouci.com/api";
 
 const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => {
@@ -27,7 +22,7 @@ const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => 
     app_token: process.env.FLOUCI_APP_TOKEN,
     app_public: process.env.FLOUCI_APP_PUBLIC,
     accept_card: "true",
-    amount: amount * 1000, // Flouci expects amount in millimes
+    amount: amount * 1000,
     success_url: successUrl,
     fail_url: failUrl,
     developer_tracking_id: developerTrackingId,

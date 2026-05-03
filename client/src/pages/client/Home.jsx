@@ -8,6 +8,9 @@ import {
   useFollowCompanyMutation,
   useSearchCompaniesQuery,
   useGetRecommendedCompaniesQuery,
+  useGetCountriesQuery,
+  useGetRegionsQuery,
+  useGetCategoriesQuery,
 } from "../../redux/features/company/companyApiSlice";
 import {
   useGetAllProductsQuery,
@@ -247,6 +250,35 @@ const SuggestedProfessionals = () => {
   );
 };
 
+const CategoryCards = ({ onCategoryClick }) => {
+  const { data: categories = [], isLoading } = useGetCategoriesQuery();
+
+  if (isLoading || categories.length === 0) return null;
+
+  // Map category names to icons (Lucide-react icons)
+  const getCategoryIcon = (name) => {
+    const n = name.toLowerCase();
+    if (n.includes('santé') || n.includes('méd')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%)' }}><Star size={24} color="#fff" /></div>;
+    if (n.includes('dépannage') || n.includes('maison')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' }}><Package size={24} color="#fff" /></div>;
+    if (n.includes('clinique')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)' }}><Building2 size={24} color="#fff" /></div>;
+    if (n.includes('btp') || n.includes('construction')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' }}><Briefcase size={24} color="#fff" /></div>;
+    return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' }}><Tag size={24} color="#fff" /></div>;
+  };
+
+  return (
+    <div style={cat.container}>
+      <div style={cat.scroll}>
+        {categories.map((c) => (
+          <div key={c._id} style={cat.card} onClick={() => onCategoryClick(c)}>
+            {getCategoryIcon(c.name)}
+            <span style={cat.name}>{c.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const RecommendedProfessionals = () => {
   const { data: recommended = [], isLoading } = useGetRecommendedProsQuery(undefined, { pollingInterval: 30000 });
   const navigate = useNavigate();
@@ -335,7 +367,7 @@ const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
                   <button type="button" onClick={(e) => handleOrder(e, product)} style={orderBtnStyle}>Commander</button>
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#64748b' }}>
-                 @{product.companyId?.companyName || product.professionalId?.fullName || 'Prestataire'}
+                  @{product.companyId?.companyName || product.professionalId?.fullName || 'Prestataire'}
                 </p>
               </div>
             </div>
@@ -403,7 +435,7 @@ const ProductDetail = ({ product, onClose }) => {
               <span style={{ ...pd.status, color: product.stock > 0 ? '#10b981' : '#ef4444' }}>
                 <CheckCircle2 size={16} /> {product.stock > 0 ? 'EN STOCK' : 'RUPTURE'}
               </span>
-             
+
             </div>
 
             <div style={pd.divider} />
@@ -441,7 +473,7 @@ const ProductDetail = ({ product, onClose }) => {
                   )}
                 </div>
                 <div>
-                <h4 style={pd.sellerName}>{product.companyId?.companyName || product.professionalId?.fullName || 'Boutique'}</h4>
+                  <h4 style={pd.sellerName}>{product.companyId?.companyName || product.professionalId?.fullName || 'Boutique'}</h4>
                   <div style={pd.sellerRating}>
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
                     <Star size={12} fill="#fbbf24" color="#fbbf24" />
@@ -452,8 +484,8 @@ const ProductDetail = ({ product, onClose }) => {
                   </div>
                 </div>
               </div>
-              <button type="button" style={pd.visitBtn} onClick={(e) => { 
-                e.preventDefault(); 
+              <button type="button" style={pd.visitBtn} onClick={(e) => {
+                e.preventDefault();
                 if (product.professionalId) {
                   navigate(`/user/professional/${product.professionalId?._id || product.professionalId}`);
                 } else {
@@ -529,7 +561,7 @@ const ServiceCarousel = ({ title, services, isLoading, onServiceClick }) => {
                   <button type="button" onClick={(e) => handleReserve(e, service)} style={orderBtnStyle}>Réserver</button>
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#64748b' }}>
-                   @{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}
+                  @{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}
                 </p>
               </div>
             </div>
@@ -594,7 +626,7 @@ const ServiceDetail = ({ service, onClose }) => {
               <span style={{ ...pd.status, color: '#10b981' }}>
                 <Clock size={16} /> DURÉE: {service.duration} min
               </span>
-             
+
             </div>
 
             <div style={pd.divider} />
@@ -615,7 +647,7 @@ const ServiceDetail = ({ service, onClose }) => {
             <div style={pd.sellerCard}>
               <div style={pd.sellerHeader}>
                 <div style={pd.sellerLogo}>
-                   {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
+                  {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
                     <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
                   ) : (
                     <Building2 size={24} color="#94a3b8" />
@@ -632,8 +664,8 @@ const ServiceDetail = ({ service, onClose }) => {
                   </div>
                 </div>
               </div>
-              <button type="button" style={pd.visitBtn} onClick={(e) => { 
-                e.preventDefault(); 
+              <button type="button" style={pd.visitBtn} onClick={(e) => {
+                e.preventDefault();
                 if (service.professionalId) {
                   navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
                 } else {
@@ -793,6 +825,7 @@ const RecommendedCompanies = () => {
 };
 
 const CompanyFeed = ({ filters }) => {
+  const navigate = useNavigate();
   const { data: companies = [], isLoading, isFetching } = useSearchCompaniesQuery(filters, { pollingInterval: 3000 });
 
   if (isLoading) return (
@@ -967,6 +1000,10 @@ const Home = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [searchTab, setSearchTab] = useState("companies"); // 'companies' | 'professionals'
   const [isShowingResults, setIsShowingResults] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState({});
 
   const productRef = useRef(null);
   const serviceRef = useRef(null);
@@ -974,6 +1011,9 @@ const Home = () => {
 
   const { data: allProducts, isLoading: productsLoading } = useGetAllProductsQuery();
   const { data: allServices, isLoading: servicesLoading } = useGetAllServicesQuery();
+  const { data: countries = [] } = useGetCountriesQuery();
+  const { data: regionsData } = useGetRegionsQuery(selectedCountry, { skip: !selectedCountry });
+  const regionsList = Array.isArray(regionsData?.regions) ? regionsData.regions : [];
 
   const handleLogout = () => {
     dispatch(logOut());
@@ -1006,6 +1046,29 @@ const Home = () => {
     }
   };
 
+  const handleSearch = () => {
+    setAppliedFilters({
+      q: searchQuery,
+      country: selectedCountry,
+      region: selectedRegion
+    });
+    setIsShowingResults(true);
+    setTimeout(() => {
+      if (searchResultsRef.current) searchResultsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handleCategoryClick = (category) => {
+    setSearchTab(category.type === 'professional' ? 'professionals' : 'companies');
+    setAppliedFilters({
+      category: category._id
+    });
+    setIsShowingResults(true);
+    setTimeout(() => {
+      if (searchResultsRef.current) searchResultsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <div style={p.root}>
       <Header
@@ -1016,6 +1079,74 @@ const Home = () => {
         activeTab={isShowingResults ? searchTab : null}
       />
       <div style={p.layout}>
+        {!isShowingResults && (
+          <>
+            <div style={hero.container}>
+              <h1 style={hero.title}>
+                Trouvez. Réservez. <span style={hero.highlight}>Payez en ligne.</span> En toute confiance.
+              </h1>
+              <p style={hero.subtitle}>
+                La plateforme intelligente qui simplifie la mise en relation avec les meilleurs professionnels et entreprises dans le monde entier.
+              </p>
+
+              <div style={hero.searchBar}>
+                <div style={hero.filterGroup}>
+                  <MapPin size={18} color="#3b82f6" />
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <select
+                      style={hero.select}
+                      value={selectedCountry}
+                      onChange={(e) => {
+                        setSelectedCountry(e.target.value);
+                        setSelectedRegion("");
+                      }}
+                    >
+                      <option value="">Sélectionner un pays</option>
+                      {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <ChevronDown size={14} color="#64748b" />
+                </div>
+
+                <div style={hero.divider} />
+
+                <div style={hero.filterGroup}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <select
+                      style={hero.select}
+                      value={selectedRegion}
+                      onChange={(e) => setSelectedRegion(e.target.value)}
+                      disabled={!selectedCountry}
+                    >
+                      <option value="">Choisir une région</option>
+                      {regionsList.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+                    </select>
+                  </div>
+                  <ChevronDown size={14} color="#64748b" />
+                </div>
+
+                <div style={hero.divider} />
+
+                <div style={hero.inputGroup}>
+                  <Search size={18} color="#64748b" />
+                  <input
+                    type="text"
+                    placeholder="Que recherchez-vous ?"
+                    style={hero.input}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+
+                <button style={hero.searchBtn} onClick={handleSearch}>
+                  Rechercher <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+            <CategoryCards onCategoryClick={handleCategoryClick} />
+          </>
+        )}
 
         <div style={p.contentWrapper}>
           <main style={p.main}>
@@ -1070,9 +1201,9 @@ const Home = () => {
                 </div>
 
                 {searchTab === "companies" ? (
-                  <CompanyFeed filters={{}} />
+                  <CompanyFeed filters={appliedFilters} />
                 ) : (
-                  <ProfessionalFeed filters={{}} />
+                  <ProfessionalFeed filters={appliedFilters} />
                 )}
               </div>
             )}
@@ -1384,6 +1515,151 @@ const sg = {
     transition: "all 0.2s", whiteSpace: "nowrap",
   },
   followBtnActive: { background: "#f1f5f9", color: "#1e293b", border: '1px solid #e2e8f0' },
+};
+
+const hero = {
+  container: {
+    padding: '30px 20px 60px',
+    textAlign: 'center',
+    background: 'linear-gradient(180deg, #f8fafc 0%, #fff 100%)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: '20px',
+    borderRadius: '24px',
+  },
+  title: {
+    fontSize: '48px',
+    fontWeight: '900',
+    color: '#0f172a',
+    marginBottom: '20px',
+    lineHeight: '1.2',
+    maxWidth: '850px',
+  },
+  highlight: {
+    color: '#3b82f6',
+  },
+  subtitle: {
+    fontSize: '18px',
+    color: '#64748b',
+    maxWidth: '700px',
+    lineHeight: '1.6',
+    marginBottom: '50px',
+    fontWeight: '500',
+  },
+  searchBar: {
+    background: '#fff',
+    padding: '10px',
+    borderRadius: '100px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0px',
+    boxShadow: '0 10px 50px rgba(0,0,0,0.06)',
+    width: '100%',
+    maxWidth: '1000px',
+    border: '1px solid #e2e8f0',
+  },
+  filterGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '0 25px',
+    flex: 1,
+    minWidth: 0,
+  },
+  divider: {
+    width: '1px',
+    height: '35px',
+    background: '#e2e8f0',
+  },
+  select: {
+    border: 'none',
+    background: 'none',
+    fontSize: '14px',
+    fontWeight: '700',
+    color: '#1e293b',
+    width: '100%',
+    cursor: 'pointer',
+    outline: 'none',
+    appearance: 'none',
+  },
+  inputGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '5px',
+    flex: 1.5,
+  },
+  input: {
+    border: 'none',
+    background: 'none',
+    fontSize: '15px',
+    width: '100%',
+    outline: 'none',
+    color: '#1e293b',
+    fontWeight: '500',
+  },
+  searchBtn: {
+    background: '#2563eb',
+    color: '#fff',
+    padding: '15px 25px',
+    borderRadius: '100px',
+    border: 'none',
+    fontSize: '15px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 15px rgba(37, 99, 235, 0.3)',
+    whiteSpace: 'nowrap',
+  }
+};
+
+const cat = {
+  container: {
+    width: '100%',
+    maxWidth: '1200px',
+  },
+  scroll: {
+    display: 'flex',
+    gap: '20px',
+    overflowX: 'auto',
+    padding: '10px 5px 20px',
+    scrollbarWidth: 'none',
+  
+  },
+  card: {
+    minWidth: '20px',
+    background: '#fff',
+    borderRadius: '16px',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+    border: '1px solid #f1f5f9',
+  },
+  iconWrap: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '5px',
+    boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+  },
+  name: {
+    fontSize: '15px',
+    fontWeight: '700',
+    color: '#1e293b',
+    textAlign: 'center',
+  }
 };
 
 export default Home;

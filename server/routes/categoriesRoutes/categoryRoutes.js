@@ -10,4 +10,4 @@ router.post("/createCategory", verifyJWT, authorizeRoles("admin"), categoryContr
 router.put("/updateCategory/:id", verifyJWT, authorizeRoles("admin"), categoryController.updateCategory);
 router.delete("/deleteCategory/:id", verifyJWT, authorizeRoles("admin"), categoryController.deleteCategory);
 
-module.exports=router;
+module.exports = router;
