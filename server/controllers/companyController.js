@@ -593,6 +593,7 @@ const searchCompanies = async (req, res) => {
 
         let cName = company.country, rName = company.region, cityName = company.city;
         let categoryName = "Multi-services";
+        let servicesList = [];
 
         try {
           // Résolution adresse
@@ -609,20 +610,28 @@ const searchCompanies = async (req, res) => {
             cityName = cityDoc?.name || null;
           }
 
-          // Résolution Catégorie (via le premier service)
+          // Résolution Catégorie et Services
           if (company.services && company.services.length > 0) {
             const Service = mongoose.model("Service");
             const SubCategory = mongoose.model("SubCategory");
             const Category = mongoose.model("Category");
 
-            const serviceId = company.services[0];
-            const serviceDoc = await Service.findById(serviceId).select("subcategory_id").lean();
-            if (serviceDoc && serviceDoc.subcategory_id) {
-              const subDoc = await SubCategory.findById(serviceDoc.subcategory_id).select("category_id").lean();
-              if (subDoc && subDoc.category_id) {
-                const catDoc = await Category.findById(subDoc.category_id).select("name").lean();
-                categoryName = catDoc?.name || "Multi-services";
-              }
+            // Récupérer les noms des services (limité à 12 pour le feed)
+            const serviceDocs = await Service.find({ _id: { $in: company.services } }).select("name subcategory_id").limit(12).lean();
+            servicesList = serviceDocs.map(s => s.name);
+
+            // Vérifier si tous les services appartiennent à la même catégorie
+            const subIds = [...new Set(serviceDocs.map(s => s.subcategory_id).filter(id => id))];
+            const subs = await SubCategory.find({ _id: { $in: subIds } }).select("category_id").lean();
+            const catIds = [...new Set(subs.map(s => s.category_id.toString()))];
+
+            if (catIds.length === 1) {
+              const catDoc = await Category.findById(catIds[0]).select("name").lean();
+              categoryName = catDoc?.name || "Multi-services";
+            } else if (catIds.length > 1) {
+              categoryName = "Multi-services";
+            } else {
+              categoryName = "Services";
             }
           }
         } catch (e) { console.error("Error populating details", e); }
@@ -634,7 +643,8 @@ const searchCompanies = async (req, res) => {
           country: cName,
           region: rName,
           city: cityName,
-          categoryName
+          categoryName,
+          servicesList
         };
       })
     );

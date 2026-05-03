@@ -18,11 +18,11 @@ const getServicesBySubCategory = async (req, res) => {
 
 const createService = async (req,res)=>{
     try {
-        const { name, subcategory_id } = req.body;  // <-- CORRECT
+        const { name, subcategory_id } = req.body;
         if(!name || !subcategory_id){
             return res.status(400).json({ message: "Name and subcategory_id are required" });
         }
-        const service = new Service({ name, subcategory_id }); // <-- CORRECT
+        const service = new Service({ name, subcategory_id });
         await service.save();
 
         if (req.user) {

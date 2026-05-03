@@ -12,11 +12,6 @@ const serviceSchema = new mongoose.Schema({
     ref: "SubCategory",
     required: true
   },
-  status: {
-    type: String,
-    enum: ["Actif", "Inactif"],
-    default: "Actif"
-  }
 
 }, { timestamps: true });
 

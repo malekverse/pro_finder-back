@@ -342,7 +342,7 @@ const CategoryCards = ({ onCategoryClick }) => {
 
   return (
     <div style={cat.container}>
-      <div style={cat.scroll}>
+      <div style={cat.grid}>
         {categories.map((c) => (
           <div key={c._id} style={cat.card} onClick={() => onCategoryClick(c)}>
             {getCategoryIcon(c.name)}
@@ -951,12 +951,19 @@ const CompanyFeed = ({ filters }) => {
                     <p style={c.listMeta}>
                       <MapPin size={14} color="#3b82f6" /> {company.city || "Tunisie"}
                     </p>
-                    {company.category?.name && (
-                      <p style={c.listMeta}>
-                        <Tag size={14} color="#10b981" /> {company.category.name}
+                    {company.categoryName && (
+                      <p style={{ ...c.listMeta, color: '#8b5cf6', fontWeight: '600' }}>
+                        <Briefcase size={14} color="#8b5cf6" /> {company.categoryName}
                       </p>
                     )}
                   </div>
+                  {company.servicesList?.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                      {company.servicesList.map((svc, i) => (
+                        <span key={i} style={c.serviceTag}>{svc}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div style={c.listRating}>
                   <div style={c.listStars}>
@@ -964,7 +971,7 @@ const CompanyFeed = ({ filters }) => {
                       <Star key={s} size={16} fill={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(company.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
                     ))}
                   </div>
-                  <span style={c.listReviewCount}>{company.rating?.count || 0} avis</span>
+                  <div style={c.listReviewCount}>{company.rating?.count || 0} avis</div>
                 </div>
               </div>
             </div>
@@ -1036,11 +1043,18 @@ const ProfessionalFeed = ({ filters }) => {
                       <MapPin size={14} color="#3b82f6" /> {pro.city || "Tunisie"}
                     </p>
                     {pro.categoryName && (
-                      <p style={c.listMeta}>
+                      <p style={{ ...c.listMeta, color: '#8b5cf6', fontWeight: '600' }}>
                         <Briefcase size={14} color="#8b5cf6" /> {pro.categoryName}
                       </p>
                     )}
                   </div>
+                  {pro.servicesList?.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                      {pro.servicesList.map((svc, i) => (
+                        <span key={i} style={c.serviceTag}>{svc}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div style={c.listRating}>
                   <div style={c.listStars}>
@@ -1048,7 +1062,7 @@ const ProfessionalFeed = ({ filters }) => {
                       <Star key={s} size={16} fill={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "none"} color={s <= Math.round(pro.rating?.average || 0) ? "#fbbf24" : "#cbd5e1"} />
                     ))}
                   </div>
-                  <span style={c.listReviewCount}>{pro.rating?.count || 0} avis</span>
+                  <div style={c.listReviewCount}>{pro.rating?.count || 0} avis</div>
                 </div>
               </div>
             </div>
@@ -1516,6 +1530,16 @@ const c = {
     transition: 'all 0.2s',
     boxShadow: '0 4px 10px rgba(30, 58, 95, 0.15)'
   },
+  serviceTag: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: '#64748b',
+    background: '#f1f5f9',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    border: '1px solid #e2e8f0',
+    whiteSpace: 'nowrap'
+  }
 };
 
 const p = {
@@ -1696,45 +1720,48 @@ const cat = {
   container: {
     width: '100%',
     maxWidth: '1200px',
-  },
-  scroll: {
-    display: 'flex',
-    gap: '20px',
-    overflowX: 'auto',
-    padding: '10px 5px 20px',
-    scrollbarWidth: 'none',
-  
-  },
-  card: {
-    minWidth: '20px',
-    background: '#fff',
-    borderRadius: '16px',
+    margin: '0 auto',
     padding: '20px',
+  },
+
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(8, 1fr)',
+    gap: '10px',
+  },
+
+  card: {
+    background: '#fff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '16px',
+    padding: '22px',
+    minHeight: '130px',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    gap: '10px',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-    border: '1px solid #f1f5f9',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    transition: '0.3s',
   },
+
   iconWrap: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '16px',
+    width: '45px',
+    height: '45px',
+    borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: '5px',
-    boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+    marginBottom: '14px',
   },
+
   name: {
     fontSize: '15px',
-    fontWeight: '700',
-    color: '#1e293b',
-    textAlign: 'center',
-  }
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: '5px',
+  },
+
 };
 
 export default Home;

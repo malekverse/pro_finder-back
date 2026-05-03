@@ -263,6 +263,7 @@ const searchProfessionals = async (req, res) => {
 
         let cName = pro.country, rName = pro.region, cityN = pro.city;
         let categoryName = "Multi-services";
+        let servicesList = [];
         try {
           if (pro.country && mongoose.isValidObjectId(pro.country)) {
             const cDoc = await Country.findById(pro.country).select("name").lean();
@@ -277,19 +278,28 @@ const searchProfessionals = async (req, res) => {
             cityN = cityDoc?.name || null;
           }
           if (pro.services && pro.services.length > 0) {
-            const serviceDoc = await Service.findById(pro.services[0]).select("subcategory_id").lean();
-            if (serviceDoc?.subcategory_id) {
-              const subDoc = await SubCategory.findById(serviceDoc.subcategory_id).select("category_id").lean();
-              if (subDoc?.category_id) {
-                const Category = mongoose.model("Category");
-                const catDoc = await Category.findById(subDoc.category_id).select("name").lean();
-                categoryName = catDoc?.name || "Multi-services";
-              }
+            // Récupérer les noms des services (limité à 12 pour le feed)
+            const serviceDocs = await Service.find({ _id: { $in: pro.services } }).select("name subcategory_id").limit(12).lean();
+            servicesList = serviceDocs.map(s => s.name);
+
+            // Vérifier si tous les services appartiennent à la même catégorie
+            const subIds = [...new Set(serviceDocs.map(s => s.subcategory_id).filter(id => id))];
+            const subs = await SubCategory.find({ _id: { $in: subIds } }).select("category_id").lean();
+            const catIds = [...new Set(subs.map(s => s.category_id.toString()))];
+
+            if (catIds.length === 1) {
+              const Category = mongoose.model("Category");
+              const catDoc = await Category.findById(catIds[0]).select("name").lean();
+              categoryName = catDoc?.name || "Multi-services";
+            } else if (catIds.length > 1) {
+              categoryName = "Multi-services";
+            } else {
+              categoryName = "Services";
             }
           }
         } catch (e) { console.error("Error populating pro details", e); }
 
-        return { ...pro, followersCount, rating, country: cName, region: rName, city: cityN, categoryName };
+        return { ...pro, followersCount, rating, country: cName, region: rName, city: cityN, categoryName, servicesList };
       })
     );
 

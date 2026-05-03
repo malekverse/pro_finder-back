@@ -15,8 +15,8 @@ const getCategories = async (req, res) => {
 
 const createCategorie = async (req, res) => {
   try {
-    const { name, type } = req.body;
-    const category = new Category({ name, type });
+    const { name } = req.body;
+    const category = new Category({ name });
     await category.save();
 
     // Log de l'activité seulement si l'admin est connecté
@@ -24,7 +24,7 @@ const createCategorie = async (req, res) => {
       await Activity.create({
         adminId: req.user,
         action: "Création de catégorie",
-        target: `${name} (${type})`,
+        target: `${name}`,
         status: "success"
       });
     }
@@ -39,8 +39,8 @@ const createCategorie = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type } = req.body;
-    const category = await Category.findByIdAndUpdate(id, { name, type }, { new: true });
+    const { name } = req.body;
+    const category = await Category.findByIdAndUpdate(id, { name }, { new: true });
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
@@ -49,7 +49,7 @@ const updateCategory = async (req, res) => {
       await Activity.create({
         adminId: req.user,
         action: "Modification de catégorie",
-        target: `${name} (${type})`,
+        target: `${name}`,
         status: "info"
       });
     }
