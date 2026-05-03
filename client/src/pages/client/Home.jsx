@@ -28,7 +28,8 @@ import {
 import {
   Loader, Users, ChevronDown, LogOut,
   Home as HomeIcon, User, Building2, MapPin, Search, X,
-  Briefcase, Tag, ChevronRight, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock
+  Briefcase, Tag, ChevronRight, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock,
+  Stethoscope, Wrench, Car, Scale, Cpu, GraduationCap, Palette, Heart, Activity, Laptop, Camera, Music, Scissors
 } from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
@@ -258,11 +259,85 @@ const CategoryCards = ({ onCategoryClick }) => {
   // Map category names to icons (Lucide-react icons)
   const getCategoryIcon = (name) => {
     const n = name.toLowerCase();
-    if (n.includes('santé') || n.includes('méd')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%)' }}><Star size={24} color="#fff" /></div>;
-    if (n.includes('dépannage') || n.includes('maison')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' }}><Package size={24} color="#fff" /></div>;
-    if (n.includes('clinique')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)' }}><Building2 size={24} color="#fff" /></div>;
-    if (n.includes('btp') || n.includes('construction')) return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' }}><Briefcase size={24} color="#fff" /></div>;
-    return <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' }}><Tag size={24} color="#fff" /></div>;
+    
+    // Santé & Bien-être
+    if (n.includes('santé') || n.includes('méd') || n.includes('bien-être')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%)' }}>
+          <Stethoscope size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Maison & Dépannage
+    if (n.includes('maison') || n.includes('dépannage') || n.includes('travaux')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' }}>
+          <Wrench size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Automobile & Transport
+    if (n.includes('auto') || n.includes('transport') || n.includes('véhicule')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' }}>
+          <Car size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Business & Juridique
+    if (n.includes('business') || n.includes('juridique') || n.includes('droit') || n.includes('finance')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)' }}>
+          <Scale size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Technologie & Digital
+    if (n.includes('tech') || n.includes('digital') || n.includes('informatique')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)' }}>
+          <Cpu size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Éducation & Formation
+    if (n.includes('éduc') || n.includes('form') || n.includes('cours') || n.includes('école')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)' }}>
+          <GraduationCap size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Créatif & Médias
+    if (n.includes('créat') || n.includes('média') || n.includes('art') || n.includes('photo') || n.includes('musique')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)' }}>
+          <Palette size={24} color="#fff" />
+        </div>
+      );
+    }
+    
+    // Services personnels
+    if (n.includes('perso') || n.includes('service') || n.includes('beauté') || n.includes('coiffure')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%)' }}>
+          <User size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // Default
+    return (
+      <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)' }}>
+        <Tag size={24} color="#fff" />
+      </div>
+    );
   };
 
   return (
