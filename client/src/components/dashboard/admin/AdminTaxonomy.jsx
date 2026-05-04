@@ -162,8 +162,7 @@ export default function AdminTaxonomy() {
       </div>
 
       <div className={styles.actionBar}>
-        <div className={styles.searchBox} style={{ maxWidth: "400px" }}>
-          <Search className={styles.searchIcon} size={20} />
+        <div className={styles.searchBox} style={{ maxWidth: "500px"}}>
           <input 
             type="text" 
             placeholder="Rechercher une catégorie, sous-catégorie ou service..." 

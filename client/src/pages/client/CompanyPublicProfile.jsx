@@ -985,16 +985,11 @@ const s = {
   page: {
     minHeight: "100vh",
     height: "100vh",
-    overflowY: "auto",
-    overflowX: "hidden",
-    WebkitOverflowScrolling: "touch",
-    background: "#f3f6fa",
-    padding: "24px 12px 48px",
-    boxSizing: "border-box",
+    padding: "20px 0px 60px",
   },
-  container: { maxWidth: 680, margin: "0 auto" },
+  container: { maxWidth: '1000px', margin: "0 auto", padding: '0 20px' },
   backBtn: {
-    border: "1px solid #dbe3ec",
+    border: "1px solid #182f47ff",
     background: "#fff",
     color: "#334155",
     borderRadius: 8,
@@ -1009,12 +1004,12 @@ const s = {
   card: {
     background: "#fff",
     border: "1px solid #e5ebf2",
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: "hidden",
     boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
     marginBottom: 20,
   },
-  cover: { height: 200, background: "linear-gradient(120deg, #dbeafe, #e2e8f0)" },
+  cover: { height: 160, background: "linear-gradient(120deg, #dbeafe, #e2e8f0)" },
   coverImg: { width: "100%", height: "100%", objectFit: "cover" },
   header: {
     padding: '0 40px 30px',
@@ -1066,6 +1061,7 @@ const s = {
     borderRadius: '6px',
     fontSize: '14px',
     fontWeight: '700',
+     border: '1px solid #fde68a'
   },
   ratingCount: {
     fontSize: '12px',
@@ -1307,6 +1303,7 @@ const s = {
     border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
   },
   pageInfo: { fontSize: 13, color: "#64748b", fontWeight: 600 },
+
 };
 
 export default CompanyPublicProfile;

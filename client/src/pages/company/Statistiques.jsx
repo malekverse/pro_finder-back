@@ -150,15 +150,15 @@ const Statistiques = () => {
       {/* KPI Cards */}
       <div style={{ 
         display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(20px, 1fr))", 
         gap: "25px", 
-        marginBottom: "40px" 
+        marginBottom: "20px" 
       }}>
         {kpis.map((kpi, index) => (
           <div key={index} style={{ 
             background: "#fff", 
-            padding: "25px", 
-            borderRadius: "20px", 
+            padding: "20px", 
+            borderRadius: "22px", 
             display: "flex", 
             flexDirection: 'column',
             gap: "15px",

@@ -103,7 +103,7 @@
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 700;
-  margin: 24px 12px 12px;
+  margin: 15px 10px 10px;
   letter-spacing: 0.1em;
   opacity: 0.8;
 }
@@ -216,7 +216,7 @@
   margin-bottom: 32px;
   color: var(--text-muted);
   font-weight: 600;
-  padding: 16px 24px;
+  padding: 10px 18px;
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);

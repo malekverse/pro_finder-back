@@ -1562,7 +1562,6 @@ const p = {
   rightSidebar: { width: 320, flexShrink: 0, position: "sticky", top: 90 },
 };
 
-
 const f = {
   center: { display: "flex", flexDirection: "column", alignItems: "center", gap: 15, padding: "80px 0" },
   loadingText: { color: "#94a3b8", fontSize: 15, margin: 0, fontWeight: 500 },
@@ -1726,7 +1725,7 @@ const cat = {
 
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(8, 1fr)',
+    gridTemplateColumns: 'repeat(7, 1fr)',
     gap: '10px',
   },
 
