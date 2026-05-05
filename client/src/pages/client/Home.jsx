@@ -225,7 +225,7 @@ const SuggestedProfessionals = () => {
   );
 };
 
-const CategoryCards = ({ onCategoryClick }) => {
+const CategoryCards = ({ onCategoryClick, selectedId }) => {
   const { data: categories = [], isLoading } = useGetCategoriesQuery();
 
   if (isLoading || categories.length === 0) return null;
@@ -371,12 +371,33 @@ const CategoryCards = ({ onCategoryClick }) => {
   return (
     <div style={cat.container}>
       <div style={cat.grid}>
-        {categories.map((c) => (
-          <div key={c._id} style={cat.card} onClick={() => onCategoryClick(c)}>
-            {getCategoryIcon(c.name)}
-            <span style={cat.name}>{c.name}</span>
-          </div>
-        ))}
+        {categories.map((c) => {
+          const isSelected = selectedId === c._id;
+          return (
+            <div 
+              key={c._id} 
+              style={{ 
+                ...cat.card, 
+                borderColor: isSelected ? '#3b82f6' : '#e5e7eb',
+                background: isSelected ? '#eff6ff' : '#fff',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                boxShadow: isSelected ? '0 10px 20px rgba(59, 130, 246, 0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
+              }} 
+              onClick={() => onCategoryClick(c)}
+              className="category-card"
+            >
+              <div style={{ position: 'relative', width: '100%' }}>
+                {getCategoryIcon(c.name)}
+                {isSelected && (
+                  <div style={{ position: 'absolute', top: -5, right: -5, background: '#3b82f6', borderRadius: '50%', padding: '2px', display: 'flex' }}>
+                    <CheckCircle2 size={14} color="#fff" />
+                  </div>
+                )}
+              </div>
+              <span style={{ ...cat.name, color: isSelected ? '#1d4ed8' : '#111827' }}>{c.name}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1117,6 +1138,7 @@ const Home = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [searchTab, setSearchTab] = useState("companies"); // 'companies' | 'professionals'
   const [isShowingResults, setIsShowingResults] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1141,6 +1163,7 @@ const Home = () => {
   const handleAction = (type) => {
     if (type === 'home') {
       setIsShowingResults(false);
+      setSelectedCategoryId(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (type === 'products' && productRef.current) {
       productRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -1164,6 +1187,7 @@ const Home = () => {
   };
 
   const handleSearch = () => {
+    setSelectedCategoryId(null);
     setAppliedFilters({
       q: searchQuery,
       country: selectedCountry,
@@ -1176,6 +1200,7 @@ const Home = () => {
   };
 
   const handleCategoryClick = (category) => {
+    setSelectedCategoryId(category._id);
     setSearchTab(category.type === 'professional' ? 'professionals' : 'companies');
     setAppliedFilters({
       category: category._id
@@ -1261,7 +1286,10 @@ const Home = () => {
                 </button>
               </div>
             </div>
-            <CategoryCards onCategoryClick={handleCategoryClick} />
+            <CategoryCards 
+              onCategoryClick={handleCategoryClick} 
+              selectedId={selectedCategoryId}
+            />
           </>
         )}
 
@@ -1295,7 +1323,10 @@ const Home = () => {
                     <h2 style={p.feedTitle}>Résultats pour {searchTab === 'companies' ? 'Sociétés' : 'Professionnels'}</h2>
                   </div>
                   <button
-                    onClick={() => setIsShowingResults(false)}
+                    onClick={() => {
+                      setIsShowingResults(false);
+                      setSelectedCategoryId(null);
+                    }}
                     style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', cursor: 'pointer' }}
                   >
                     Retour à l'accueil
@@ -1351,6 +1382,11 @@ const Home = () => {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         .showcase-card:hover { transform: translateY(-5px); }
+        .category-card:hover {
+          transform: translateY(-5px) scale(1.02);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+          border-color: #3b82f6 !important;
+        }
       `}</style>
     </div>
   );
