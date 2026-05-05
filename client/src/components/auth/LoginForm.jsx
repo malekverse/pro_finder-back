@@ -7,7 +7,7 @@ import styles from '../../styles/Form.module.css';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/features/auth/authSlice';
 import Cookies from 'js-cookie';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 const LoginForm = () => {
     const dispatch = useDispatch();
@@ -61,6 +61,10 @@ const LoginForm = () => {
     return (
     <div className={styles.splitContainer}>
       <div className={styles.rightPanel}>
+        <Link to="/" className={styles.backButton}>
+          <ArrowLeft size={20} />
+          Retour à l'accueil
+        </Link>
         <div className={styles.loginCard}>
           <div style={{ textAlign: 'center', marginBottom: '30px' }}>
             <h1 style={{ color: '#1E3A5F', fontSize: '32px', fontWeight: '800', marginBottom: '10px' }}>ProFinder</h1>

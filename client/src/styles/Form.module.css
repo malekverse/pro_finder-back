@@ -11,7 +11,6 @@
 
 /* ================= SPLIT LAYOUT (AUTH SHELL) ================= */
 .splitContainer {
-  display: flex;
   width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, #1E3A5F 0%, #24416b 100%);
@@ -29,7 +28,34 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ================= BACK BUTTON ================= */
+.backButton {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-5px);
+  color: #ffffff;
 }
 
 /* ================= CARDS ================= */
@@ -97,7 +123,7 @@
 }
 
 .passwordWrapper input {
-  padding-right: 50px; /* Espace pour l'icône */
+  padding-right: 50px;
 }
 
 .eyeButton {

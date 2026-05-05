@@ -98,35 +98,8 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
               Connexion
             </Link>
           </div>
-        ) : (
-          <div style={{ position: "relative" }}>
-            <button type="button" style={h.profileBtn} onClick={() => setMenuOpen((v) => !v)}>
-              {user?.avatarUrl
-                ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
-                : <div style={h.avatarFallback}>{initials}</div>}
-              <div style={h.profileInfo}>
-                <span style={h.profileName}>{user?.fullName || "Mon profil"}</span>
-                <span style={h.profileSub}>Connecté</span>
-              </div>
-              <ChevronDown size={14} color="#94a3b8"
-                style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-            </button>
-            {menuOpen && (
-              <>
-                <div style={h.overlay} onClick={() => setMenuOpen(false)} />
-                <div style={h.dropdown}>
-                  <button type="button" style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/profile"); }}>
-                    <User size={15} color="#1E3A5F" /> Mon profil
-                  </button>
-                  <div style={h.dropDivider} />
-                  <button type="button" style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
-                    <LogOut size={15} color="#dc2626" /> Déconnexion
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        ) : null
+        }
       </div>
     </div>
   );
