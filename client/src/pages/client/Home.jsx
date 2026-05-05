@@ -1292,7 +1292,6 @@ const Home = () => {
             />
           </>
         )}
-
         <div style={p.contentWrapper}>
           <main style={p.main}>
             {!isShowingResults ? (
@@ -1681,9 +1680,9 @@ const sg = {
 
 const hero = {
   container: {
-    padding: '30px 20px 60px',
+    padding: '30px 20px 0px',
     textAlign: 'center',
-    background: 'linear-gradient(180deg, #f8fafc 0%, #fff 100%)',
+    background: 'linear-gradient(10deg, #f8fafc 0%, #ffffffff 100%)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

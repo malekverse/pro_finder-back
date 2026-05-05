@@ -54,7 +54,7 @@ const Publication = () => {
 };
 
 const p = {
-  page: { maxWidth: 660, margin: "0 auto", padding: "8px 0 40px", width: "100%" },
+  page: { maxWidth: 860, margin: "0 auto", padding: "8px 0 40px", width: "100%" },
   pageHeader: { marginBottom: 20 },
   titleRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 4 },
   title: { fontWeight: 800, fontSize: 22, color: "#0f172a", margin: 0, letterSpacing: "-0.3px" },
