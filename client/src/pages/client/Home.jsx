@@ -29,7 +29,8 @@ import {
   Loader, Users, ChevronDown, LogOut,
   Home as HomeIcon, User, Building2, MapPin, Search, X,
   Briefcase, Tag, ChevronRight, Store, Star, Package, ShoppingBag, ChevronLeft, CheckCircle2, Clock,
-  Stethoscope, Wrench, Car, Scale, Cpu, GraduationCap, Palette, Heart, Activity, Laptop, Camera, Music, Scissors
+  Stethoscope, Wrench, Car, Scale, Cpu, GraduationCap, Palette, Heart, Activity, Laptop, Camera, Music, Scissors,
+  HardHat, Factory, ShoppingCart, Landmark, Plane, Truck, Hammer, Map, Building, Banknote, Coffee
 } from "lucide-react";
 
 import { toImageUrl } from "../../utils/imageUtils";
@@ -233,8 +234,8 @@ const CategoryCards = ({ onCategoryClick }) => {
   const getCategoryIcon = (name) => {
     const n = name.toLowerCase();
     
-    // Santé & Bien-être
-    if (n.includes('santé') || n.includes('méd') || n.includes('bien-être')) {
+    // 1. Santé & Bien-être
+    if (n.includes('santé') || n.includes('médic') || n.includes('bien-être') || n.includes('soin')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%)' }}>
           <Stethoscope size={24} color="#fff" />
@@ -242,8 +243,8 @@ const CategoryCards = ({ onCategoryClick }) => {
       );
     }
     
-    // Maison & Dépannage
-    if (n.includes('maison') || n.includes('dépannage') || n.includes('travaux')) {
+    // 2. Maison & Dépannage
+    if (n.includes('maison') || n.includes('dépannage') || n.includes('travaux') || n.includes('plomb') || n.includes('élec')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' }}>
           <Wrench size={24} color="#fff" />
@@ -251,26 +252,26 @@ const CategoryCards = ({ onCategoryClick }) => {
       );
     }
     
-    // Automobile & Transport
-    if (n.includes('auto') || n.includes('transport') || n.includes('véhicule')) {
-      return (
-        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' }}>
-          <Car size={24} color="#fff" />
-        </div>
-      );
-    }
-    
-    // Business & Juridique
-    if (n.includes('business') || n.includes('juridique') || n.includes('droit') || n.includes('finance')) {
+    // 3. Business & Juridique
+    if (n.includes('business') || n.includes('juridique') || n.includes('droit') || n.includes('avocat')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)' }}>
           <Scale size={24} color="#fff" />
         </div>
       );
     }
+
+    // 4. Finance & Assurance (Separate from Business)
+    if (n.includes('finance') || n.includes('assurance') || n.includes('banque') || n.includes('compta')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}>
+          <Banknote size={24} color="#fff" />
+        </div>
+      );
+    }
     
-    // Technologie & Digital
-    if (n.includes('tech') || n.includes('digital') || n.includes('informatique')) {
+    // 5. Technologie & Digital
+    if (n.includes('tech') || n.includes('digital') || n.includes('informatique') || n.includes('web') || n.includes('logiciel')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)' }}>
           <Cpu size={24} color="#fff" />
@@ -278,8 +279,8 @@ const CategoryCards = ({ onCategoryClick }) => {
       );
     }
     
-    // Éducation & Formation
-    if (n.includes('éduc') || n.includes('form') || n.includes('cours') || n.includes('école')) {
+    // 6. Éducation & Formation
+    if (n.includes('éduc') || n.includes('form') || n.includes('cours') || n.includes('école') || n.includes('univ')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)' }}>
           <GraduationCap size={24} color="#fff" />
@@ -287,8 +288,8 @@ const CategoryCards = ({ onCategoryClick }) => {
       );
     }
     
-    // Créatif & Médias
-    if (n.includes('créat') || n.includes('média') || n.includes('art') || n.includes('photo') || n.includes('musique')) {
+    // 7. Créatif & Médias
+    if (n.includes('créat') || n.includes('média') || n.includes('art') || n.includes('photo') || n.includes('musique') || n.includes('pub')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)' }}>
           <Palette size={24} color="#fff" />
@@ -296,8 +297,62 @@ const CategoryCards = ({ onCategoryClick }) => {
       );
     }
     
-    // Services personnels
-    if (n.includes('perso') || n.includes('service') || n.includes('beauté') || n.includes('coiffure')) {
+    // 8. Automobile & Transport
+    if (n.includes('auto') || n.includes('transport') || n.includes('véhicule') || n.includes('logistique') || n.includes('camion')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' }}>
+          <Car size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // 9. BTP & Construction
+    if (n.includes('btp') || n.includes('construction') || n.includes('immob') || n.includes('archi') || n.includes('bâti')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' }}>
+          <HardHat size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // 10. Industrie & Production
+    if (n.includes('industrie') || n.includes('prod') || n.includes('usine') || n.includes('fab')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' }}>
+          <Factory size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // 11. Commerce & Distribution
+    if (n.includes('commerce') || n.includes('vente') || n.includes('magasin') || n.includes('distribution') || n.includes('shopping')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)' }}>
+          <ShoppingCart size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // 12. Tourisme & Loisirs
+    if (n.includes('tourism') || n.includes('loisir') || n.includes('voyage') || n.includes('hôtel') || n.includes('resto') || n.includes('café')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #ec4899 0%, #f472b6 100%)' }}>
+          <Plane size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // 13. Services aux entreprises
+    if (n.includes('entreprises') || n.includes('btob') || n.includes('b2b') || n.includes('conseil')) {
+      return (
+        <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%)' }}>
+          <Briefcase size={24} color="#fff" />
+        </div>
+      );
+    }
+
+    // 14. Services personnels
+    if (n.includes('perso') || n.includes('service') || n.includes('beauté') || n.includes('coiffure') || n.includes('garde')) {
       return (
         <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%)' }}>
           <User size={24} color="#fff" />
@@ -307,7 +362,7 @@ const CategoryCards = ({ onCategoryClick }) => {
 
     // Default
     return (
-      <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)' }}>
+      <div style={{ ...cat.iconWrap, background: 'linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%)' }}>
         <Tag size={24} color="#fff" />
       </div>
     );
