@@ -1350,8 +1350,10 @@ const Home = () => {
           <aside style={p.rightSidebar}>
             <RecommendedCompanies />
             <RecommendedProfessionals />
-          
+            <SuggestedCompanies />
+            <SuggestedProfessionals />
           </aside>
+          
         </div>
       </div>
 
