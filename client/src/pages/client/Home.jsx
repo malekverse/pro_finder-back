@@ -582,7 +582,7 @@ const ProductDetail = ({ product, onClose }) => {
             </div>
 
             <div style={pd.actionRow}>
-              <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleBuy(); }}>ACHETER</button>
+              <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleBuy(); }}>ACHETER MAINTENANT</button>
             </div>
 
             <div style={pd.overview}>
@@ -764,7 +764,7 @@ const ServiceDetail = ({ service, onClose }) => {
             <div style={pd.divider} />
 
             <div style={pd.actionRow}>
-              <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleBuy(); }}>RÉSERVER MAINTENANT</button>
+              <button type="button" style={pd.buyBtn} onClick={(e) => { e.preventDefault(); handleBuy(); }}>CONFIRMER LA RÉSERVATION</button>
             </div>
 
             <div style={pd.overview}>

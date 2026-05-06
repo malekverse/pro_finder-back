@@ -106,6 +106,22 @@ const Marketplace = () => {
     }
   };
 
+  const handleOrder = () => {
+    if (!user) {
+      navigate("/auth/login", { state: { from: "/marketplace" } });
+    } else {
+      navigate("/user/dashboard");
+    }
+  };
+
+  const handleReserve = () => {
+    if (!user) {
+      navigate("/auth/login", { state: { from: "/marketplace" } });
+    } else {
+      navigate("/user/dashboard");
+    }
+  };
+
   return (
     <div style={m.page}>
       <Header user={user} />
@@ -171,6 +187,7 @@ const Marketplace = () => {
         <ProductDetail 
           product={selectedProduct} 
           onClose={() => setSelectedProduct(null)} 
+          onOrder={handleOrder}
         />
       )}
 
@@ -178,6 +195,7 @@ const Marketplace = () => {
         <ServiceDetail 
           service={selectedService} 
           onClose={() => setSelectedService(null)} 
+          onReserve={handleReserve}
         />
       )}
     </div>
