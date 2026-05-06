@@ -111,7 +111,7 @@ const SuggestedCompanies = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useSelector((state) => state.auth.user);
-  const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 30000 });
+  const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 50000 });
   const [followCompany] = useFollowCompanyMutation();
   const [followedIds, setFollowedIds] = useState([]);
 
@@ -1118,7 +1118,7 @@ const ProfessionalFeed = ({ filters }) => {
             <div style={c.listActions}>
               <button
                 onClick={(e) => { e.stopPropagation(); navigate(`/user/professional/${pro._id}`); }}
-                style={{ ...c.listBtn, background: '#3b82f6', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)' }}
+                style={{ ...c.listBtn, background: '#1E3A5F', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)' }}
               >
                 Voir Profil
               </button>
@@ -1321,15 +1321,7 @@ const Home = () => {
                     <Search size={18} color="#1E3A5F" />
                     <h2 style={p.feedTitle}>Résultats pour {searchTab === 'companies' ? 'Sociétés' : 'Professionnels'}</h2>
                   </div>
-                  <button
-                    onClick={() => {
-                      setIsShowingResults(false);
-                      setSelectedCategoryId(null);
-                    }}
-                    style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', cursor: 'pointer' }}
-                  >
-                    Retour à l'accueil
-                  </button>
+                  
                 </div>
 
                 <div style={r.tabToggle}>
@@ -1358,8 +1350,7 @@ const Home = () => {
           <aside style={p.rightSidebar}>
             <RecommendedCompanies />
             <RecommendedProfessionals />
-            <SuggestedCompanies />
-            <SuggestedProfessionals />
+          
           </aside>
         </div>
       </div>
