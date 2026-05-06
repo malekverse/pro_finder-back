@@ -74,6 +74,14 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
 
         <button
           type="button"
+          onClick={() => navigate("/marketplace")}
+          style={{ ...h.navBtn, color: activeTab === 'marketplace' ? "#1E3A5F" : "#64748b", borderBottom: activeTab === 'marketplace' ? "2px solid #1E3A5F" : "none" }}
+        >
+          <Store size={18} /><span style={h.navLabel}>Marketplace</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => onAction('companies')}
           style={{ ...h.navBtn, color: activeTab === 'companies' ? "#1E3A5F" : "#64748b", borderBottom: activeTab === 'companies' ? "2px solid #1E3A5F" : "none" }}
         >

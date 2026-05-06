@@ -13,6 +13,7 @@ import ClaimCompany from './pages/auth/ClaimCompany';
 
 // Pages Client
 import Home from './pages/client/Home';
+import Marketplace from './pages/client/Marketplace';
 import Profile from './pages/client/Profile';
 import UserDashboard from './pages/client/UserDashboard';
 import ClientPurchases from './pages/client/ClientPurchases';
@@ -67,6 +68,7 @@ function App() {
     <Routes>
       <Route path="/" element={<RootLayout />}>
         <Route index element={<Home />} />
+        <Route path="marketplace" element={<Marketplace />} />
 
         {/* PUBLIQUES */}
         <Route path="auth/login" element={<Login />} />
