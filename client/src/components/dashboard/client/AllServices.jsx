@@ -24,7 +24,7 @@ const AllServices = ({ onAction }) => {
           <Search size={18} color="#64748b" style={g.searchIcon} />
           <input
             type="text"
-            placeholder="Rechercher un service ou un prestataire..."
+            placeholder="Rechercher un service ..."
             style={g.searchInput}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -74,7 +74,7 @@ const CompaniesExplorer = () => {
           <Search size={20} color="#94a3b8" />
           <input
             type="text"
-            placeholder="Rechercher une entreprise par nom..."
+            placeholder="Rechercher une entreprise par nom ou services..."
             style={ex.searchInput}
             value={filters.q}
             onChange={(e) => setFilters({ ...filters, q: e.target.value })}
