@@ -367,15 +367,26 @@ exports.getAvailableSlots = async (req, res) => {
       existingReservations = await Reservation.find({
         $or: providerQuery,
         date: { $gte: startOfDay, $lte: endOfDay },
-        status: { $in: ["confirmed", "paid", "completed", "blocked"] }
+        status: { $in: ["pending", "confirmed", "paid", "completed", "blocked"] }
       });
     }
     const bookedSlots = existingReservations.map(r => r.timeSlot);
 
+    // Also check for Quotes (requests) that are not rejected or expired
+    const Quote = require("../models/Quote");
+    const existingQuotes = await Quote.find({
+      $or: providerQuery,
+      bookingDate: { $gte: startOfDay, $lte: endOfDay },
+      status: { $in: ["sent", "accepted"] }
+    });
+    
+    const quoteBookedSlots = existingQuotes.map(q => q.bookingTimeSlot);
+    const allBookedSlots = [...new Set([...bookedSlots, ...quoteBookedSlots])];
+
     // Map all potential slots to availability status
     const availableSlots = allSlots.map(slot => ({
       time: slot,
-      isAvailable: !bookedSlots.includes(slot)
+      isAvailable: !allBookedSlots.includes(slot)
     }));
 
     res.json(availableSlots);

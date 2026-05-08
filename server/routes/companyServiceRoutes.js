@@ -3,13 +3,14 @@ const router = express.Router();
 const companyServiceController = require("../controllers/companyServiceController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorizeRoles = require("../middleware/authorizeRoles");
+const checkPermission = require("../middleware/checkPermission");
 const upload = require("../config/multer");
 
-// Toutes les routes de gestion exigent d'être authentifié en tant qu'entreprise/admin/owner
+// Toutes les routes de gestion exigent d'être authentifié et d'avoir la permission
 router.post(
   "/create",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner", "professional"),
+  checkPermission("manage_catalog"),
   upload.any(),
   companyServiceController.createService
 );
@@ -19,7 +20,7 @@ router.get("/company/:companyId", companyServiceController.getCompanyServices);
 router.put(
   "/update/:id",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner", "professional"),
+  checkPermission("manage_catalog"),
   upload.any(),
   companyServiceController.updateService
 );
@@ -27,7 +28,7 @@ router.put(
 router.delete(
   "/delete/:id",
   verifyJWT,
-  authorizeRoles("company", "admin", "owner", "professional"),
+  checkPermission("manage_catalog"),
   companyServiceController.deleteService
 );
 

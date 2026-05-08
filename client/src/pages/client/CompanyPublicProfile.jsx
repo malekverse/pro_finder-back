@@ -18,6 +18,7 @@ import { useGetCompanyProductsQuery } from "../../redux/features/products/produc
 import { useGetCompanyServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
 import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
 import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
+import { useCreateQuoteRequestMutation } from "../../redux/features/company/quoteApiSlice";
 import {
   useGetCompanyReviewsQuery,
   useGetAverageRatingQuery,
@@ -68,6 +69,7 @@ const CompanyPublicProfile = () => {
   // Reservation & Order Logic
   const [createReservation, { isLoading: reserving }] = useCreateReservationMutation();
   const [createOrder, { isLoading: ordering }] = useCreateOrderMutation();
+  const [createQuoteRequest, { isLoading: isRequestingQuote }] = useCreateQuoteRequestMutation();
   const [initPayment, { isLoading: isPaying }] = useInitializePaymentMutation();
   
   const [selectedService, setSelectedService] = useState(null);
@@ -252,34 +254,6 @@ const CompanyPublicProfile = () => {
     }
   };
 
-  const handleBookService = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      navigate("/auth/login", { state: { from: location.pathname } });
-      return;
-    }
-    try {
-      await createReservation({
-        serviceId: selectedService._id,
-        companyId,
-        date: reservationDate,
-        timeSlot: reservationTime,
-        notes: reservationNotes,
-      }).unwrap();
-      setResSuccess(true);
-      setTimeout(() => {
-        setSelectedService(null);
-        setResSuccess(false);
-        setReservationDate("");
-        setReservationTime("");
-        setReservationNotes("");
-      }, 2000);
-    } catch (err) {
-      console.error("Reservation error", err);
-      alert("Erreur lors de la réservation");
-    }
-  };
-
   const handlePlaceOrder = async (e) => {
     // Remplacé par handleSubmitAction via ActionModal
   };
@@ -307,18 +281,10 @@ const CompanyPublicProfile = () => {
           notes: data.note
         }).unwrap();
         
-        // DÉCLENCHER LE PAIEMENT (CHECKOUT)
-        const paymentData = await initPayment({
-          orderId: orderResult.order._id,
-          successUrl: `${window.location.origin}/payment/success`,
-          failUrl: `${window.location.origin}/payment/fail`
-        }).unwrap();
-
-        if (paymentData.result_url) {
-          window.location.href = paymentData.result_url;
-        } else {
-          setOrderSuccess(true);
-        }
+        // On ne déclenche plus le paiement automatiquement, on redirige vers les achats
+        setOrderSuccess(true);
+        navigate("/user/purchases");
+      } else {
         // Formater la date en YYYY-MM-DD pour éviter les décalages de fuseau horaire
         let formattedDate = data.date;
         if (data.date instanceof Date) {
@@ -328,12 +294,15 @@ const CompanyPublicProfile = () => {
           formattedDate = `${y}-${m}-${d}`;
         }
 
-        await createReservation({
+        await createQuoteRequest({
           companyId,
-          serviceId: selectedItemForAction._id,
-          date: formattedDate,
-          timeSlot: data.time || data.bookingSlot,
+          bookingServiceId: selectedItemForAction._id,
+          bookingDate: formattedDate,
+          bookingTimeSlot: data.time || data.bookingSlot,
           notes: data.note,
+          clientPhone: data.address?.phone || data.phone,
+          clientName: user?.fullName || user?.companyName || "Client",
+          clientEmail: user?.email || "",
         }).unwrap();
         setResSuccess(true);
       }
@@ -821,7 +790,7 @@ const CompanyPublicProfile = () => {
       {(orderSuccess || resSuccess) && (
         <div style={{ position: 'fixed', bottom: '20px', right: '20px', background: '#10b981', color: '#fff', padding: '15px 25px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 3000, display: 'flex', alignItems: 'center', gap: '10px', animation: 'fadeInUp 0.3s' }}>
           <CheckCircle2 size={20} />
-          <span>{orderSuccess ? "Commande réussie !" : "Réservation envoyée !"}</span>
+          <span>{orderSuccess ? "Commande réussie !" : "Demande envoyée, veuillez attendre le devis !"}</span>
         </div>
       )}
 

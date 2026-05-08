@@ -18,7 +18,7 @@ const createProduct = async (req, res) => {
     };
 
     if (req.roles.includes("professional")) {
-      productData.professionalId = req.user;
+      productData.professionalId = req.professionalId || req.user;
     } else {
       productData.companyId = req.companyId || req.user;
     }
@@ -35,7 +35,7 @@ const createProduct = async (req, res) => {
 // GET BY COMPANY
 const getCompanyProducts = async (req, res) => {
   try {
-    const id = req.params.companyId || req.companyId || req.user;
+    const id = req.params.companyId || req.companyId || req.professionalId || req.user;
     const products = await Product.find({
       $or: [
         { companyId: id },
@@ -54,7 +54,7 @@ const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, category, price, description, stock, existingImages } = req.body;
-    const ownerId = req.companyId || req.user;
+    const ownerId = req.companyId || req.professionalId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 
@@ -93,7 +93,7 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const ownerId = req.companyId || req.user;
+    const ownerId = req.companyId || req.professionalId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 

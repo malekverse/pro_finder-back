@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
-import axios from "axios";
+
 import { selectPermissions } from "../../redux/features/auth/authSlice";
 import { 
   useGetCompanyFollowersQuery, 
   useGetBlockedUsersQuery,
-  useToggleBlockFollowerMutation 
+  useToggleBlockFollowerMutation,
+  useGetRolesQuery 
 } from "../../redux/features/company/companyApiSlice";
 import CompanyUsersList from "../../components/dashboard/Company/CompanyUsersList";
 import AddUserModal from "../../components/dashboard/Company/AddUserModal.jsx";
@@ -28,25 +29,8 @@ const UserManagement = () => {
   
   const [showConfirm, setShowConfirm] = useState(false);
   const [userToToggle, setUserToToggle] = useState(null);
-  const [roles, setRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const token = useSelector((state) => state.auth.token) || localStorage.getItem("accessToken");
-
-  const fetchRoles = async () => {
-    if (!token) return;
-    try {
-      const response = await axios.get("http://localhost:5000/roles/getRoles", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRoles(response.data);
-    } catch (err) {
-      console.error("Erreur récupération rôles:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoles(); 
-  }, [token]);
+  const { data: roles = [] } = useGetRolesQuery();
 
   const handleUserAdded = () => {
     setRefreshKey((prev) => prev + 1);

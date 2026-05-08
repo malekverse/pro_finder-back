@@ -55,6 +55,7 @@ const contractSchema = new mongoose.Schema(
       type: Date,
     },
     terms: { type: String },
+    isPaid: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

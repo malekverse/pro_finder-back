@@ -13,81 +13,124 @@ const invoiceController = require("./invoiceController");
 // Initialize a Flouci payment
 exports.initializePayment = async (req, res) => {
   try {
-    const { reservationId: bodyReservationId, quoteId, orderId, contractId, successUrl, failUrl } = req.body;
-    const userId = req.user;
+    console.log("📥 [initializePayment] Raw Body:", req.body);
+    
+    // Support both { items: [...] } and { items: { items: [...] } } just in case
+    let bodyItems = req.body.items;
+    
+    // Si items est un objet contenant une propriété items (erreur de double imbrication côté front possible)
+    if (bodyItems && !Array.isArray(bodyItems) && bodyItems.items) {
+      bodyItems = bodyItems.items;
+    }
 
-    let finalAmount = 0;
-    let targetEntity = null;
-    let resolvedReservationId = bodyReservationId;
+    const successUrl = req.body.successUrl;
+    const failUrl = req.body.failUrl;
 
-    // Recalculer le montant depuis la DB (Zéro confiance au montant frontend)
-    if (bodyReservationId) {
-      targetEntity = await Reservation.findById(bodyReservationId).populate("serviceId");
-      if (!targetEntity) return res.status(404).json({ message: "Réservation non trouvée" });
-      if (!targetEntity.serviceId) return res.status(400).json({ message: "Service associé à la réservation introuvable" });
-      finalAmount = targetEntity.serviceId.price;
-      resolvedReservationId = bodyReservationId;
-    } else if (quoteId) {
-      targetEntity = await Quote.findById(quoteId);
-      if (!targetEntity) return res.status(404).json({ message: "Devis non trouvé" });
-      finalAmount = targetEntity.totalAmount;
-      if (targetEntity.reservationId) resolvedReservationId = targetEntity.reservationId;
-    } else if (contractId) {
-      targetEntity = await Contract.findById(contractId).populate("quoteId");
-      if (!targetEntity) return res.status(404).json({ message: "Contrat non trouvé" });
-      finalAmount = targetEntity.totalValue;
-      if (targetEntity.quoteId?.reservationId) resolvedReservationId = targetEntity.quoteId.reservationId;
-    } else if (orderId) {
-      targetEntity = await Order.findById(orderId).populate("items.productId");
-      if (!targetEntity) return res.status(404).json({ message: "Commande non trouvée" });
+    if (!bodyItems && (req.body.reservationId || req.body.orderId || req.body.quoteId || req.body.contractId)) {
+      // Fallback for old single item format if needed (legacy support)
+      bodyItems = [];
+      if (req.body.reservationId) bodyItems.push({ entityId: req.body.reservationId, entityType: "Reservation" });
+      if (req.body.orderId) bodyItems.push({ entityId: req.body.orderId, entityType: "Order" });
+      if (req.body.quoteId) bodyItems.push({ entityId: req.body.quoteId, entityType: "Quote" });
+      if (req.body.contractId) bodyItems.push({ entityId: req.body.contractId, entityType: "Contract" });
+    }
 
-      // Recalculer le prix total à partir des produits en DB
-      let recalculatedTotal = 0;
-      for (const item of targetEntity.items) {
-        if (item.productId) {
-          recalculatedTotal += item.productId.price * item.quantity;
-        } else {
-          // Si le produit n'est plus en DB, on garde le prix historique stocké dans l'item
-          recalculatedTotal += item.price * item.quantity;
+    if (!bodyItems || !Array.isArray(bodyItems) || bodyItems.length === 0) {
+       console.error("❌ [initializePayment] No items found in body:", req.body);
+       
+       // Si on est vraiment bloqué, on essaie de voir si l'objet lui-même est l'item (cas extrême)
+       if (req.body.entityId && req.body.entityType) {
+         bodyItems = [req.body];
+       } else {
+         return res.status(400).json({ 
+           message: "Aucun article de paiement spécifié",
+           receivedBody: req.body 
+         });
+       }
+     }
+
+     const userId = req.user;
+     let totalAmount = 0;
+    const resolvedItems = [];
+    let companyId = null;
+    let professionalId = null;
+
+    for (const item of bodyItems) {
+      let finalAmount = 0;
+      let targetEntity = null;
+      const { entityId, entityType } = item;
+
+      if (entityType === "Reservation") {
+        targetEntity = await Reservation.findById(entityId).populate("serviceId");
+        if (!targetEntity) throw new Error(`Réservation ${entityId} non trouvée`);
+        finalAmount = targetEntity.serviceId.price;
+      } else if (entityType === "Quote") {
+        targetEntity = await Quote.findById(entityId);
+        if (!targetEntity) throw new Error(`Devis ${entityId} non trouvé`);
+        finalAmount = targetEntity.totalAmount;
+      } else if (entityType === "Contract") {
+        targetEntity = await Contract.findById(entityId);
+        if (!targetEntity) throw new Error(`Contrat ${entityId} non trouvé`);
+        finalAmount = targetEntity.totalValue;
+      } else if (entityType === "Order") {
+        targetEntity = await Order.findById(entityId).populate("items.productId");
+        if (!targetEntity) throw new Error(`Commande ${entityId} non trouvée`);
+        
+        let recalculatedTotal = 0;
+        for (const orderItem of targetEntity.items) {
+          recalculatedTotal += (orderItem.productId?.price || orderItem.price) * orderItem.quantity;
         }
+        finalAmount = recalculatedTotal;
+      } else {
+        throw new Error(`Type d'entité ${entityType} non supporté`);
       }
-      finalAmount = recalculatedTotal;
-    } else if (contractId) {
-      targetEntity = await Contract.findById(contractId);
-      if (!targetEntity) return res.status(404).json({ message: "Contrat non trouvé" });
-      finalAmount = targetEntity.totalValue;
-    } else {
-      return res.status(400).json({ message: "Aucune entité de paiement spécifiée" });
+
+      if (!finalAmount || finalAmount <= 0) {
+        throw new Error(`Montant invalide pour ${entityType} ${entityId}`);
+      }
+
+      totalAmount += finalAmount;
+      resolvedItems.push({
+        entityType,
+        entityId,
+        amount: finalAmount
+      });
+
+      // On récupère le provider du premier article (on assume qu'ils appartiennent tous au même)
+      if (!companyId && !professionalId) {
+        companyId = targetEntity.companyId;
+        professionalId = targetEntity.professionalId;
+      }
     }
 
-    if (!finalAmount || finalAmount <= 0) {
-      return res.status(400).json({ message: "Montant invalide ou nul après calcul" });
-    }
+    console.log(`💳 [initializePayment] Total Amount: ${totalAmount}, Items Count: ${resolvedItems.length}`);
 
     const developerTrackingId = uuidv4();
 
-    // Call Flouci to generate payment with RECALCULATED amount
+    // Call Flouci to generate payment with RECALCULATED total amount
     const flouciResponse = await flouci.initPayment(
-      finalAmount,
+      totalAmount,
       successUrl || `${process.env.CLIENT_URL}/payment/success`,
       failUrl || `${process.env.CLIENT_URL}/payment/fail`,
       developerTrackingId
     );
 
+    if (!flouciResponse || !flouciResponse.result || !flouciResponse.result.payment_id) {
+      console.error("❌ [initializePayment] Invalid Flouci response:", flouciResponse);
+      throw new Error("Invalid response from Flouci");
+    }
+
     // Create a pending payment record in our DB
     const newPayment = new Payment({
       paymentId: uuidv4(),
       userId,
-      reservationId: resolvedReservationId,
-      quoteId,
-      orderId,
-      contractId,
-      amount: finalAmount,
+      items: resolvedItems,
+      amount: totalAmount,
       flouciPaymentId: flouciResponse.result.payment_id,
       developerTrackingId,
       status: "pending",
-      companyId: targetEntity.companyId,
-      professionalId: targetEntity.professionalId
+      companyId: companyId || null,
+      professionalId: professionalId || null
     });
 
     await newPayment.save();
@@ -120,90 +163,72 @@ exports.verifyPayment = async (req, res) => {
     }
 
     if (verificationData.result.status === "SUCCESS") {
-      // Double vérification du montant (optionnel mais recommandé)
-      // On peut comparer verificationData.result.amount avec payment.amount * 1000
+      console.log(`💰 [verifyPayment] Payment SUCCESS for Flouci ID: ${payment_id}`);
 
       payment.status = "success";
       await payment.save();
 
-      // Generate Invoice automatically
-      try {
-        await invoiceController.createInvoiceFromPayment(payment);
-      } catch (invErr) {
-        console.error("❌ [verifyPayment] Invoice generation failed:", invErr);
+      // Mettre à jour la balance du fournisseur
+      const ProviderBalance = require("../models/ProviderBalance");
+      const balanceQuery = payment.companyId 
+        ? { companyId: payment.companyId } 
+        : { professionalId: payment.professionalId };
+
+      let balance = await ProviderBalance.findOne(balanceQuery);
+      if (!balance) {
+        balance = new ProviderBalance(balanceQuery);
       }
+      
+      balance.pendingBalance += payment.amount;
+      balance.totalEarned += payment.amount;
+      // Pour cet exemple simple, on considère que l'argent est immédiatement disponible
+      // (Normalement on attendrait quelques jours avant de passer de pending à available)
+      balance.availableBalance += payment.amount; 
+      
+      await balance.save();
+      console.log(`💳 [verifyPayment] Provider balance updated (+${payment.amount})`);
 
-      // Update related entity status if needed
-      if (payment.reservationId) {
-        await Reservation.findByIdAndUpdate(payment.reservationId, { status: "paid" });
-        console.log(`✅ [verifyPayment] Reservation ${payment.reservationId} status updated to paid`);
-      }
 
-      if (payment.quoteId) {
-        const quote = await Quote.findById(payment.quoteId);
-        if (quote) {
-          quote.status = "accepted";
-          await quote.save();
-          console.log(`✅ [verifyPayment] Quote ${payment.quoteId} status updated to accepted`);
-
-          // Sync with Reservation (Calendar)
-          if (quote.reservationId) {
-            await Reservation.findByIdAndUpdate(quote.reservationId, { status: "paid" });
-            console.log(`✅ [verifyPayment] Linked reservation ${quote.reservationId} updated to paid`);
+      // Update related entities status FIRST
+      for (const item of payment.items) {
+        if (item.entityType === "Reservation") {
+          await Reservation.findByIdAndUpdate(item.entityId, { status: "paid" });
+          console.log(`✅ [verifyPayment] Reservation ${item.entityId} status updated to paid`);
+        } else if (item.entityType === "Quote") {
+          const quote = await Quote.findById(item.entityId);
+          if (quote) {
+            quote.status = "accepted";
+            quote.isPaid = true;
+            await quote.save();
+            if (quote.reservationId) {
+              await Reservation.findByIdAndUpdate(quote.reservationId, { status: "paid" });
+            }
           }
-
-          // GENERATE AUTOMATIC CONTRACT IF REQUIRED (similar to quoteController.js)
-          if (quote.requiresContract) {
-            try {
-              const existingContract = await Contract.findOne({ quoteId: quote._id });
-              if (!existingContract) {
-                const totalCount = await Contract.countDocuments({});
-                const contractNumber = `CTR-${new Date().getFullYear()}-${(totalCount + 1).toString().padStart(4, '0')}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-
-                const itemsList = quote.items.map(item => `- ${item.description} (x${item.quantity}) : ${item.total} TND`).join('\n');
-
-                const newContract = new Contract({
-                  contractNumber,
-                  companyId: quote.companyId,
-                  professionalId: quote.professionalId,
-                  userId: quote.userId,
-                  quoteId: quote._id,
-                  title: `Contrat de prestation - ${quote.quoteNumber}`,
-                  content: `Ce contrat formalise l'accord pour les services suivants :\n\n${itemsList}\n\nTotal TTC : ${quote.totalAmount} TND`,
-                  startDate: new Date(),
-                  totalValue: quote.totalAmount,
-                  status: "pending_signature",
-                  terms: quote.notes || "Conditions standards de prestation de service."
-                });
-
-                await newContract.save();
-
-                // Notify client about the new contract
-                await Notification.create({
-                  recipient_id: quote.userId,
-                  recipient_type: "User",
-                  sender_id: quote.companyId || quote.professionalId,
-                  sender_type: quote.companyId ? "Company" : "Professional",
-                  type: "contract",
-                  related_id: newContract._id,
-                  message: `Votre contrat pour le devis ${quote.quoteNumber} a été généré automatiquement après votre paiement. Veuillez le signer.`
-                });
-                console.log(`✅ [verifyPayment] Automatic contract generated: ${contractNumber}`);
-              }
-            } catch (contractErr) {
-              console.error("❌ [verifyPayment] Failed to generate contract:", contractErr);
+        } else if (item.entityType === "Order") {
+          await Order.findByIdAndUpdate(item.entityId, { status: "paid" });
+          console.log(`✅ [verifyPayment] Order ${item.entityId} status updated to paid`);
+        } else if (item.entityType === "Contract") {
+          const contract = await Contract.findByIdAndUpdate(item.entityId, { status: "active", isPaid: true });
+          if (contract && contract.quoteId) {
+            // Update the related quote and reservation as paid
+            const quote = await Quote.findByIdAndUpdate(contract.quoteId, { status: "accepted", isPaid: true });
+            if (quote && quote.reservationId) {
+              await Reservation.findByIdAndUpdate(quote.reservationId, { status: "paid" });
             }
           }
         }
       }
-      if (payment.orderId) {
-        await Order.findByIdAndUpdate(payment.orderId, { status: "paid" });
-      }
-      if (payment.contractId) {
-        await Contract.findByIdAndUpdate(payment.contractId, { status: "active" });
+
+      // Generate Invoice automatically AFTER status updates
+      try {
+        console.log(`📄 [verifyPayment] Attempting to generate invoice for payment: ${payment._id}`);
+        const invoice = await invoiceController.createInvoiceFromPayment(payment);
+        console.log(`✅ [verifyPayment] Invoice generated successfully: ${invoice?.invoiceNumber}`);
+      } catch (invErr) {
+        console.error("❌ [verifyPayment] Invoice generation failed:", invErr);
       }
 
-      res.status(200).json({ status: "success", message: "Paiement vérifié avec succès" });
+      res.status(200).json({ status: "success", message: "Payment verified successfully" });
     } else {
       payment.status = "failed";
       await payment.save();

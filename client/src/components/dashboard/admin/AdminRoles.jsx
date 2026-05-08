@@ -124,7 +124,7 @@ const AdminRoles = () => {
             });
             setRoles(roles.filter(r => r._id !== id));
         } catch (err) {
-            alert("Erreur lors de la suppression");
+            alert(err.response?.data?.message || "Erreur lors de la suppression");
         }
     };
 

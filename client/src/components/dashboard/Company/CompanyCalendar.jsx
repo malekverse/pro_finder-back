@@ -106,8 +106,13 @@ const CompanyCalendar = ({ reservations, onUpdateStatus }) => {
                   {res.timeSlot}
                 </div>
                 <div style={s.eventName}>
-                  {res.status === 'blocked' ? 'INDISPONIBLE' : (res.userId?.fullName?.split(' ')[0] || 'Client')}
+                  {res.status === 'blocked' ? 'INDISPONIBLE' : (res.serviceId?.name || 'Service')}
                 </div>
+                {res.status !== 'blocked' && (
+                  <div style={s.eventService}>
+                    {res.userId?.fullName || 'Client'}
+                  </div>
+                )}
               </div>
             ))}
             {dayReservations.length === 0 && <div style={s.addHint}><Plus size={14} /></div>}

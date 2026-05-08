@@ -46,7 +46,7 @@ export const generateQuotePDF = (quote, company) => {
   const tableRows = quote.items.map(item => {
     const row = [item.description];
     if (hasDuration) row.push(item.duration || "-");
-    row.push(`${item.unitPrice.toFixed(2)} TND`);
+    row.push(`${(item.unitPrice || 0).toFixed(2)} TND`);
     row.push(`${((item.unitPrice || 0) * (item.quantity || 1)).toFixed(2)} TND`);
     return row;
   });
@@ -60,10 +60,10 @@ export const generateQuotePDF = (quote, company) => {
 
   // Totals
   const finalY = doc.lastAutoTable.finalY + 10;
-  doc.text(`Sous-total: ${quote.subTotal.toFixed(2)} TND`, 140, finalY);
-  doc.text(`TVA (${quote.taxRate}%): ${quote.taxAmount.toFixed(2)} TND`, 140, finalY + 5);
+  doc.text(`Sous-total: ${(quote.subTotal || 0).toFixed(2)} TND`, 140, finalY);
+  doc.text(`TVA (${quote.taxRate || 0}%): ${(quote.taxAmount || 0).toFixed(2)} TND`, 140, finalY + 5);
   doc.setFontSize(12);
-  doc.text(`TOTAL TTC: ${quote.totalAmount.toFixed(2)} TND`, 140, finalY + 12);
+  doc.text(`TOTAL TTC: ${(quote.totalAmount || 0).toFixed(2)} TND`, 140, finalY + 12);
 
   // Footer
   if (quote.notes) {
@@ -158,6 +158,12 @@ export const generateInvoicePDF = (invoice, provider) => {
   doc.setFontSize(10);
   doc.text(invoice.userId?.fullName || "Client", 20, 75);
   doc.text(invoice.userId?.email || "", 20, 80);
+  
+  // Afficher le numéro de téléphone du client s'il est présent dans l'un des items
+  const clientPhone = invoice.items?.find(item => item.clientPhone)?.clientPhone;
+  if (clientPhone) {
+    doc.text(`Tél: ${clientPhone}`, 20, 85);
+  }
 
   // Table
   const tableHead = [["Description", "Qté", "Prix Unitaire", "Total"]];

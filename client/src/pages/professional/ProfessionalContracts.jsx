@@ -10,7 +10,7 @@ import { useGetProfessionalFollowersQuery, useGetProfessionalProfileQuery } from
 import { useGetCompanyQuotesQuery } from "../../redux/features/company/quoteApiSlice";
 import { 
   FileSignature, Plus, Search, X, Loader2, 
-  User, Calendar, FileText, CheckCircle2, Eye, Download
+  User, Calendar, FileText, CheckCircle2, Eye, Download, FileSpreadsheet
 } from "lucide-react";
 import { generateContractPDF } from "../../utils/pdfGenerator";
 
@@ -190,6 +190,20 @@ const ProfessionalContracts = ({ isEmbedded = false }) => {
                   <button onClick={() => handleStatusChange(contract._id, 'signed')} title="Marquer comme signé" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: '5px' }}><CheckCircle2 size={18} /></button>
                 )}
                 <button onClick={() => setSelectedContract(contract)} title="Détails" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '5px' }}><Eye size={18} /></button>
+
+                {contract.quoteId && (
+                  <button 
+                    onClick={() => {
+                      navigate("/professional/documents", { 
+                        state: { tab: "quotes" } 
+                      });
+                    }}
+                    title={`Voir le devis ${contract.quoteId.quoteNumber}`}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#24416b', padding: '5px' }}
+                  >
+                    <FileSpreadsheet size={18} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -221,6 +235,25 @@ const ProfessionalContracts = ({ isEmbedded = false }) => {
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '700', color: '#475569' }}>Termes & Conditions</h4>
                 <p style={{ margin: 0, fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>{selectedContract.terms}</p>
               </div>
+            )}
+
+            {selectedContract.quoteId && (
+              <button 
+                onClick={() => {
+                  navigate("/professional/documents", { 
+                    state: { tab: "quotes" } 
+                  });
+                  setSelectedContract(null);
+                }}
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none', 
+                  background: '#f1f5f9', color: '#24416b', fontWeight: '800', cursor: 'pointer', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  marginBottom: '24px'
+                }}
+              >
+                <FileSpreadsheet size={20} /> Voir le devis associé ({selectedContract.quoteId.quoteNumber})
+              </button>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>

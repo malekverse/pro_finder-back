@@ -154,6 +154,61 @@ export const companyApiSlice = apiSlice.injectEndpoints({
       }),
     }),
 
+    getCompanyUsers: builder.query({
+      query: () => "company/users",
+      providesTags: ["CompanyUsers"]
+    }),
+
+    assignRoleToUser: builder.mutation({
+      query: (body) => ({
+        url: "company/assign-role",
+        method: "PUT",
+        body
+      }),
+      invalidatesTags: ["CompanyUsers"]
+    }),
+
+    updateRoleToUser: builder.mutation({
+      query: (body) => ({
+        url: "company/update-role",
+        method: "PUT",
+        body
+      }),
+      invalidatesTags: ["CompanyUsers"]
+    }),
+
+    deleteRoleToUser: builder.mutation({
+      query: (body) => ({
+        url: "company/delete-role",
+        method: "DELETE",
+        body
+      }),
+      invalidatesTags: ["CompanyUsers"]
+    }),
+
+    getRoles: builder.query({
+      query: () => "roles/getRoles"
+    }),
+
+    getMyBalance: builder.query({
+      query: () => "balance/my-balance",
+      providesTags: ["Balance", "Payments"]
+    }),
+
+    requestPayout: builder.mutation({
+      query: (amount) => ({
+        url: "balance/request-payout",
+        method: "POST",
+        body: { amount }
+      }),
+      invalidatesTags: ["Balance", "Payouts"]
+    }),
+
+    getPayoutHistory: builder.query({
+      query: () => "balance/payout-history",
+      providesTags: ["Payouts"]
+    }),
+
   })
 });
 
@@ -182,4 +237,12 @@ export const {
   useGetMyFollowsQuery,
   useGetMyManagedCompaniesQuery,
   useRequestClaimMutation,
+  useGetCompanyUsersQuery,
+  useAssignRoleToUserMutation,
+  useUpdateRoleToUserMutation,
+  useDeleteRoleToUserMutation,
+  useGetRolesQuery,
+  useGetMyBalanceQuery,
+  useRequestPayoutMutation,
+  useGetPayoutHistoryQuery,
 } = companyApiSlice;

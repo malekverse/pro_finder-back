@@ -46,6 +46,10 @@ const reservationSchema = new mongoose.Schema(
     adminNotes: {
       type: String,
       trim: true,
+    },
+    clientPhone: {
+      type: String,
+      trim: true,
     }
   },
   {

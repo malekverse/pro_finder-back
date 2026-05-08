@@ -36,6 +36,7 @@ import CompanyProfile from './components/dashboard/Company/CompanyProfile';
 import Publication from './pages/company/Publication';
 import Commandes from './pages/company/Commandes';
 import Reviews from './pages/company/Reviews';
+import Gains from './pages/company/Gains';
 
 // Pages Professional
 import ProfessionalDashboardLayout from './pages/professional/ProfessionalDashboardLayout';
@@ -148,6 +149,7 @@ function App() {
           <Route path="users" element={<UserManagement />} />
           <Route path="profile" element={<CompanyProfile />} />
           <Route path="posts" element={<Publication />} />
+          <Route path="gains" element={<Gains />} />
         </Route>
 
         {/* PROFESSIONAL */}
@@ -172,6 +174,7 @@ function App() {
           <Route path="profile" element={<ProfessionalProfile />} />
           <Route path="reviews" element={<ProfessionalReviews />} />
           <Route path="users" element={<ProfessionalUserManagement />} />
+          <Route path="gains" element={<Gains />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

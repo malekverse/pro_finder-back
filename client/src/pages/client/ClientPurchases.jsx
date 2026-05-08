@@ -30,9 +30,20 @@ const ClientPurchases = () => {
       const amount = item.totalPrice || item.totalAmount || item.totalValue || item.serviceId?.price;
       if (!amount) return alert("Montant invalide");
 
+      console.log("🚀 [handlePayment] Sending payment items:", [
+        {
+          entityId: item._id,
+          entityType: type === 'reservation' ? 'Reservation' : 'Order'
+        }
+      ]);
+
       const res = await initializePayment({
-        reservationId: type === 'reservation' ? item._id : null,
-        orderId: type === 'order' ? item._id : null,
+        items: [
+          {
+            entityId: item._id,
+            entityType: type === 'reservation' ? 'Reservation' : 'Order'
+          }
+        ],
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/payment/fail`,
       }).unwrap();
@@ -194,7 +205,7 @@ const ClientPurchases = () => {
                       </div>
                     </div>
 
-                    {res.status === 'confirmed' && (
+                    {res.status === 'confirmed' && (!res.quote || (res.quote.status !== 'accepted' && !res.quote.isPaid)) && (
                       <button 
                         onClick={() => handlePayment(res, 'reservation')}
                         disabled={isPaying}
@@ -240,11 +251,11 @@ const ClientPurchases = () => {
                           <FileText size={18} />
                         </div>
                         <div>
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: res.quote.status === 'accepted' ? '#166534' : '#1e3a8a' }}>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: (res.quote.isPaid || res.status === 'paid') ? '#166534' : '#1e3a8a' }}>
                             Devis {res.quote.status === 'accepted' ? 'Accepté' : 'Reçu'}
                           </div>
-                          <div style={{ fontSize: '11px', color: res.quote.status === 'accepted' ? '#15803d' : '#1e40af' }}>
-                            {res.quote.status === 'accepted' ? 'Paiement effectué' : 'Cliquez pour voir les détails'}
+                          <div style={{ fontSize: '11px', color: (res.quote.isPaid || res.status === 'paid') ? '#15803d' : '#1e40af' }}>
+                            {(res.quote.isPaid || res.status === 'paid') ? 'Paiement effectué' : 'Cliquez pour voir les détails'}
                           </div>
                         </div>
                       </div>

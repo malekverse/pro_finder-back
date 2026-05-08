@@ -3,9 +3,89 @@ const Contract = require("../models/Contract");
 const Notification = require("../models/Notification");
 const Company = require("../models/company");
 const Professional = require("../models/Professional");
+const User = require("../models/User"); // Ajout de l'import User
 const mongoose = require("mongoose");
 
-// CREATE QUOTE
+// Client creates a quote request from a service booking
+const createQuoteRequest = async (req, res) => {
+  try {
+    const { 
+      companyId, 
+      professionalId, 
+      bookingServiceId, 
+      bookingDate, 
+      bookingTimeSlot, 
+      clientPhone, 
+      clientName,
+      clientEmail,
+      notes 
+    } = req.body;
+    const userId = req.user;
+
+    // Generate a unique quote number
+    const totalCount = await Quote.countDocuments({});
+    const quoteNumber = `QR-${new Date().getFullYear()}-${(totalCount + 1).toString().padStart(4, "0")}`;
+
+    // Fetch service details to pre-fill items if possible
+    let initialItems = [];
+    let initialTotal = 0;
+    try {
+      const CompanyService = require("../models/CompanyService");
+      const service = await CompanyService.findById(bookingServiceId);
+      if (service) {
+        initialItems = [{
+          description: service.name,
+          quantity: 1,
+          unitPrice: service.price || 0,
+          duration: service.duration || "",
+          total: service.price || 0
+        }];
+        initialTotal = service.price || 0;
+      }
+    } catch (err) {
+      console.error("Error fetching service for quote request:", err);
+    }
+
+    const newQuote = new Quote({
+      quoteNumber,
+      userId,
+      companyId: companyId || null,
+      professionalId: professionalId || null,
+      bookingServiceId,
+      bookingDate,
+      bookingTimeSlot, 
+      clientPhone, 
+      clientName,
+      clientEmail,
+      notes,
+      status: "demande envoyée", 
+      totalAmount: initialTotal,
+      subTotal: initialTotal,
+      taxAmount: 0,
+      items: initialItems
+    });
+
+    await newQuote.save();
+
+    // Notify provider
+    await Notification.create({
+      recipient_id: companyId || professionalId,
+      recipient_type: companyId ? "Company" : "Professional",
+      sender_id: userId,
+      sender_type: "User",
+      type: "quote",
+      related_id: newQuote._id,
+      message: `Nouvelle demande de devis pour un service le ${new Date(bookingDate).toLocaleDateString()}.`
+    });
+
+    res.status(201).json({ message: "Demande de devis envoyée avec succès", quote: newQuote });
+  } catch (error) {
+    console.error("Create Quote Request Error:", error);
+    res.status(500).json({ message: "Échec de l'envoi de la demande de devis", error: error.message });
+  }
+};
+
+// CREATE QUOTE (Provider side)
 const createQuote = async (req, res) => {
   try {
 
@@ -126,6 +206,7 @@ const getCompanyQuotes = async (req, res) => {
 
     const quotes = await Quote.find(query)
       .populate("userId", "fullName email")
+      .populate("bookingServiceId", "name price duration")
       .sort({ createdAt: -1 });
     
     // Add contract and payment info
@@ -135,8 +216,25 @@ const getCompanyQuotes = async (req, res) => {
     const enrichedQuotes = await Promise.all(quotes.map(async (q) => {
       const contract = await Contract.findOne({ quoteId: q._id }).select("_id status");
       const payment = await Payment.findOne({ quoteId: q._id, status: "success" });
+      
+      // Sécurité supplémentaire pour le nom du client
+      let clientName = "Client";
+      let clientEmail = "";
+      if (q.userId && typeof q.userId === 'object') {
+        clientName = q.userId.fullName || q.userId.email || "Client";
+        clientEmail = q.userId.email || "";
+      } else if (q.userId) {
+        const user = await User.findById(q.userId);
+        if (user) {
+          clientName = user.fullName || user.email || "Client";
+          clientEmail = user.email || "";
+        }
+      }
+
       return {
         ...q.toObject(),
+        clientName, // Champ direct pour le frontend
+        clientEmail, // Champ direct pour le frontend
         contractId: contract?._id,
         contractStatus: contract?.status,
         isPaid: !!payment
@@ -209,7 +307,37 @@ const updateQuoteStatus = async (req, res) => {
       }
 
       quote.status = status;
-      
+
+      // If quote is accepted, we might want to create a Reservation if it was a quote request
+      if (status === "accepted" && quote.bookingDate && quote.bookingTimeSlot) {
+        const Reservation = require("../models/Reservation");
+        
+        // Check if reservation already exists to avoid duplicates
+        const existingRes = await Reservation.findOne({
+          quoteId: quote._id
+        });
+
+        if (!existingRes) {
+          const newReservation = new Reservation({
+            userId: quote.userId,
+            companyId: quote.companyId,
+            professionalId: quote.professionalId,
+            serviceId: quote.bookingServiceId,
+            date: quote.bookingDate,
+            timeSlot: quote.bookingTimeSlot,
+            clientPhone: quote.clientPhone,
+            notes: quote.notes,
+            status: "pending", // Now it's a real reservation waiting for final process/payment
+            quoteId: quote._id
+          });
+          await newReservation.save();
+          
+          quote.reservationId = newReservation._id;
+          await quote.save();
+          console.log(`✅ [updateQuoteStatus] Reservation created from accepted quote: ${newReservation._id}`);
+        }
+      }
+
       // UPDATE RESERVATION STATUS IF LINKED
       if (status === "accepted" && quote.reservationId) {
         try {
@@ -377,8 +505,103 @@ const updateQuoteStatus = async (req, res) => {
   }
 };
 
+// Update a quote (used by provider to fill details or edit)
+const updateQuote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { items, taxRate, validUntil, notes, requiresContract, status } = req.body;
+
+    const quote = await Quote.findById(id);
+    if (!quote) return res.status(404).json({ message: "Devis non trouvé" });
+
+    // Calculer les totaux
+    let subTotal = 0;
+    const calculatedItems = items.map(item => {
+      const quantity = parseFloat(item.quantity) || 1;
+      const unitPrice = parseFloat(item.unitPrice) || 0;
+      const total = quantity * unitPrice;
+      subTotal += total;
+      return {
+        description: item.description,
+        quantity,
+        unitPrice,
+        duration: item.duration || "",
+        total
+      };
+    });
+
+    const rate = parseFloat(taxRate) || 19;
+    const taxAmount = (subTotal * rate) / 100;
+    const totalAmount = subTotal + taxAmount;
+
+    quote.items = calculatedItems;
+    quote.subTotal = subTotal;
+    quote.taxRate = rate;
+    quote.taxAmount = taxAmount;
+    quote.totalAmount = totalAmount;
+    
+    if (validUntil) quote.validUntil = validUntil;
+    if (notes) quote.notes = notes;
+    if (requiresContract !== undefined) {
+      quote.requiresContract = requiresContract === true || requiresContract === 'true';
+    }
+
+    // Change status from 'demande envoyée' to 'sent' if provided or if being answered
+    if (status) {
+      quote.status = status;
+    } else if (quote.status === 'demande envoyée' || quote.status === 'request') {
+      quote.status = 'sent';
+    }
+
+    // Change quote number from QR- to QT- if it's being finalized
+    if (quote.status === 'sent' && quote.quoteNumber.startsWith('QR-')) {
+      const totalCount = await Quote.countDocuments({ quoteNumber: { $regex: /^QT-/ } });
+      quote.quoteNumber = `QT-${new Date().getFullYear()}-${(totalCount + 1).toString().padStart(4, '0')}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+    }
+
+    await quote.save();
+
+    // Notify client if it was just sent
+    if (quote.status === 'sent') {
+      try {
+        const providerId = quote.companyId || quote.professionalId;
+        const providerType = quote.companyId ? "Company" : "Professional";
+        
+        let providerName = "Un professionnel";
+        if (quote.companyId) {
+          const Company = require("../models/company");
+          const company = await Company.findById(quote.companyId);
+          providerName = company?.companyName || providerName;
+        } else if (quote.professionalId) {
+          const pro = await Professional.findById(quote.professionalId);
+          providerName = pro?.fullName || providerName;
+        }
+
+        await Notification.create({
+          recipient_id: quote.userId,
+          recipient_type: "User",
+          sender_id: providerId,
+          sender_type: providerType,
+          type: "quote",
+          related_id: quote._id,
+          message: `${providerName} a répondu à votre demande de devis (${quote.quoteNumber}).`
+        });
+      } catch (notifErr) {
+        console.error("Failed to notify client on quote update:", notifErr);
+      }
+    }
+
+    res.status(200).json({ message: "Devis mis à jour avec succès", quote });
+  } catch (error) {
+    console.error("Update Quote Error:", error);
+    res.status(500).json({ message: "Échec de la mise à jour du devis", error: error.message });
+  }
+};
+
 module.exports = {
+  createQuoteRequest,
   createQuote,
+  updateQuote,
   getCompanyQuotes,
   getUserQuotes,
   updateQuoteStatus

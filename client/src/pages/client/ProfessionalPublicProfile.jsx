@@ -300,18 +300,9 @@ const ProfessionalPublicProfile = () => {
           notes: data.note
         }).unwrap();
 
-        // DÉCLENCHER LE PAIEMENT (CHECKOUT)
-        const paymentData = await initPayment({
-          orderId: orderResult.order._id,
-          successUrl: `${window.location.origin}/payment/success`,
-          failUrl: `${window.location.origin}/payment/fail`
-        }).unwrap();
-
-        if (paymentData.result_url) {
-          window.location.href = paymentData.result_url;
-        } else {
-          setOrderSuccess(true);
-        }
+        // On ne déclenche plus le paiement automatiquement, on redirige vers les achats
+        setOrderSuccess(true);
+        navigate("/user/purchases");
       } else {
         // Formater la date en YYYY-MM-DD pour éviter les décalages de fuseau horaire
         let formattedDate = data.date;
@@ -322,12 +313,15 @@ const ProfessionalPublicProfile = () => {
           formattedDate = `${y}-${m}-${d}`;
         }
 
-        await createReservation({
-          professionalId: professional._id,
-          serviceId: selectedItemForAction._id,
-          date: formattedDate,
-          timeSlot: data.time || data.bookingSlot,
+        await createQuoteRequest({
+          professionalId: professionalId,
+          bookingServiceId: selectedItemForAction._id,
+          bookingDate: formattedDate,
+          bookingTimeSlot: data.time || data.bookingSlot,
           notes: data.note,
+          clientPhone: data.address?.phone || data.phone,
+          clientName: user?.fullName || user?.companyName || "Client",
+          clientEmail: user?.email || "",
         }).unwrap();
         setResSuccess(true);
       }
@@ -702,7 +696,7 @@ const ProfessionalPublicProfile = () => {
       {(orderSuccess || resSuccess) && (
         <div style={{ position: 'fixed', bottom: '20px', right: '20px', background: '#10b981', color: '#fff', padding: '15px 25px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 3000, display: 'flex', alignItems: 'center', gap: '10px', animation: 'fadeInUp 0.3s' }}>
           <CheckCircle2 size={20} />
-          <span>{orderSuccess ? "Commande réussie !" : "Réservation envoyée !"}</span>
+          <span>{orderSuccess ? "Commande réussie !" : "Demande envoyée, veuillez attendre le devis !"}</span>
         </div>
       )}
 

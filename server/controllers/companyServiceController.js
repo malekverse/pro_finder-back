@@ -23,7 +23,7 @@ const createService = async (req, res) => {
     };
 
     if (req.roles.includes("professional")) {
-      serviceData.professionalId = req.user;
+      serviceData.professionalId = req.professionalId || req.user;
     } else {
       serviceData.companyId = req.companyId || req.user;
     }
@@ -40,7 +40,7 @@ const createService = async (req, res) => {
 // GET BY COMPANY
 const getCompanyServices = async (req, res) => {
   try {
-    const id = req.params.companyId || req.companyId || req.user;
+    const id = req.params.companyId || req.companyId || req.professionalId || req.user;
     const services = await CompanyService.find({
       $or: [
         { companyId: id },
@@ -59,7 +59,7 @@ const updateService = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, duration, existingImages } = req.body;
-    const ownerId = req.companyId || req.user;
+    const ownerId = req.companyId || req.professionalId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 
@@ -97,7 +97,7 @@ const updateService = async (req, res) => {
 const deleteService = async (req, res) => {
   try {
     const { id } = req.params;
-    const ownerId = req.companyId || req.user;
+    const ownerId = req.companyId || req.professionalId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const query = isProfessional ? { _id: id, professionalId: ownerId } : { _id: id, companyId: ownerId };
 

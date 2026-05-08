@@ -128,7 +128,7 @@ const ProfessionalCommandes = () => {
             fontWeight: '600', transition: '0.2s'
           }}
         >
-          <Calendar size={18} /> Réservations ({reservations.length})
+          <Calendar size={18} /> Réservations ({reservations.filter(r => ["pending", "confirmed"].includes(r.status)).length})
         </button>
         <button 
           onClick={() => setActiveTab("payments")}
@@ -435,7 +435,10 @@ const ProfessionalCommandes = () => {
       ) : (
         <div className={styles.content}>
            <CompanyCalendar 
-                reservations={reservations.filter(r => ["pending", "confirmed", "paid", "completed", "blocked"].includes(r.status))} 
+                reservations={reservations.filter(r => 
+                  ["confirmed", "paid", "completed", "blocked"].includes(r.status) || 
+                  (r.status === "pending" && r.quote?.status === "accepted")
+                )} 
                 onUpdateStatus={handleUpdateReservation}
            />
         </div>

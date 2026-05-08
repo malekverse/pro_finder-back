@@ -17,7 +17,7 @@ export const paymentApiSlice = apiSlice.injectEndpoints({
           const { data } = await queryFulfilled;
           if (data.status === 'success' || data.result?.status === 'SUCCESS') {
             // Invalider les tags pour forcer le rafraîchissement des listes
-            dispatch(apiSlice.util.invalidateTags(["Order", "Reservation", "Quote", "Payment"]));
+            dispatch(apiSlice.util.invalidateTags(["Order", "Reservation", "Quote", "Payment", "Invoice"]));
           }
         } catch (err) {}
       }

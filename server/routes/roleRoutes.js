@@ -5,6 +5,7 @@ const roleController = require("../controllers/roleController");
 const verifyJWT = require("../middleware/verifyJWT");
 const authorizeRoles = require("../middleware/authorizeRoles");
 const checkIfOwner = require("../middleware/checkIfOwner");
+const checkPermission = require("../middleware/checkPermission");
 
 router.use(verifyJWT);
 
@@ -14,7 +15,7 @@ router.put("/:roleId", authorizeRoles("admin"), roleController.updateRole);
 router.delete("/:roleId", authorizeRoles("admin"), roleController.deleteRole);
 
 // L'admin, l'owner et la compagnie peuvent VOIR les rôles pour les assigner
-router.get("/getRoles", authorizeRoles("admin", "owner", "company"), roleController.getRoles);
+router.get("/getRoles", checkPermission("manage_access"), roleController.getRoles);
 
 
 module.exports = router;

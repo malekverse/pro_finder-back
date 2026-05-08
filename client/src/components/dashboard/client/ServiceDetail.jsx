@@ -88,6 +88,43 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
                   </div>
                 ))}
               </div>
+
+              {/* Company Profile moved here */}
+              <div style={pd.sellerCard}>
+                <div style={pd.sellerHeader}>
+                  <div style={pd.sellerLogo}>
+                    {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
+                      <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
+                    ) : (
+                      <Building2 size={24} color="#1c79faff" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 style={pd.sellerName}>{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}</h4>
+                    <div style={pd.sellerRating}>
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
+                      <Star size={12} color="#cbd5e1" />
+                      <span style={pd.ratingCount}>5</span>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  style={pd.visitBtn} 
+                  onClick={() => {
+                    if (service.professionalId) {
+                      navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
+                    } else {
+                      navigate(`/user/company/${service.companyId?._id || service.companyId}`);
+                    }
+                  }}
+                >
+                  {service.professionalId ? "VOIR LE PROFIL" : "VISITER L'ENTREPRISE"}
+                </button>
+              </div>
             </div>
 
             <div style={pd.midCol}>
@@ -150,45 +187,6 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
                 >
                   {!selectedDate || !selectedSlot ? "CHOISISSEZ UNE DATE & HEURE" : "CONFIRMER LA RÉSERVATION"}
                 </button>
-
-              </div>
-            </div>
-
-            <div style={pd.rightCol}>
-              <div style={pd.sellerCard}>
-                <div style={pd.sellerHeader}>
-                  <div style={pd.sellerLogo}>
-                    {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
-                      <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
-                    ) : (
-                      <Building2 size={24} color="#1c79faff" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 style={pd.sellerName}>{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}</h4>
-                    <div style={pd.sellerRating}>
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} color="#cbd5e1" />
-                      <span style={pd.ratingCount}>5</span>
-                    </div>
-                  </div>
-                </div>
-                <button 
-                  type="button" 
-                  style={pd.visitBtn} 
-                  onClick={() => {
-                    if (service.professionalId) {
-                      navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
-                    } else {
-                      navigate(`/user/company/${service.companyId?._id || service.companyId}`);
-                    }
-                  }}
-                >
-                  {service.professionalId ? "VOIR LE PROFIL" : "VISITER L'ENTREPRISE"}
-                </button>
               </div>
             </div>
           </div>
@@ -241,13 +239,13 @@ const pd = {
   actionRow: { display: 'flex', gap: '15px', marginBottom: '35px', marginTop: '20px' },
   buyBtn: { flex: 1, height: '52px', background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 4px 6px -1px rgba(30, 58, 95, 0.2)', textTransform: 'uppercase', letterSpacing: '0.05em' },
   bookingSection: { 
-    background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '25px',
-    boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)'
+    background: '#f8fafc', padding: '25px', borderRadius: '20px', border: '2px solid #e2e8f0', marginBottom: '25px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
   },
-  bookingHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' },
-  bookingTitle: { fontSize: '15px', fontWeight: '800', color: '#1E3A5F', margin: 0 },
-  bookingContent: { display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' },
-  calendarWrapper: { flex: '0 0 280px' },
+  bookingHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' },
+  bookingTitle: { fontSize: '18px', fontWeight: '800', color: '#1E3A5F', margin: 0 },
+  bookingContent: { display: 'flex', gap: '30px', flexWrap: 'wrap', alignItems: 'flex-start' },
+  calendarWrapper: { flex: '0 0 350px' },
   slotsWrapper: { flex: 1, minWidth: '200px' },
   stepLabel: { fontSize: '12px', fontWeight: '800', color: '#64748b', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.025em' },
   noteSection: { marginTop: '20px', padding: '15px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' },
@@ -257,7 +255,7 @@ const pd = {
   descriptionText: { fontSize: '15px', color: '#475569', lineHeight: '1.7', margin: 0 },
   overviewTitle: { fontSize: '14px', fontWeight: '800', color: '#0f172a', margin: '20px 0 10px', textTransform: 'uppercase' },
   rightCol: { width: '250px', flexShrink: 0 },
-  sellerCard: { padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' },
+  sellerCard: { padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc', marginTop: '20px', width: '100%' },
   sellerHeader: { display: 'flex', gap: '12px', marginBottom: '20px' },
   sellerLogo: { width: '48px', height: '48px', borderRadius: '10px', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   logo: { width: '100%', height: '100%', objectFit: 'cover' },

@@ -4,14 +4,16 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { 
   useGetCompanyQuotesQuery, 
   useCreateQuoteMutation, 
+  useUpdateQuoteMutation,
   useUpdateQuoteStatusMutation 
 } from "../../redux/features/company/quoteApiSlice";
 import { useGetProfessionalFollowersQuery, useGetProfessionalProfileQuery } from "../../redux/features/professional/professionalApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
 import { useGetCompanyServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
-import { 
-  FileSpreadsheet, Plus, Search, X, Loader2, 
-  User, Calendar, FileText, Package, Wrench, Eye, Download, Send, RefreshCw, FileSignature
+import {
+  FileSpreadsheet, Plus, Search, X, Loader2,
+  User, Calendar, FileText, Package, Wrench, Eye, Download, Send, RefreshCw, FileSignature,
+  Edit
 } from "lucide-react";
 import { generateQuotePDF } from "../../utils/pdfGenerator";
 
@@ -37,6 +39,7 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
   const { data: services = [] } = useGetCompanyServicesQuery(professionalId, { skip: !professionalId });
   
   const [createQuote, { isLoading: isCreating }] = useCreateQuoteMutation();
+  const [updateQuote, { isLoading: isUpdating }] = useUpdateQuoteMutation();
   const [updateStatus] = useUpdateQuoteStatusMutation();
 
   const handleDownloadPDF = (quote) => {
@@ -52,9 +55,14 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
   };
 
   const [formData, setFormData] = useState({
+    id: "",
     userId: prefillData?.userId || "",
+    userName: prefillData?.userName || "",
+    userEmail: prefillData?.userEmail || "",
     reservationId: prefillData?.reservationId || "",
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    bookingDate: prefillData?.bookingDate || "", // Date réelle du service
+    bookingTimeSlot: prefillData?.bookingTimeSlot || "", // Heure réelle du service
     notes: prefillData?.notes || "",
     requiresContract: false,
     items: prefillData?.serviceId ? [
@@ -65,9 +73,14 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
   useEffect(() => {
     if (prefillData && openModalOnLoad) {
       setFormData({
+        id: "",
         userId: prefillData.userId || "",
+        userName: prefillData.userName || "",
+        userEmail: prefillData.userEmail || "",
         reservationId: prefillData.reservationId || "",
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        bookingDate: prefillData.bookingDate || "",
+        bookingTimeSlot: prefillData.bookingTimeSlot || "",
         notes: prefillData.notes || "",
         items: prefillData.serviceId ? [
           { description: `Service: ${prefillData.serviceName}`, quantity: 1, unitPrice: prefillData.price, duration: prefillData.duration || "60 min" }
@@ -109,13 +122,39 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const rawUserId = formData.userId || prefillData?.userId;
+    const finalUserId = (rawUserId && typeof rawUserId === 'object') ? rawUserId._id : rawUserId;
+
+    if (!finalUserId) {
+      alert("Erreur: ID Client manquant. Veuillez réessayer.");
+      return;
+    }
+
     try {
-      // S'assurer que le statut passe à 'sent' lors de l'envoi
-      const quoteData = { ...formData, status: 'sent' };
-      await createQuote(quoteData).unwrap();
+      const quoteData = { 
+        ...formData, 
+        userId: finalUserId,
+        status: 'sent',
+        taxRate: 19,
+        subTotal: formData.items[0].unitPrice * (formData.items[0].quantity || 1),
+        taxAmount: (formData.items[0].unitPrice * (formData.items[0].quantity || 1)) * 0.19,
+        totalAmount: (formData.items[0].unitPrice * (formData.items[0].quantity || 1)) * 1.19
+      };
+      
+      let response;
+      if (formData.id) {
+        response = await updateQuote({ id: formData.id, ...quoteData }).unwrap();
+      } else {
+        response = await createQuote(quoteData).unwrap();
+      }
+      
       setIsModalOpen(false);
       setFormData({
+        id: "",
         userId: "",
+        userName: "",
+        userEmail: "",
         reservationId: "",
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: "",
@@ -125,8 +164,8 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
       refetch();
       alert("Devis généré et envoyé au client avec succès !");
     } catch (err) {
-      console.error("Failed to create quote:", err);
-      alert("Erreur lors de la création du devis.");
+      console.error("❌ [Quotes] Failed to process quote:", err);
+      alert(`Erreur: ${err.data?.message || "Échec de l'opération"}`);
     }
   };
 
@@ -202,19 +241,68 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
               </div>
               <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>Devis</div>
               <div style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>{quote.quoteNumber}</div>
-              <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{quote.userId?.fullName}</div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>{new Date(quote.createdAt).toLocaleDateString()}</div>
-              <div style={{ fontSize: '15px', fontWeight: '800', color: '#1e293b' }}>{quote.totalAmount.toFixed(2)} TND</div>
-              <div>
-                <span style={{ 
-                  padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
-                  backgroundColor: quote.status === 'accepted' ? '#dcfce7' : quote.status === 'sent' ? '#eff6ff' : quote.status === 'rejected' ? '#fee2e2' : '#f1f5f9',
-                  color: quote.status === 'accepted' ? '#166534' : quote.status === 'sent' ? '#1e40af' : quote.status === 'rejected' ? '#991b1b' : '#475569'
-                }}>
-                  {quote.status === 'draft' ? 'Brouillon' : quote.status === 'sent' ? 'Envoyé' : quote.status === 'accepted' ? 'Accepté' : quote.status === 'rejected' ? 'Refusé' : quote.status}
-                </span>
+              {/* Client Name */}
+              <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+                {quote.clientName || quote.userId?.fullName || "Client"}
               </div>
+              <div style={{ fontSize: '14px', color: '#64748b' }}>{new Date(quote.createdAt).toLocaleDateString()}</div>
+                <div style={{ fontSize: '15px', fontWeight: '800', color: '#1e293b' }}>
+                  {(quote.totalAmount > 0 ? quote.totalAmount : (quote.bookingServiceId?.price || 0)).toFixed(2)} TND
+                </div>
+                <div>
+                  <span style={{ 
+                    padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', 
+                    backgroundColor: 
+                      quote.status === 'accepted' ? '#dcfce7' : 
+                      quote.status === 'sent' ? '#eff6ff' : 
+                      quote.status === 'rejected' ? '#fee2e2' : 
+                      (quote.status === 'request' || quote.status === 'demande envoyée') ? '#fef9c3' : 
+                      '#f1f5f9',
+                    color: 
+                      quote.status === 'accepted' ? '#166534' : 
+                      quote.status === 'sent' ? '#1e40af' : 
+                      quote.status === 'rejected' ? '#991b1b' : 
+                      (quote.status === 'request' || quote.status === 'demande envoyée') ? '#854d0e' : 
+                      '#475569'
+                  }}>
+                    {quote.status === 'draft' ? 'Brouillon' : 
+                     quote.status === 'sent' ? 'Envoyé' : 
+                     quote.status === 'accepted' ? 'Accepté' : 
+                     quote.status === 'rejected' ? 'Refusé' : 
+                     (quote.status === 'request' || quote.status === 'demande envoyée') ? 'Demande' : 
+                     quote.status}
+                  </span>
+                </div>
               <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+                {(quote.status === 'request' || quote.status === 'demande envoyée') && (
+                  <button 
+                    onClick={() => {
+                      setFormData({
+                        id: quote._id,
+                        userId: quote.userId?._id || quote.userId,
+                        userName: quote.clientName || quote.userId?.fullName || "Client",
+                        userEmail: quote.clientEmail || quote.userId?.email || "",
+                        reservationId: quote.reservationId || "",
+                        validUntil: quote.validUntil ? new Date(quote.validUntil).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        bookingDate: quote.bookingDate ? new Date(quote.bookingDate).toISOString().split('T')[0] : "",
+                        bookingTimeSlot: quote.bookingTimeSlot || "",
+                        notes: quote.notes || "",
+                        requiresContract: false,
+                        items: [{ 
+                          description: quote.bookingServiceId?.name || "Service demandé", 
+                          quantity: 1, 
+                          unitPrice: quote.bookingServiceId?.price || 0,
+                          duration: quote.bookingServiceId?.duration || ""
+                        }]
+                      });
+                      setIsModalOpen(true);
+                    }}
+                    title="Répondre à la demande"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#854d0e', padding: '5px' }}
+                  >
+                    <Edit size={18} />
+                  </button>
+                )}
                 <button onClick={() => handleDownloadPDF(quote)} title="Télécharger PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: '5px' }}><Download size={18} /></button>
                 {quote.status === 'draft' && (
                   <button onClick={() => handleStatusChange(quote._id, 'sent')} title="Envoyer au client" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: '5px' }}><Send size={18} /></button>
@@ -266,6 +354,20 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
                     }}
                     title="Créer le contrat"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: '5px' }}
+                  >
+                    <FileSignature size={18} />
+                  </button>
+                )}
+
+                {quote.contractId && (
+                  <button 
+                    onClick={() => {
+                        navigate("/professional/documents", { 
+                            state: { tab: "contracts" } 
+                        });
+                    }}
+                    title="Voir le contrat associé"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#24416b', padding: '5px' }}
                   >
                     <FileSignature size={18} />
                   </button>
@@ -337,6 +439,25 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
                 <p style={{ margin: 0, fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>{selectedQuote.notes}</p>
               </div>
             )}
+
+            {selectedQuote.contractId && (
+              <button 
+                onClick={() => {
+                  navigate("/professional/documents", { 
+                    state: { tab: "contracts" } 
+                  });
+                  setSelectedQuote(null);
+                }}
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none', 
+                  background: '#24416b', color: 'white', fontWeight: '800', cursor: 'pointer', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  marginBottom: '12px'
+                }}
+              >
+                <FileSignature size={20} /> Voir le contrat associé
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -347,8 +468,10 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
           <div style={qs.modal} onClick={e => e.stopPropagation()}>
             <div style={qs.modalHeader}>
               <div>
-                <h2 style={qs.modalTitle}>Nouveau Devis</h2>
-                <p style={qs.modalSub}>Configurez votre proposition commerciale en tant que professionnel.</p>
+                <h2 style={qs.modalTitle}>{formData.id ? "Répondre à la Demande" : "Nouveau Devis"}</h2>
+                <p style={qs.modalSub}>
+                  {formData.id ? `Proposition pour ${formData.userName}` : "Configurez votre proposition commerciale pour ce client."}
+                </p>
               </div>
               <button onClick={() => setIsModalOpen(false)} style={qs.closeBtn}><X size={24} /></button>
             </div>
@@ -357,62 +480,61 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
               <div style={qs.grid}>
                 <div style={qs.formGroup}>
                   <label style={qs.label}>Client (Abonné)</label>
-                  <div style={qs.inputWrapper}>
-                    <User size={18} style={qs.inputIcon} />
-                    {formData.reservationId ? (
-                      <div style={{
-                        ...qs.input,
-                        backgroundColor: '#f1f5f9',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        fontWeight: '700',
-                        color: '#1e293b',
-                        border: '1px solid #cbd5e1',
-                        minHeight: '45px',
-                        padding: '8px 15px'
-                      }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '15px' }}>{prefillData?.userName || "Client de la réservation"}</span>
-                          {prefillData?.userEmail && (
-                            <span style={{ fontSize: '11px', fontWeight: '400', color: '#64748b' }}>{prefillData.userEmail}</span>
-                          )}
-                        </div>
-                        <span style={{ 
-                          fontSize: '10px', 
-                          backgroundColor: '#24416b', 
-                          color: 'white', 
-                          padding: '3px 10px', 
-                          borderRadius: '6px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>Automatique</span>
+                  <div style={{
+                    ...qs.input,
+                    backgroundColor: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    border: '2px solid #e2e8f0',
+                    minHeight: '52px',
+                    padding: '8px 20px',
+                    borderRadius: '14px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '36px', height: '36px', backgroundColor: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={20} color="#64748b" />
                       </div>
-                    ) : (
-                      <select 
-                        required 
-                        style={qs.select}
-                        value={formData.userId}
-                        onChange={(e) => setFormData({...formData, userId: e.target.value})}
-                      >
-                        <option value="">Sélectionner un client</option>
-                        {followers.map(f => (
-                          <option key={f.user_id._id} value={f.user_id._id}>{f.user_id.fullName}</option>
-                        ))}
-                      </select>
-                    )}
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '16px' }}>{formData.userName || prefillData?.userName || "Client"}</span>
+                        <span style={{ fontSize: '12px', fontWeight: '400', color: '#64748b' }}>{formData.userEmail || prefillData?.userEmail || "Email non renseigné"}</span>
+                      </div>
+                    </div>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      backgroundColor: '#24416b', 
+                      color: 'white', 
+                      padding: '4px 12px', 
+                      borderRadius: '8px',
+                      textTransform: 'uppercase',
+                      fontWeight: '900',
+                      letterSpacing: '0.5px'
+                    }}>Client lié</span>
                   </div>
                 </div>
                 <div style={qs.formGroup}>
-                  <label style={qs.label}>Valide jusqu'au</label>
-                  <div style={qs.inputWrapper}>
-                    <Calendar size={18} style={qs.inputIcon} />
-                    <input 
-                        type="date" required 
-                        style={qs.input}
-                        value={formData.validUntil}
-                        onChange={(e) => setFormData({...formData, validUntil: e.target.value})}
-                    />
+                  <label style={qs.label}>Date & Heure du Service</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={qs.inputWrapper}>
+                      <Calendar size={18} style={qs.inputIcon} />
+                      <input 
+                          type="date" required 
+                          style={{ ...qs.input, backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
+                          value={formData.bookingDate}
+                          readOnly
+                      />
+                    </div>
+                    <div style={qs.inputWrapper}>
+                      <Clock size={18} style={qs.inputIcon} />
+                      <input 
+                          type="text" required 
+                          style={{ ...qs.input, backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
+                          value={formData.bookingTimeSlot}
+                          readOnly
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -503,8 +625,8 @@ const ProfessionalQuotes = ({ isEmbedded = false }) => {
 
               <div style={qs.footer}>
                 <button type="button" onClick={() => setIsModalOpen(false)} style={qs.btnSecondary}>Annuler</button>
-                <button type="submit" disabled={isCreating} style={qs.btnPrimary}>
-                  {isCreating ? <Loader2 className="animate-spin" size={20} /> : "Générer le Devis"}
+                <button type="submit" disabled={isCreating || isUpdating} style={qs.btnPrimary}>
+                  {isCreating || isUpdating ? <Loader2 className="animate-spin" size={20} /> : "Générer le Devis"}
                 </button>
               </div>
             </form>

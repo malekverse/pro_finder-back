@@ -118,15 +118,9 @@ const deleteRole = async (req, res) => {
   try {
     const { roleId } = req.params;
 
-    // Vérifier si le rôle est utilisé par une entreprise (via Follow)
+    // Au lieu de bloquer, on détache le rôle de tous les utilisateurs qui l'utilisent
     const Follow = require("../models/follow");
-    const isUsed = await Follow.findOne({ role_id: roleId });
-
-    if (isUsed) {
-      return res.status(400).json({ 
-        message: "Un rôle déjà utilisé par une entreprise ne peut pas être supprimé." 
-      });
-    }
+    await Follow.updateMany({ role_id: roleId }, { $set: { role_id: null } });
 
     const role = await Role.findById(roleId); 
     if (!role)

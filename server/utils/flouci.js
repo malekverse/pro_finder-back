@@ -1,3 +1,4 @@
+const axios = require("axios");
 const FLOUCI_API_BASE = "https://developers.flouci.com/api";
 
 const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => {
@@ -29,23 +30,16 @@ const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => 
   };
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
+    const response = await axios.post(url, payload, {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to initialize Flouci payment");
-    }
-
-    return data; // Should contain payment_id and result_url
+    return response.data; // Should contain payment_id and result_url
   } catch (error) {
-    console.error("Flouci Init Payment Error:", error);
-    throw error;
+    console.error("Flouci Init Payment Error:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Failed to initialize Flouci payment");
   }
 };
 
@@ -67,8 +61,7 @@ const verifyPayment = async (paymentId) => {
   const url = `${FLOUCI_API_BASE}/verify_payment/${paymentId}`;
   
   try {
-    const response = await fetch(url, {
-      method: "GET",
+    const response = await axios.get(url, {
       headers: {
         "Content-Type": "application/json",
         "apppublic": process.env.FLOUCI_APP_PUBLIC,
@@ -76,15 +69,10 @@ const verifyPayment = async (paymentId) => {
       },
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to verify Flouci payment");
-    }
-
-    return data; // Should contain result.status ("SUCCESS", "FAILURE", etc.)
+    return response.data; // Should contain result.status ("SUCCESS", "FAILURE", etc.)
   } catch (error) {
-    console.error("Flouci Verify Payment Error:", error);
-    throw error;
+    console.error("Flouci Verify Payment Error:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Failed to verify Flouci payment");
   }
 };
 

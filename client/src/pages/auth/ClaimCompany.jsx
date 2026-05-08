@@ -140,6 +140,9 @@ const ClaimCompany = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (step === 1) {
+      if (!formData.password || !formData.phone || !formData.country || !formData.region || !formData.city) {
+        return setError("Veuillez remplir tous les champs obligatoires (Mot de passe, Téléphone, Pays, Région, Ville).");
+      }
       if (formData.password !== formData.confirmPassword) {
         return setError("Les mots de passe ne correspondent pas.");
       }
@@ -152,6 +155,7 @@ const ClaimCompany = () => {
     try {
       const payload = {
         token,
+        companyName: formData.companyName,
         password: formData.password,
         phone: formData.phone,
         country: formData.country,

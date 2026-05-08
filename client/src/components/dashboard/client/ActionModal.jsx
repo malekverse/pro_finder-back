@@ -16,7 +16,8 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user, prefilled
   const [address, setAddress] = useState({
     street: "",
     city: "",
-    zipCode: ""
+    zipCode: "",
+    phone: user?.phone || ""
   });
 
   useEffect(() => {
@@ -56,7 +57,7 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user, prefilled
     <div style={m.overlay} onClick={onClose}>
       <div style={m.content} onClick={e => e.stopPropagation()}>
         <div style={m.header}>
-          <h3 style={m.title}>{type === 'product' ? 'Commander le produit' : 'Réserver le service'}</h3>
+          <h3 style={m.title}>{type === 'product' ? 'Commander le produit' : 'Demander un devis & Réserver'}</h3>
           <button onClick={onClose} style={m.close}><X size={20} /></button>
         </div>
 
@@ -136,10 +137,32 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user, prefilled
                     onChange={handleAddressChange}
                   />
                 </div>
+                <div style={{ marginTop: '12px' }}>
+                  <input
+                    type="text"
+                    name="phone"
+                    placeholder="Numéro de téléphone"
+                    style={m.input}
+                    value={address.phone}
+                    onChange={handleAddressChange}
+                  />
+                </div>
               </div>
             </>
           ) : (
             <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={m.label}>Numéro de téléphone</label>
+                <input
+                  type="text"
+                  name="phone"
+                  placeholder="Votre numéro de téléphone"
+                  style={m.input}
+                  value={address.phone}
+                  onChange={handleAddressChange}
+                  required
+                />
+              </div>
               {prefilledData ? (
                 <div style={{ background: '#eff6ff', padding: '15px', borderRadius: '12px', border: '1px solid #bfdbfe', marginBottom: '20px' }}>
                   <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#1e40af', fontWeight: '700' }}>Rendez-vous sélectionné :</p>
@@ -197,12 +220,12 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user, prefilled
             onClick={() => onSubmit({ quantity, date, time, note, address })}
             style={{
               ...m.confirmBtn,
-              opacity: (isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))) ? 0.6 : 1,
-              cursor: (isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))) ? 'not-allowed' : 'pointer'
+              opacity: (isLoading || (type === 'service' && (!date || !time || !address.phone)) || (type === 'product' && (!address.street || !address.city || !address.phone || quantity > (item.stock || 0)))) ? 0.6 : 1,
+              cursor: (isLoading || (type === 'service' && (!date || !time || !address.phone)) || (type === 'product' && (!address.street || !address.city || !address.phone || quantity > (item.stock || 0)))) ? 'not-allowed' : 'pointer'
             }}
-            disabled={isLoading || (type === 'service' && (!date || !time)) || (type === 'product' && (!address.street || !address.city || quantity > (item.stock || 0)))}
+            disabled={isLoading || (type === 'service' && (!date || !time || !address.phone)) || (type === 'product' && (!address.street || !address.city || !address.phone || quantity > (item.stock || 0)))}
           >
-            {isLoading ? <Loader size={18} className="spin" /> : (type === 'product' ? 'Confirmer la commande' : 'Confirmer la réservation')}
+            {isLoading ? <Loader className="animate-spin" size={20} /> : (type === 'product' ? 'Confirmer la commande' : 'Envoyer la demande de devis')}
           </button>
         </div>
       </div>
@@ -212,11 +235,11 @@ const ActionModal = ({ type, item, onClose, onSubmit, isLoading, user, prefilled
 
 const m = {
   overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' },
-  content: { background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' },
-  header: { padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  content: { background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' },
+  header: { padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: 800, color: '#1e293b', margin: 0 },
   close: { background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' },
-  body: { padding: '24px' },
+  body: { padding: '24px', overflowY: 'auto', flex: 1 },
   itemInfo: { display: 'flex', gap: '16px', marginBottom: '24px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #f1f5f9' },
   itemImgWrapper: { width: '70px', height: '70px', borderRadius: '10px', overflow: 'hidden', background: '#fff', border: '1px solid #e2e8f0', flexShrink: 0 },
   itemImg: { width: '100%', height: '100%', objectFit: 'cover' },

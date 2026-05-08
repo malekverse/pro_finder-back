@@ -1,8 +1,8 @@
 export const PERMISSIONS = {
-  ADMIN_ACCESS: "admin_access", // Permission "maître"
-  CREATE_POST: "create_post",
-  UPDATE_POST: "update_post",
-  DELETE_POST: "delete_post",
-  VIEW_FOLLOWERS: "view_followers",
-  MANAGE_TEAM: "manage_team"
+  MANAGE_POSTS: "manage_posts",
+  MANAGE_CATALOG: "manage_catalog", // Produits et Services
+  MANAGE_ACCESS: "manage_access", // Gestion de l'équipe et accès
+  MANAGE_SALES: "manage_sales", // Réservations et Commandes
+  MANAGE_DOCUMENTS: "manage_documents", // Devis, Contrats et Factures
+  ALL_ACCESS: "all_access" // Accès total
 };

@@ -17,7 +17,7 @@ const Service = mongoose.model("Service");
 // ── Profil connecté ──────────────────────────────────────────
 const getProfessionalProfile = async (req, res) => {
   try {
-    const professionalId = req.user;
+    const professionalId = req.professionalId || req.user;
     const professional = await Professional.findById(professionalId);
     if (!professional) return res.status(404).json({ message: "Professional not found" });
 
@@ -40,7 +40,7 @@ const getProfessionalProfile = async (req, res) => {
 
 const getProfessionalFollowers = async (req, res) => {
   try {
-    const professionalId = req.user;
+    const professionalId = req.professionalId || req.user;
 
     const followers = await Follow.find({
       professional_id: professionalId,
@@ -106,7 +106,7 @@ const getPublicProfessionalProfile = async (req, res) => {
 // ── Mise à jour profil ───────────────────────────────────────
 const updateProfessionalProfile = async (req, res) => {
   try {
-    const professionalId = req.user;
+    const professionalId = req.professionalId || req.user;
     const { fullName, phone, website, description, country, region, city } = req.body;
 
     const professional = await Professional.findById(professionalId);
@@ -431,7 +431,7 @@ const getRecommendedProfessionals = async (req, res) => {
 
 // ── Dashboard ────────────────────────────────────────────────
 const getDashboard = async (req, res) => {
-  res.json({ message: "Professional Dashboard", professionalId: req.user });
+  res.json({ message: "Professional Dashboard", professionalId: req.professionalId || req.user });
 };
 
 const createScrapedProfessional = async (req, res) => {

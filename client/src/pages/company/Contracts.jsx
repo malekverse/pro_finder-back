@@ -9,7 +9,7 @@ import { useGetCompanyFollowersQuery } from "../../redux/features/company/compan
 import { useGetCompanyQuotesQuery } from "../../redux/features/company/quoteApiSlice";
 import { 
   FileSignature, Plus, Search, X, Loader2, 
-  User, Calendar, DollarSign, FileText, CheckCircle2, Clock, Info, Eye, Download, Send, Edit
+  User, Calendar, DollarSign, FileText, CheckCircle2, Clock, Info, Eye, Download, Send, Edit, FileSpreadsheet
 } from "lucide-react";
 import { generateContractPDF } from "../../utils/pdfGenerator";
 import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
@@ -214,6 +214,20 @@ const Contracts = ({ isEmbedded = false, openModalOnLoad = false, prefillData = 
                 >
                   <Eye size={18} />
                 </button>
+
+                {contract.quoteId && (
+                  <button 
+                    onClick={() => {
+                      navigate("/company/documents", { 
+                        state: { tab: "quotes" } 
+                      });
+                    }}
+                    title={`Voir le devis ${contract.quoteId.quoteNumber}`}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#24416b', padding: '5px' }}
+                  >
+                    <FileSpreadsheet size={18} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -333,6 +347,25 @@ const Contracts = ({ isEmbedded = false, openModalOnLoad = false, prefillData = 
                 <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>Valeur totale TTC du contrat</p>
               </div>
             </div>
+
+            {selectedContract.quoteId && (
+              <button 
+                onClick={() => {
+                  navigate("/company/documents", { 
+                    state: { tab: "quotes" } 
+                  });
+                  setSelectedContract(null);
+                }}
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none', 
+                  background: '#f1f5f9', color: '#24416b', fontWeight: '800', cursor: 'pointer', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  marginBottom: '24px'
+                }}
+              >
+                <FileSpreadsheet size={20} /> Voir le devis associé ({selectedContract.quoteId.quoteNumber})
+              </button>
+            )}
 
             <div style={{ marginBottom: '32px' }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 16px 0', fontSize: '16px', fontWeight: '800', color: '#1e293b' }}>

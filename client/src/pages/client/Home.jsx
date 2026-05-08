@@ -35,13 +35,8 @@ import {
 
 import { toImageUrl } from "../../utils/imageUtils";
 
-const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
+const Header = ({ onAction, activeTab }) => {
   const navigate = useNavigate();
-
-  const initials = user?.fullName
-    ? user.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-    : "?";
 
   return (
     <div style={h.bar}>
@@ -98,17 +93,14 @@ const Header = ({ user, onProfileClick, onLogout, onAction, activeTab }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        {!user ? (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link to="/auth/signup" style={h.authBtnSignup}>
-              S'inscrire
-            </Link>
-            <Link to="/auth/login" style={h.authBtnLogin}>
-              Connexion
-            </Link>
-          </div>
-        ) : null
-        }
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link to="/auth/signup" style={h.authBtnSignup}>
+            S'inscrire
+          </Link>
+          <Link to="/auth/login" style={h.authBtnLogin}>
+            Connexion
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -1222,9 +1214,6 @@ const Home = () => {
   return (
     <div style={p.root}>
       <Header
-        user={user}
-        onProfileClick={() => navigate("/profile")}
-        onLogout={handleLogout}
         onAction={handleAction}
         activeTab={isShowingResults ? searchTab : null}
       />

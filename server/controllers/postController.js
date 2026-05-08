@@ -32,7 +32,14 @@ const createPost = async (req, res) => {
     const { Post } = getModels();
     const { content } = req.body;
     const authorType  = getAuthorType(req.roles);
-    const authorId    = (authorType === "Company") ? (req.companyId || req.user) : req.user;
+    let authorId;
+    if (authorType === "Company") {
+      authorId = req.companyId || req.user;
+    } else if (authorType === "Professional") {
+      authorId = req.professionalId || req.user;
+    } else {
+      authorId = req.user;
+    }
 
     // Stockage local : f.path est le chemin relatif (ex: uploads/posts/...)
     const imagesPost = req.files ? req.files.filter(f => f.fieldname === 'imagesPost').map((f) => f.path.replace(/\\/g, "/")) : [];
@@ -128,7 +135,7 @@ const updatePost = async (req, res) => {
     const post = await Post.findOne({ _id: req.params.id, isDeleted: false });
     if (!post) return res.status(404).json({ message: "Post non trouvé" });
 
-    const authorId = req.companyId || req.user;
+    const authorId = req.companyId || req.professionalId || req.user;
     if (post.author_id.toString() !== authorId.toString()) {
       return res.status(403).json({ message: "Non autorisé" });
     }
@@ -160,7 +167,7 @@ const deletePost = async (req, res) => {
     const post = await Post.findOne({ _id: req.params.id, isDeleted: false });
     if (!post) return res.status(404).json({ message: "Post non trouvé" });
 
-    const authorId = req.companyId || req.user;
+    const authorId = req.companyId || req.professionalId || req.user;
     if (post.author_id.toString() !== authorId.toString() && !req.roles?.includes("admin")) {
       return res.status(403).json({ message: "Non autorisé" });
     }
@@ -299,7 +306,7 @@ const deleteComment = async (req, res) => {
 const getMyPosts = async (req, res) => {
   try {
     const { Post } = getModels();
-    const authorId = req.companyId || req.user;
+    const authorId = req.companyId || req.professionalId || req.user;
 
     const posts = await Post.find({ author_id: authorId, isDeleted: false })
       .sort({ createdAt: -1 })

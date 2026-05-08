@@ -12,6 +12,7 @@ import {
 } from "../../redux/features/company/companyServiceApiSlice";
 import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
 import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
+import { useCreateQuoteRequestMutation } from "../../redux/features/company/quoteApiSlice";
 import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart, User } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
@@ -44,6 +45,7 @@ const UserDashboard = () => {
   const [serviceForDetail, setServiceForDetail] = useState(null);
   const [selectedImg, setSelectedImg] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [quoteSuccess, setQuoteSuccess] = useState(false);
   const carts = useSelector((state) => state.cart.carts);
 
   const cartItemsCount = Object.values(carts).reduce((sum, cart) => sum + cart.items.length, 0);
@@ -55,6 +57,7 @@ const UserDashboard = () => {
 
   const [createOrder, { isLoading: isOrdering }] = useCreateOrderMutation();
   const [createReservation, { isLoading: isReserving }] = useCreateReservationMutation();
+  const [createQuoteRequest, { isLoading: isRequestingQuote }] = useCreateQuoteRequestMutation();
   const [initPayment, { isLoading: isPaying }] = useInitializePaymentMutation();
 
   const handleAction = (item, type) => {
@@ -63,22 +66,14 @@ const UserDashboard = () => {
     setProductForDetail(null);
   };
 
-  const handleServiceReserve = async (data) => {
-    try {
-      const isPro = !!data.professionalId;
-      await createReservation({
-        companyId: !isPro ? (data.companyId?._id || data.companyId) : null,
-        professionalId: isPro ? (data.professionalId?._id || data.professionalId) : null,
-        serviceId: data._id,
-        date: data.bookingDate,
-        timeSlot: data.bookingSlot,
-        notes: "" 
-      }).unwrap();
-      navigate("/user/purchases");
-      setServiceForDetail(null);
-    } catch (err) {
-      alert(err.data?.message || "Une erreur est survenue");
-    }
+  const [prefilledData, setPrefilledData] = useState(null);
+
+  const handleServiceReserve = (data) => {
+    // Au lieu de réserver directement, on ouvre l'ActionModal pour le numéro de téléphone
+    setSelectedItem(data);
+    setActionType('service');
+    setPrefilledData(data); // On passe les données de date/heure déjà choisies
+    setServiceForDetail(null);
   };
 
   const handleSubmitAction = async (data) => {
@@ -102,18 +97,8 @@ const UserDashboard = () => {
           notes: data.note
         }).unwrap();
         
-        // DÉCLENCHER LE PAIEMENT (CHECKOUT)
-        const paymentData = await initPayment({
-          orderId: orderResult.order._id,
-          successUrl: `${window.location.origin}/payment/success`,
-          failUrl: `${window.location.origin}/payment/fail`
-        }).unwrap();
-
-        if (paymentData.result_url) {
-          window.location.href = paymentData.result_url;
-        } else {
-          navigate("/user/purchases");
-        }
+        // Rediriger vers la page des achats où l'utilisateur pourra cliquer sur "Payer"
+        navigate("/user/purchases");
       } else {
         const isPro = !!selectedItem.professionalId;
         
@@ -126,15 +111,19 @@ const UserDashboard = () => {
           formattedDate = `${y}-${m}-${d}`;
         }
 
-        await createReservation({
+        await createQuoteRequest({
           companyId: !isPro ? (selectedItem.companyId?._id || selectedItem.companyId) : null,
           professionalId: isPro ? (selectedItem.professionalId?._id || selectedItem.professionalId) : null,
-          serviceId: selectedItem._id,
-          date: formattedDate,
-          timeSlot: data.time,
-          notes: data.note
+          bookingServiceId: selectedItem._id,
+          bookingDate: formattedDate,
+          bookingTimeSlot: data.time,
+          notes: data.note,
+          clientPhone: data.address?.phone || data.phone,
+          clientName: user?.fullName || user?.companyName || "Client",
+          clientEmail: user?.email || "",
         }).unwrap();
-        navigate("/user/purchases");
+        setQuoteSuccess(true);
+        setTimeout(() => setQuoteSuccess(false), 3000);
       }
       setSelectedItem(null);
     } catch (err) {
@@ -234,11 +223,22 @@ const UserDashboard = () => {
         <ActionModal
           type={actionType}
           item={selectedItem}
+          prefilledData={prefilledData}
           user={user}
-          onClose={() => setSelectedItem(null)}
+          onClose={() => {
+            setSelectedItem(null);
+            setPrefilledData(null);
+          }}
           onSubmit={handleSubmitAction}
-          isLoading={isOrdering || isReserving || isPaying}
+          isLoading={isOrdering || isReserving || isPaying || isRequestingQuote}
         />
+      )}
+
+      {quoteSuccess && (
+        <div style={{ position: 'fixed', bottom: '20px', right: '20px', background: '#10b981', color: '#fff', padding: '15px 25px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 3000, display: 'flex', alignItems: 'center', gap: '10px', animation: 'fadeInUp 0.3s' }}>
+          <CheckCircle2 size={20} />
+          <span>Demande envoyée, veuillez attendre le devis !</span>
+        </div>
       )}
 
       <style>{`

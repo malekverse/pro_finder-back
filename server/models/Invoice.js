@@ -12,26 +12,21 @@ const invoiceSchema = new mongoose.Schema(
       ref: "Payment",
       required: true,
     },
-    orderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
-      required: false,
-    },
-    reservationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Reservation",
-      required: false,
-    },
-    quoteId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Quote",
-      required: false,
-    },
-    contractId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Contract",
-      required: false,
-    },
+    items: [{
+      description: String,
+      quantity: Number,
+      price: Number,
+      total: Number,
+      entityType: {
+        type: String,
+        enum: ["Reservation", "Quote", "Order", "Contract"]
+      },
+      entityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: "items.entityType"
+      },
+      clientPhone: String
+    }],
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -64,12 +59,6 @@ const invoiceSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    items: [{
-      description: String,
-      quantity: Number,
-      price: Number,
-      total: Number
-    }],
     notes: String,
   },
   {

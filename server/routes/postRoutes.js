@@ -11,7 +11,7 @@ router.use(verifyJWT);
 // ── Posts ─────────────────────────────────────────────────────────────────
 // Créer un post (plusieurs images sans limite)
 router.post("/",
-  checkPermission("create_post"),
+  checkPermission("manage_posts"),
   upload.array("imagesPost"),
   postController.createPost
 );
@@ -30,14 +30,14 @@ router.get("/:id", postController.getPost);
 
 // Modifier un post
 router.put("/:id",
-  checkPermission("update_post"),
+  checkPermission("manage_posts"),
   upload.any(),
   postController.updatePost
 );
 
 // Supprimer un post
 router.delete("/:id", 
-  checkPermission("delete_post"),
+  checkPermission("manage_posts"),
   postController.deletePost
 );
 

@@ -22,26 +22,22 @@ const paymentSchema = new mongoose.Schema(
       ref: "Professional",
       required: false,
     },
-    reservationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Reservation",
-      required: false,
-    },
-    quoteId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Quote",
-      required: false,
-    },
-    orderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
-      required: false,
-    },
-    contractId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Contract",
-      required: false,
-    },
+    items: [{
+      entityType: {
+        type: String,
+        enum: ["Reservation", "Quote", "Order", "Contract"],
+        required: true
+      },
+      entityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refPath: "items.entityType"
+      },
+      amount: {
+        type: Number,
+        required: true
+      }
+    }],
     amount: {
       type: Number,
       required: true,

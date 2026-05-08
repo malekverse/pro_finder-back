@@ -9,6 +9,7 @@ import {
   useUpdateReservationStatusMutation 
 } from "../../redux/features/reservationApiSlice";
 import { useGetProviderPaymentsQuery } from "../../redux/features/paymentApiSlice";
+import { useGetProviderInvoicesQuery } from "../../redux/features/invoiceApiSlice";
 import { 
   ShoppingBag, 
   Calendar, 
@@ -22,21 +23,46 @@ import {
   Loader2,
   AlertCircle,
   FileSpreadsheet,
-  DollarSign
+  DollarSign,
+  Phone
 } from "lucide-react";
 import styles from "../../styles/Commandes.module.css";
 import CompanyCalendar from "../../components/dashboard/Company/CompanyCalendar";
 
+import { generateInvoicePDF } from "../../utils/pdfGenerator";
+import { useSelector } from "react-redux";
+
 const Commandes = () => {
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
   const [activeTab, setActiveTab] = useState("orders"); // orders, reservations, or calendar
 
   const { data: orders = [], isLoading: loadingOrders } = useGetCompanyOrdersQuery(undefined, { pollingInterval: 3000 });
   const { data: reservations = [], isLoading: loadingReservations } = useGetCompanyReservationsQuery(undefined, { pollingInterval: 3000 });
   const { data: payments = [], isLoading: loadingPayments } = useGetProviderPaymentsQuery(undefined, { pollingInterval: 3000 });
+  const { data: invoices = [] } = useGetProviderInvoicesQuery(undefined, { pollingInterval: 3000 });
 
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
   const [updateReservationStatus] = useUpdateReservationStatusMutation();
+
+  const handleShowInvoice = (id, type) => {
+    console.log("🔍 [handleShowInvoice] Searching for invoice with item ID:", id, "Type:", type);
+    console.log("📄 [handleShowInvoice] Available invoices:", invoices);
+
+    const invoice = invoices.find(inv => 
+      inv.items && inv.items.some(item => 
+        String(item.entityId) === String(id)
+      )
+    );
+    
+    if (invoice) {
+      console.log("✅ [handleShowInvoice] Invoice found:", invoice);
+      generateInvoicePDF(invoice, user);
+    } else {
+      console.error("❌ [handleShowInvoice] Invoice not found for ID:", id);
+      alert("La facture n'est pas encore disponible ou n'a pas été trouvée. Elle se génère automatiquement dès que le paiement est validé.");
+    }
+  };
 
   const handleUpdateOrder = async (orderId, status) => {
     try {
@@ -126,7 +152,7 @@ const Commandes = () => {
           onClick={() => setActiveTab("reservations")}
           className={activeTab === "reservations" ? styles.tabActive : styles.tab}
         >
-          <Calendar size={18} /> Réservations ({reservations.length})
+          <Calendar size={18} /> Réservations ({reservations.filter(r => ["pending", "confirmed"].includes(r.status)).length})
         </button>
         <button 
           onClick={() => setActiveTab("payments")}
@@ -155,8 +181,7 @@ const Commandes = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
               {[
                 { title: "Nouvelles Commandes", status: ["pending", "paid"], icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
-                { title: "En cours de traitement", status: ["confirmed", "shipped"], icon: <Truck size={20} color="#3b82f6" />, bg: "#eff6ff" },
-                { title: "Terminées", status: ["delivered"], icon: <Package size={20} color="#94a3b8" />, bg: "#f8fafc" }
+                { title: "Historique", status: ["shipped", "delivered"], icon: <Package size={20} color="#94a3b8" />, bg: "#f8fafc" }
               ].map((section, idx) => {
                 const filtered = orders.filter(o => section.status.includes(o.status));
                 if (filtered.length === 0) return null;
@@ -203,25 +228,41 @@ const Commandes = () => {
                           </div>
                           <div className={styles.cardFooter}>
                             {order.status === "pending" && (
-                              <>
-                                <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm}>Confirmer</button>
-                                <button onClick={() => handleUpdateOrder(order._id, "cancelled")} className={styles.btnCancel}>Refuser</button>
-                              </>
+                              <div style={{ 
+                                width: '100%', 
+                                textAlign: 'center', 
+                                padding: '12px', 
+                                backgroundColor: '#fffbeb', 
+                                borderRadius: '12px', 
+                                color: '#92400e', 
+                                fontWeight: '700', 
+                                fontSize: '14px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                gap: '10px', 
+                                border: '1px solid #fef3c7' 
+                              }}>
+                                <Clock size={18} /> Attendre le paiement du client
+                              </div>
                             )}
                             {order.status === "paid" && (
                               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-                                <button onClick={() => handleUpdateOrder(order._id, "confirmed")} className={styles.btnConfirm} style={{ flex: 1 }}>Confirmer & Préparer</button>
                                 <button 
-                                  onClick={() => navigate("/company/invoices", { state: { orderId: order._id } })} 
+                                  onClick={() => handleShowInvoice(order._id, 'order')} 
                                   className={styles.btnDeliver}
-                                  style={{ flex: 1, backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}
+                                  style={{ flex: 1, backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                                 >
-                                  <FileSpreadsheet size={16} /> Facture
+                                  <FileSpreadsheet size={16} /> Télécharger la Facture
+                                </button>
+                                <button 
+                                  onClick={() => handleUpdateOrder(order._id, "shipped")} 
+                                  className={styles.btnShip}
+                                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                >
+                                  <Truck size={16} /> Expédier
                                 </button>
                               </div>
-                            )}
-                            {order.status === "confirmed" && (
-                              <button onClick={() => handleUpdateOrder(order._id, "shipped")} className={styles.btnShip}><Truck size={16} /> Marquer comme expédié</button>
                             )}
                             {order.status === "shipped" && (
                               <button onClick={() => handleUpdateOrder(order._id, "delivered")} className={styles.btnDeliver}>Marquer comme livré</button>
@@ -273,7 +314,13 @@ const Commandes = () => {
                               <User size={16} />
                               <div>
                                 <div className={styles.userName}>{res.userId?.fullName}</div>
-                                <div className={styles.userMeta}>{res.userId?.phone}</div>
+                                <div className={styles.userMeta}>
+                                  {res.userId?.phone || res.clientPhone ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                      <Phone size={12} /> {res.clientPhone || res.userId?.phone}
+                                    </span>
+                                  ) : res.userId?.email}
+                                </div>
                               </div>
                             </div>
                             <div className={styles.serviceBox}>
@@ -368,11 +415,11 @@ const Commandes = () => {
                             )}
                             {res.status === "paid" && (
                               <button 
-                                onClick={() => navigate("/company/invoices", { state: { reservationId: res._id } })} 
+                                onClick={() => handleShowInvoice(res._id, 'reservation')} 
                                 className={styles.btnDeliver}
-                                style={{ width: '100%', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}
+                                style={{ width: '100%', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                               >
-                                <FileSpreadsheet size={16} /> Voir la Facture
+                                <FileSpreadsheet size={16} /> Télécharger la Facture
                               </button>
                             )}
                           </div>
@@ -439,7 +486,10 @@ const Commandes = () => {
       ) : (
         <div className={styles.content}>
            <CompanyCalendar 
-                reservations={reservations.filter(r => ["pending", "confirmed", "paid", "completed", "blocked"].includes(r.status))} 
+                reservations={reservations.filter(r => 
+                  ["confirmed", "paid", "completed", "blocked"].includes(r.status) || 
+                  (r.status === "pending" && r.quote?.status === "accepted")
+                )} 
                 onUpdateStatus={handleUpdateReservation}
            />
         </div>

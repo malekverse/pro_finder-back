@@ -1,5 +1,6 @@
 const Company = require("../models/company");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const { sendEmail } = require("../utils/emailService");
 const Follow = require("../models/follow");
 const Role = require("../models/Role");
@@ -819,8 +820,8 @@ const claimCompanyProfile = async (req, res) => {
   try {
     const { token, password, phone, country, region, city, website, description, logoUrl, coverUrl, services, companyName } = req.body;
 
-    if (!token || !password || !phone) {
-      return res.status(400).json({ message: "Le jeton, le mot de passe et le numéro de téléphone sont requis." });
+    if (!token || !password || !phone || !country || !region || !city) {
+      return res.status(400).json({ message: "Le jeton, le mot de passe, le téléphone, le pays, la région et la ville sont requis." });
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || "default_secret");
@@ -834,20 +835,26 @@ const claimCompanyProfile = async (req, res) => {
       return res.status(400).json({ message: "Cette entreprise a déjà été revendiquée." });
     }
 
-    const bcrypt = require("bcrypt");
     company.password = await bcrypt.hash(password, 10);
     company.companyName = companyName || company.companyName;
     company.phone = phone;
-    company.country = country;
-    company.region = region;
-    company.city = city;
+
+    // Only assign if provided and not empty string to avoid CastError
+    if (country && mongoose.isValidObjectId(country)) company.country = country;
+    if (region && mongoose.isValidObjectId(region)) company.region = region;
+    if (city && mongoose.isValidObjectId(city)) company.city = city;
+
     company.website = website || company.website || "";
     company.description = description || company.description || "";
     company.logoUrl = logoUrl || company.logoUrl || null;
     company.coverUrl = coverUrl || company.coverUrl || null;
-    company.services = services || company.services || [];
+
+    if (Array.isArray(services)) {
+      company.services = services.filter(s => mongoose.isValidObjectId(s));
+    }
+
     company.isGenerated = false;
-    company.Status = "pending"; // Pass en attente de validation comme une inscription normale
+    company.Status = "approved"; // Bypass la validation admin pour les revendications
 
     await company.save();
 
@@ -858,7 +865,12 @@ const claimCompanyProfile = async (req, res) => {
     if (error.name === "TokenExpiredError") {
       return res.status(400).json({ message: "Le lien de revendication a expiré." });
     }
-    return res.status(500).json({ message: "Erreur lors de la revendication." });
+    // Log details of the error to help debugging
+    return res.status(500).json({ 
+      message: "Erreur lors de la revendication.", 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    });
   }
 };
 

@@ -15,13 +15,50 @@ const createInvoiceFromPayment = async (payment) => {
     try {
         const invoiceNumber = await generateInvoiceNumber();
         
+        const invoiceItems = await Promise.all(payment.items.map(async (item) => {
+            let detail = "";
+            let phone = "";
+            
+            try {
+                if (item.entityType === "Order") {
+                    const order = await mongoose.model("Order").findById(item.entityId);
+                    if (order?.shippingAddress?.phone) phone = order.shippingAddress.phone;
+                } else if (item.entityType === "Reservation") {
+                    const res = await mongoose.model("Reservation").findById(item.entityId);
+                    if (res?.clientPhone) phone = res.clientPhone;
+                } else if (item.entityType === "Quote") {
+                    const quote = await mongoose.model("Quote").findById(item.entityId);
+                    // On peut aussi chercher le numéro dans la réservation liée au devis
+                    if (quote?.reservationId) {
+                        const res = await mongoose.model("Reservation").findById(quote.reservationId);
+                        if (res?.clientPhone) phone = res.clientPhone;
+                    }
+                } else if (item.entityType === "Contract") {
+                    const contract = await mongoose.model("Contract").findById(item.entityId).populate("quoteId");
+                    if (contract?.quoteId?.reservationId) {
+                        const res = await mongoose.model("Reservation").findById(contract.quoteId.reservationId);
+                        if (res?.clientPhone) phone = res.clientPhone;
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching phone for invoice item:", err);
+            }
+
+            return {
+                description: `${item.entityType} #${item.entityId.toString().slice(-6).toUpperCase()}`,
+                quantity: 1,
+                price: item.amount,
+                total: item.amount,
+                entityType: item.entityType,
+                entityId: item.entityId,
+                clientPhone: phone
+            };
+        }));
+
         const invoice = new Invoice({
             invoiceNumber,
             paymentId: payment._id,
-            orderId: payment.orderId,
-            reservationId: payment.reservationId,
-            quoteId: payment.quoteId,
-            contractId: payment.contractId,
+            items: invoiceItems,
             userId: payment.userId,
             companyId: payment.companyId,
             professionalId: payment.professionalId,
@@ -32,7 +69,7 @@ const createInvoiceFromPayment = async (payment) => {
         });
 
         await invoice.save();
-        console.log(`📄 [InvoiceService] Invoice created: ${invoiceNumber}`);
+        console.log(`📄 [InvoiceService] Invoice created: ${invoiceNumber} with ${invoiceItems.length} items`);
         return invoice;
     } catch (error) {
         console.error("❌ [InvoiceService] Failed to create invoice:", error);

@@ -229,7 +229,7 @@ const login = async (req, res) => {
     }
   } else if (accountType === "company" || accountType === "professional") {
     // Les entreprises et professionnels ont par défaut toutes les permissions
-    permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
+    permissions = ["all_access", "manage_posts", "manage_catalog", "manage_access", "manage_sales", "manage_documents"];
   }
 
 
@@ -339,7 +339,7 @@ const refresh = async (req, res) => {
         }
       }
     } else if (accountType === "company" || accountType === "professional") {
-      permissions = ["all_access", "manage_team", "create_post", "update_post", "delete_post", "view_followers", "remove_follower", "block_user"];
+      permissions = ["all_access", "manage_posts", "manage_catalog", "manage_access", "manage_sales", "manage_documents"];
     }
 
     if (roles.includes("admin")) {
@@ -394,33 +394,40 @@ const logout = async (req, res) => {
 
 const switchCompany = async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const { companyId } = req.params; // On l'appelle companyId dans la route, mais ça peut être un professionalId
     const userId = req.user;
 
-    // Vérifier si l'utilisateur a accès à cette entreprise
+    // Vérifier si l'utilisateur a accès à cette entreprise OU ce professionnel
     const follow = await Follow.findOne({ 
       user_id: userId, 
-      company_id: companyId,
+      $or: [ { company_id: companyId }, { professional_id: companyId } ],
       role_id: { $ne: null },
       is_blocked: { $ne: true }
     }).populate("role_id");
 
     if (!follow) {
-      return res.status(403).json({ message: "Accès refusé à cette entreprise" });
+      return res.status(403).json({ message: "Accès refusé à cette entité" });
     }
 
     // Récupérer les permissions du rôle
     const permissions = follow.role_id?.permissions || [];
+    
+    // Déterminer s'il s'agit d'une company ou d'un pro
+    const isCompany = !!follow.company_id;
+    const roles = [...req.roles];
+    if (isCompany && !roles.includes("company")) roles.push("company");
+    if (!isCompany && !roles.includes("professional")) roles.push("professional");
 
-    // Générer un nouveau token avec le nouveau companyId
+    // Générer un nouveau token
     const accessToken = jwt.sign(
       {
         UserInfo: {
           id: userId,
-          email: req.email, // On a besoin de l'email ici, verifyJWT devrait le mettre dans req
-          roles: req.roles,
+          email: req.email,
+          roles: roles,
           permissions: permissions,
-          companyId: companyId,
+          companyId: isCompany ? companyId : null,
+          professionalId: !isCompany ? companyId : null,
           accountType: "user"
         },
       },

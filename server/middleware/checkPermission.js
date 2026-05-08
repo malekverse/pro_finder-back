@@ -20,40 +20,43 @@ const checkPermission = (requiredPermission) => {
       const Follow = mongoose.model("Follow");
       const Role = mongoose.model("Role");
 
-      // Rechercher l'ID de l'entreprise concernée par l'action
-      let companyIdToCheck = req.params.companyId || req.body.companyId || req.query.companyId || req.companyId;
+      // Rechercher l'ID de l'entreprise ou du professionnel concerné
+      let companyIdToCheck = req.params.companyId || req.body.companyId || req.query.companyId || req.query._c || req.companyId;
+      let professionalIdToCheck = req.params.professionalId || req.body.professionalId || req.query.professionalId || req.query._p || req.professionalId;
 
-      // Si l'action concerne un post, on récupère l'entreprise auteur du post
-      if (!companyIdToCheck && (req.params.id || req.params.postId)) {
+      // Si l'action concerne un post, on récupère l'auteur
+      if (!companyIdToCheck && !professionalIdToCheck && (req.params.id || req.params.postId)) {
         const post = await Post.findById(req.params.id || req.params.postId);
-        if (post && post.authorType === "Company") {
-          companyIdToCheck = post.author_id;
-        } else if (post && post.authorType === "User") {
-          // Si c'est un post d'un utilisateur, on autorise like/comment par défaut
-          if (requiredPermission === "like_post" || requiredPermission === "comment_post") {
-            return next();
+        if (post) {
+          if (post.authorType === "Company") companyIdToCheck = post.author_id;
+          else if (post.authorType === "Professional") professionalIdToCheck = post.author_id;
+          else if (post.authorType === "User") {
+            if (requiredPermission === "like_post" || requiredPermission === "comment_post") return next();
           }
         }
       }
 
-      if (companyIdToCheck) {
-        // Chercher la relation de suivi
-        const follow = await Follow.findOne({ 
-          user_id: req.user, 
-          company_id: companyIdToCheck,
-          is_blocked: { $ne: true }
-        }).populate("role_id");
+      if (companyIdToCheck || professionalIdToCheck) {
+        const query = { user_id: req.user, is_blocked: { $ne: true } };
+        if (companyIdToCheck) query.company_id = companyIdToCheck;
+        else query.professional_id = professionalIdToCheck;
+
+        const follow = await Follow.findOne(query).populate("role_id");
 
         if (follow) {
-          // Si c'est juste un like/comment, le simple fait de suivre suffit (selon la demande utilisateur)
-          if (requiredPermission === "like_post" || requiredPermission === "comment_post") {
-            return next();
-          }
+          if (requiredPermission === "like_post" || requiredPermission === "comment_post") return next();
 
-          // Sinon, on vérifie les permissions du rôle associé
           if (follow.role_id && follow.role_id.permissions) {
             const rolePermissions = follow.role_id.permissions;
             if (rolePermissions.includes(requiredPermission) || rolePermissions.includes("all_access")) {
+              // ✅ Injecter l'ID dans la requête pour le contrôleur
+              if (companyIdToCheck) {
+                req.companyId = companyIdToCheck;
+                if (!req.roles.includes("company")) req.roles.push("company");
+              } else {
+                req.professionalId = professionalIdToCheck;
+                if (!req.roles.includes("professional")) req.roles.push("professional");
+              }
               return next();
             }
           }

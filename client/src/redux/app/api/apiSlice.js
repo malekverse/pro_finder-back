@@ -17,6 +17,23 @@ prepareHeaders: (headers, { getState }) => {
 );
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
+  const state = api.getState();
+  const companyId = state.auth?.user?.companyId;
+  const professionalId = state.auth?.user?.professionalId;
+
+  // Injection automatique des IDs de contexte pour les membres d'équipe
+  if (companyId || professionalId) {
+    if (typeof args === 'string') {
+      const separator = args.includes('?') ? '&' : '?';
+      if (companyId && !args.includes('_c=')) args += `${separator}_c=${companyId}`;
+      else if (professionalId && !args.includes('_p=')) args += `${separator}_p=${professionalId}`;
+    } else if (args && typeof args === 'object') {
+      if (!args.params) args.params = {};
+      if (companyId && !args.params._c) args.params._c = companyId;
+      else if (professionalId && !args.params._p) args.params._p = professionalId;
+    }
+  }
+
   let result = await baseQuery(args, api, extraOptions);
 
   if (result?.error?.status === 401 || result?.error?.status === 403) {

@@ -72,74 +72,83 @@ const Header = ({
 
       {/* Section Droite : Panier, Notifs, Profil */}
       <div style={h.rightSection}>
-        <div style={h.actionIcons}>
-          {/* Bouton Panier */}
-          <button
-            onClick={onCartClick}
-            className="action-icon-btn"
-            style={h.actionBtn}
-          >
-            <ShoppingCart size={22} />
-            {cartItemsCount > 0 && (
-              <span style={h.badge}>
-                {cartItemsCount}
-              </span>
-            )}
-          </button>
+        {user ? (
+          <>
+            <div style={h.actionIcons}>
+              {/* Bouton Panier */}
+              <button
+                onClick={onCartClick}
+                className="action-icon-btn"
+                style={h.actionBtn}
+              >
+                <ShoppingCart size={22} />
+                {cartItemsCount > 0 && (
+                  <span style={h.badge}>
+                    {cartItemsCount}
+                  </span>
+                )}
+              </button>
 
-          {/* Composant de cloche de notifications */}
-          <div className="action-icon-btn" style={h.actionBtn}>
-            <NotificationBell type="User" />
-          </div>
-        </div>
-
-        <div style={h.divider} />
-
-        {/* Profil avec Dropdown */}
-        <div style={{ position: "relative" }} ref={dropdownRef}>
-          <button
-            className="profile-btn"
-            style={h.profileBtn}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {user?.avatarUrl
-              ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
-              : <div style={h.avatarFallback}>{initials}</div>}
-            <ChevronDown size={14} color="#64748b" style={{ transform: menuOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
-          </button>
-
-          {menuOpen && (
-            <div style={h.dropdown}>
-              <div style={h.dropdownHeader}>
-                <span style={h.dropName}>{user?.fullName || "Mon compte"}</span>
-                <span style={h.dropEmail}>{user?.email || "Client"}</span>
+              {/* Composant de cloche de notifications */}
+              <div className="action-icon-btn" style={h.actionBtn}>
+                <NotificationBell type="User" />
               </div>
-              <div style={h.dropDivider} />
-              
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); onProfileClick(); }}>
-                <User size={16} /> Mon profil
-              </button>
-              
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/purchases"); }}>
-                <CreditCard size={16} /> Mes achats
-              </button>
-              
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/documents"); }}>
-                <FileText size={16} /> Mes documents
+            </div>
+
+            <div style={h.divider} />
+
+            {/* Profil avec Dropdown */}
+            <div style={{ position: "relative" }} ref={dropdownRef}>
+              <button
+                className="profile-btn"
+                style={h.profileBtn}
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                {user?.avatarUrl
+                  ? <img src={toImageUrl(user.avatarUrl)} alt="avatar" style={h.avatar} />
+                  : <div style={h.avatarFallback}>{initials}</div>}
+                <ChevronDown size={14} color="#64748b" style={{ transform: menuOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
               </button>
 
-              <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/invoices"); }}>
-                <CreditCard size={16} /> Mes factures
-              </button>
-              
-              <div style={h.dropDivider} />
-              
-              <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
-                <LogOut size={16} /> Déconnexion
-              </button>
+              {menuOpen && (
+                <div style={h.dropdown}>
+                  <div style={h.dropdownHeader}>
+                    <span style={h.dropName}>{user?.fullName || "Mon compte"}</span>
+                    <span style={h.dropEmail}>{user?.email || "Client"}</span>
+                  </div>
+                  <div style={h.dropDivider} />
+                  
+                  <button style={h.dropItem} onClick={() => { setMenuOpen(false); onProfileClick(); }}>
+                    <User size={16} /> Mon profil
+                  </button>
+                  
+                  <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/purchases"); }}>
+                    <CreditCard size={16} /> Mes achats
+                  </button>
+                  
+                  <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/documents"); }}>
+                    <FileText size={16} /> Mes documents
+                  </button>
+
+                  <button style={h.dropItem} onClick={() => { setMenuOpen(false); navigate("/user/invoices"); }}>
+                    <CreditCard size={16} /> Mes factures
+                  </button>
+                  
+                  <div style={h.dropDivider} />
+                  
+                  <button style={{ ...h.dropItem, color: "#dc2626" }} onClick={() => { setMenuOpen(false); onLogout(); }}>
+                    <LogOut size={16} /> Déconnexion
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => navigate("/auth/signup")} style={h.authBtnSignup}>S'inscrire</button>
+            <button onClick={() => navigate("/auth/login")} style={h.authBtnLogin}>Connexion</button>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -260,6 +269,18 @@ const h = {
     borderRadius: "10px", transition: "all 0.2s",
   },
   dropDivider: { height: "1px", background: "#f1f5f9", margin: "4px 0" },
+  authBtnLogin: {
+    padding: '8px 20px', borderRadius: '10px',
+    background: '#1E3A5F', color: '#fff',
+    fontWeight: '700', fontSize: '13px', border: 'none', cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(30, 58, 95, 0.2)', transition: 'all 0.2s'
+  },
+  authBtnSignup: {
+    padding: '8px 20px', borderRadius: '10px',
+    background: '#fff', color: '#1E3A5F',
+    fontWeight: '700', fontSize: '13px', border: '1px solid #1E3A5F', cursor: 'pointer',
+    transition: 'all 0.2s'
+  }
 };
 
 export default Header;

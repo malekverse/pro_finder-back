@@ -27,6 +27,8 @@ require("./models/Review");
 require("./models/Professional");
 require("./models/Payment");
 require("./models/Invoice");
+require("./models/ProviderBalance");
+require("./models/PayoutRequest");
 
 connectDB();
 
@@ -68,6 +70,7 @@ app.use("/quotes", require("./routes/quoteRoutes"));
 app.use("/contracts", require("./routes/contractRoutes"));
 app.use("/payments", require("./routes/paymentRoutes"));
 app.use("/invoices", require("./routes/invoiceRoutes"));
+app.use("/balance", require("./routes/balanceRoutes"));
 
 app.use("/categories", require("./routes/categoriesRoutes/subCategoryRoutes"));
 app.use("/categories", require("./routes/categoriesRoutes/serviceRoutes"));

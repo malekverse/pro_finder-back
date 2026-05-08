@@ -35,13 +35,15 @@ const ClientDocuments = () => {
       if (!amount) return alert("Montant invalide");
 
       const res = await initializePayment({
-          quoteId: type === 'quote' ? item._id : null,
-          contractId: type === 'contract' ? item._id : null,
-          reservationId: type === 'reservation' ? item._id : null,
-          orderId: type === 'order' ? item._id : null,
-          successUrl: `${window.location.origin}/payment/success`,
-          failUrl: `${window.location.origin}/payment/fail`,
-        }).unwrap();
+        items: [
+          {
+            entityId: item._id,
+            entityType: type === 'quote' ? 'Quote' : type === 'contract' ? 'Contract' : type === 'reservation' ? 'Reservation' : 'Order'
+          }
+        ],
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      }).unwrap();
 
       if (res.result_url) {
         window.location.href = res.result_url;
@@ -80,6 +82,7 @@ const ClientDocuments = () => {
 
   const getStatusStyle = (status) => {
     const s = {
+      'demande envoyée': { bg: "#fffbeb", color: "#b45309", label: "Demande envoyée" },
       sent: { bg: "#eff6ff", color: "#1e40af", label: "Reçu" },
       accepted: { bg: "#dcfce7", color: "#166534", label: "Accepté" },
       rejected: { bg: "#fee2e2", color: "#991b1b", label: "Refusé" },
@@ -123,6 +126,7 @@ const ClientDocuments = () => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
               {[
+                { title: "Demandes en attente", status: ["demande envoyée", "request"], icon: <Clock size={20} color="#b45309" />, bg: "#fffbeb" },
                 { title: "Action requise", status: "sent", icon: <Clock size={20} color="#f59e0b" />, bg: "#fffbeb" },
                 { title: "Devis Acceptés", status: "accepted", icon: <CheckCircle2 size={20} color="#10b981" />, bg: "#f0fdf4" },
                 { title: "Historique (Refusés / Expirés)", status: ["rejected", "expired"], icon: <FileText size={20} color="#94a3b8" />, bg: "#f8fafc" }

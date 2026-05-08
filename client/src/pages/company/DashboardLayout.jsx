@@ -12,9 +12,10 @@ import {
   LogOut,
   ShoppingBag,
   Star,
-  Bell,
   FileSpreadsheet,
-  FileSignature
+  FileSignature,
+  Newspaper,
+  Wallet
 } from "lucide-react";
 import { useGetCompanyProfileQuery } from "../../redux/features/company/companyApiSlice";
 import NotificationBell from "../../components/dashboard/company/NotificationBell";
@@ -39,17 +40,18 @@ const DashboardLayout = () => {
 
   const mainMenu = [
     { path: "/company/stats", label: "Dashboard", icon: <BarChart3 size={20} />, show: true },
-    { path: "/company/documents", label: "Documents", icon: <FileText size={20} />, show: true },
-    { path: "/company/invoices", label: "Factures", icon: <FileSpreadsheet size={20} />, show: true },
-    { path: "/company/commandes", label: "Commandes & Réservations", icon: <ShoppingBag size={20} />, show: true },
+    { path: "/company/documents", label: "Documents & Devis", icon: <FileText size={20} />, show: hasPermission("manage_documents") },
+    { path: "/company/invoices", label: "Factures", icon: <FileSpreadsheet size={20} />, show: hasPermission("manage_documents") },
+    { path: "/company/commandes", label: "Ventes & RDV", icon: <ShoppingBag size={20} />, show: hasPermission("manage_sales") },
     { path: "/company/reviews", label: "Avis clients", icon: <Star size={20} />, show: true },
-    { path: "/company/posts", label: "Publications", icon: <LayoutDashboard size={20} />, show: hasPermission("create_post") },
+    { path: "/company/gains", label: "Mes gains", icon: <Wallet size={20} />, show: hasPermission("manage_sales") },
+    { path: "/company/posts", label: "Publications", icon: <Newspaper size={20} />, show: hasPermission("manage_posts") },
   ];
 
   const managementMenu = [
-    { path: "/company/produits", label: "Mes Produits", icon: <Package size={20} />, show: true },
-    { path: "/company/services", label: "Mes Services", icon: <Wrench size={20} />, show: true },
-    { path: "/company/users", label: "Gestion des accès", icon: <Users size={20} />, show: hasPermission("manage_team") },
+    { path: "/company/produits", label: "Mes Produits", icon: <Package size={20} />, show: hasPermission("manage_catalog") },
+    { path: "/company/services", label: "Mes Services", icon: <Wrench size={20} />, show: hasPermission("manage_catalog") },
+    { path: "/company/users", label: "Gestion des accès", icon: <Users size={20} />, show: hasPermission("manage_access") },
   ];
 
   const handleLogout = () => {

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logOut } from "../../redux/features/auth/authSlice";
 import { apiSlice } from "../../redux/app/api/apiSlice";
 import {
@@ -14,13 +14,14 @@ import {
   FileText,
   Calendar,
   Users,
+  Wallet,
+  FileSpreadsheet
 } from "lucide-react";
 import { useGetProfessionalProfileQuery } from "../../redux/features/professional/professionalApiSlice";
 import { toImageUrl } from "../../utils/imageUtils";
 import NotificationBell from "../../components/dashboard/company/NotificationBell";
 
 import styles from "../../styles/Dashboard.module.css";
-
 const ProfessionalDashboardLayout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -29,16 +30,21 @@ const ProfessionalDashboardLayout = () => {
     pollingInterval: 3000,
   });
 
+  const authUser = useSelector((state) => state.auth.user);
+  const permissions = authUser?.permissions || [];
+  const hasPermission = (perm) => permissions.includes(perm) || permissions.includes("all_access");
+
   const mainMenu = [
     { path: "/professional/stats", label: "Dashboard",   icon: <BarChart3 size={20} />, show: true },
-    { path: "/professional/produits", label: "Mes Produits", icon: <Package size={20} />, show: true },
-    { path: "/professional/services", label: "Mes Services", icon: <Wrench size={20} />, show: true },
-    { path: "/professional/commandes", label: "Commandes & RDV", icon: <Calendar size={20} />, show: true },
-    { path: "/professional/documents", label: "Documents", icon: <FileText size={20} />, show: true },
-    { path: "/professional/invoices", label: "Mes Factures", icon: <FileSpreadsheet size={20} />, show: true },
-    { path: "/professional/posts", label: "Mes Publications", icon: <Newspaper size={20} />, show: true },
+    { path: "/professional/produits", label: "Mes Produits", icon: <Package size={20} />, show: hasPermission("manage_catalog") },
+    { path: "/professional/services", label: "Mes Services", icon: <Wrench size={20} />, show: hasPermission("manage_catalog") },
+    { path: "/professional/commandes", label: "Commandes & RDV", icon: <Calendar size={20} />, show: hasPermission("manage_sales") },
+    { path: "/professional/documents", label: "Documents", icon: <FileText size={20} />, show: hasPermission("manage_documents") },
+    { path: "/professional/invoices", label: "Mes Factures", icon: <FileSpreadsheet size={20} />, show: hasPermission("manage_documents") },
+    { path: "/professional/posts", label: "Mes Publications", icon: <Newspaper size={20} />, show: hasPermission("manage_posts") },
     { path: "/professional/reviews", label: "Avis clients", icon: <Star size={20} />, show: true },
-    { path: "/professional/users", label: "Gestion des accès", icon: <Users size={20} />, show: true },
+    { path: "/professional/gains", label: "Mes gains", icon: <Wallet size={20} />, show: hasPermission("manage_sales") },
+    { path: "/professional/users", label: "Gestion des accès", icon: <Users size={20} />, show: hasPermission("manage_access") },
   ];
 
   const handleLogout = () => {

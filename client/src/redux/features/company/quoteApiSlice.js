@@ -18,6 +18,22 @@ export const quoteApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Quote"],
     }),
+    createQuoteRequest: builder.mutation({
+      query: (quoteData) => ({
+        url: "/quotes/request",
+        method: "POST",
+        body: quoteData,
+      }),
+      invalidatesTags: ["Quote"],
+    }),
+    updateQuote: builder.mutation({
+      query: ({ id, ...quoteData }) => ({
+        url: `/quotes/${id}`,
+        method: "PUT",
+        body: quoteData,
+      }),
+      invalidatesTags: ["Quote"],
+    }),
     updateQuoteStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: `/quotes/${id}/status`,
@@ -33,5 +49,7 @@ export const {
   useGetCompanyQuotesQuery,
   useGetUserQuotesQuery,
   useCreateQuoteMutation,
+  useCreateQuoteRequestMutation,
+  useUpdateQuoteMutation,
   useUpdateQuoteStatusMutation,
 } = quoteApiSlice;

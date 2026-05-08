@@ -148,7 +148,7 @@ const unfollowProfessional = async (req, res) => {
 
 const getFollowerCount = async (req, res) => {
   try {
-    const idToUse = req.companyId || req.user;
+    const idToUse = req.companyId || req.professionalId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const query = isProfessional ? { professional_id: idToUse, is_blocked: { $ne: true } } : { company_id: idToUse, is_blocked: { $ne: true } };
     
@@ -164,7 +164,7 @@ const getFollowerCount = async (req, res) => {
 const getFollowersStats = async (req, res) => {
   try {
     const Post = mongoose.model("Post");
-    const idToUse = req.companyId || req.user;
+    const idToUse = req.companyId || req.professionalId || req.user;
     const isProfessional = req.roles?.includes("professional");
     const companyId = new mongoose.Types.ObjectId(idToUse);
     const { period = "annual" } = req.query; // annual ou monthly
