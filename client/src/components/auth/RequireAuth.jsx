@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import Cookies from "js-cookie";
 import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLoginMutation } from '../../redux/features/auth/authApiSlice'; 
-// ✅ Vérifie bien que ce chemin mène au fichier apiSlice.js depuis LoginForm.jsx
 import { apiSlice } from "../../redux/app/api/apiSlice";
 import styles from '../../styles/Form.module.css';
 import { useDispatch } from 'react-redux';
@@ -15,7 +14,6 @@ const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-
     const [login, { isLoading, isError, error }] = useLoginMutation();
     const errorMsg = isError ? (error?.data?.message || 'Identifiants invalides') : null;
 
@@ -24,21 +22,17 @@ const LoginForm = () => {
 
         try {
             const response = await login({ email, password }).unwrap();
-
             const token = response.accessToken;
             localStorage.setItem("accessToken", token);
             Cookies.set('accessToken', token, { expires: 7 });
-
-            // 🔥 C'est ici que la magie opère :
-            // apiSlice est l'objet parent qui contient la gestion du cache
             dispatch(apiSlice.util.resetApiState());
 
-           dispatch(
-  setCredentials({
-    accessToken: token,
-    account: response.account,
-  })
-);
+            dispatch(
+                setCredentials({
+                    accessToken: token,
+                    account: response.account,
+                })
+            );
 
             const roles = response.account?.roles || [];
 
@@ -57,6 +51,7 @@ const LoginForm = () => {
             console.error("Erreur de connexion :", err);
         }
     };
+
 
     return (
     <div className={styles.splitContainer}>

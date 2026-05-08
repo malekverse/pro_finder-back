@@ -7,8 +7,10 @@ import { setCredentials } from '../../redux/features/auth/authSlice';
 import Cookies from 'js-cookie';
 import Autocomplete from "./Autocomplete";
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+
+
 const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
+    new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
@@ -17,7 +19,7 @@ const fileToBase64 = (file) =>
 
 const SignupForm = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch(); // AJOUTÉ
+  const dispatch = useDispatch();
   const [role, setRole] = useState('user');
   const [step, setStep] = useState(1);
   const [countries, setCountries] = useState([]);
@@ -69,36 +71,37 @@ const SignupForm = () => {
     sous_domaine: '',
     services_list: [],
   });
-const [categories, setCategories] = useState([]);
-const [subCategories, setSubCategories] = useState([]);
-const [services, setServices] = useState([]);
-useEffect(() => {
-  fetch("http://localhost:5000/categories/categories")
-    .then(res => res.json())
-    .then(data => setCategories(data))
-    .catch(err => console.log(err));
-}, []);
 
-// Domaine pour company
-useEffect(() => {
-  const domaine = role === 'company' ? companyInputs.domaine : professionalInputs.domaine;
-  if (domaine) {
-    fetch(`http://localhost:5000/categories/subCategories/${domaine}`)
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [services, setServices] = useState([]);
+  useEffect(() => {
+    fetch("http://localhost:5000/categories/categories")
       .then(res => res.json())
-      .then(data => setSubCategories(data))
+      .then(data => setCategories(data))
       .catch(err => console.log(err));
-  }
-}, [companyInputs.domaine, professionalInputs.domaine, role]);
+  }, []);
 
-useEffect(() => {
-  const sousDomaine = role === 'company' ? companyInputs.sous_domaine : professionalInputs.sous_domaine;
-  if (sousDomaine) {
-    fetch(`http://localhost:5000/categories/services/${sousDomaine}`)
-      .then(res => res.json())
-      .then(data => setServices(data))
-      .catch(err => console.log(err));
-  }
-}, [companyInputs.sous_domaine, professionalInputs.sous_domaine, role]);
+  // Domaine pour company
+  useEffect(() => {
+    const domaine = role === 'company' ? companyInputs.domaine : professionalInputs.domaine;
+    if (domaine) {
+      fetch(`http://localhost:5000/categories/subCategories/${domaine}`)
+        .then(res => res.json())
+        .then(data => setSubCategories(data))
+        .catch(err => console.log(err));
+    }
+  }, [companyInputs.domaine, professionalInputs.domaine, role]);
+
+  useEffect(() => {
+    const sousDomaine = role === 'company' ? companyInputs.sous_domaine : professionalInputs.sous_domaine;
+    if (sousDomaine) {
+      fetch(`http://localhost:5000/categories/services/${sousDomaine}`)
+        .then(res => res.json())
+        .then(data => setServices(data))
+        .catch(err => console.log(err));
+    }
+  }, [companyInputs.sous_domaine, professionalInputs.sous_domaine, role]);
   const [register, { isError, error }] = useRegisterMutation();
 
   useEffect(() => {
@@ -108,31 +111,30 @@ useEffect(() => {
       .catch(err => console.log(err));
   }, []);
 
-useEffect(() => {
-  const countryId = role === 'company' ? companyInputs.country_id : professionalInputs.country_id;
-  if (countryId) {
-    fetch(`http://localhost:5000/localisation/getRegionsByCountry/${countryId}`)
-      .then(res => res.json())
-      .then(data => {
-        setRegions(data.regions || []);
-      })
-      .catch(err => console.log(err));
-  }
-}, [companyInputs.country_id, professionalInputs.country_id, role]);
-
   useEffect(() => {
-  const regionId = role === 'company' ? companyInputs.region_id : professionalInputs.region_id;
-  if (regionId) {
-    fetch(`http://localhost:5000/localisation/getCitiesByRegion/${regionId}`)
-      .then(res => res.json())
-      .then(data => setCities(data))
-      .catch(err => console.log(err));
-  } 
-}, [companyInputs.region_id, professionalInputs.region_id, role]);
+    const countryId = role === 'company' ? companyInputs.country_id : professionalInputs.country_id;
+    if (countryId) {
+      fetch(`http://localhost:5000/localisation/getRegionsByCountry/${countryId}`)
+        .then(res => res.json())
+        .then(data => {
+          setRegions(data.regions || []);
+        })
+        .catch(err => console.log(err));
+    }
+  }, [companyInputs.country_id, professionalInputs.country_id, role]);
+
+    useEffect(() => {
+    const regionId = role === 'company' ? companyInputs.region_id : professionalInputs.region_id;
+    if (regionId) {
+      fetch(`http://localhost:5000/localisation/getCitiesByRegion/${regionId}`)
+        .then(res => res.json())
+        .then(data => setCities(data))
+        .catch(err => console.log(err));
+    } 
+  }, [companyInputs.region_id, professionalInputs.region_id, role]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       let payload = {};
 
