@@ -166,7 +166,6 @@ const handleDelete = async (id, type) => {
 
       <div className={styles.actionBar}>
         <div className={styles.searchWrapper}>
-          <Search className={styles.searchIcon} size={20} />
           <input 
             type="text" 
             placeholder={`Rechercher ${activeTab}...`} 

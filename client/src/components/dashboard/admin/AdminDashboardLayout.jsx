@@ -1,6 +1,10 @@
 import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
-import {Globe, Tags, Eye, Users, LayoutDashboard,LogOut, UserCog, ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
-import { useGetProfileQuery } from "../../../redux/features/profileApiSlice";
+import { 
+  Globe, Tags, Eye, Users, LayoutDashboard, 
+  LogOut, UserCog, ShieldCheck, ChevronRight, Sparkles 
+} from "lucide-react";
+import { useGetProfileQuery } from "../../../redux/features/profileApiSlice"; // ✅ AJOUT
+
 import styles from "../../../styles/dashboardAdmin.module.css";
 
 const SERVER_URL = "http://localhost:5000";
@@ -9,7 +13,7 @@ const AdminDashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Charger le profil admin
+  // ✅ Charger le profil admin
   const { data: profile } = useGetProfileQuery(undefined, { pollingInterval: 3000 });
 
   const adminMenu = [
@@ -30,11 +34,14 @@ const AdminDashboardLayout = () => {
 
   return (
     <div className={styles.dashboard}>
+
       {/* SIDEBAR */}
       <nav className={styles.sidebar}>
+
         {/* SECTION PROFIL */}
         <div className={styles.userSection}>
-          {/* Afficher la vraie photo ou l'icône par défaut */}
+
+          {/* ✅ Afficher la vraie photo ou l'icône par défaut */}
           {profile?.avatarUrl ? (
             <img
               src={`${SERVER_URL}/${profile.avatarUrl}`}

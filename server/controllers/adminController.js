@@ -39,11 +39,13 @@ const getDashboard = async (req, res) => {
 
       const userCount = await User.countDocuments({ createdAt: { $lt: nextD } });
       const companyCount = await Company.countDocuments({ createdAt: { $lt: nextD } });
+      const professionalCount = await Professional.countDocuments({ createdAt: { $lt: nextD } });
 
       growthData.push({
         name: monthNames[d.getMonth()],
         users: userCount,
-        companies: companyCount
+        companies: companyCount,
+        professionals: professionalCount
       });
     }
 

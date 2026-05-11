@@ -1,4 +1,4 @@
-//
+
 import React, { useState, useRef, useEffect } from "react";
 import { Loader, Newspaper } from "lucide-react";
 import ItemsCarousel from "./ItemsCarousel";

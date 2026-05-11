@@ -10,8 +10,9 @@ const checkPermission = (requiredPermission) => {
       req.permissions = [];
     }
 
-    // 1. Vérification classique via le token (statique)
-    const hasPermission = req.permissions.includes(requiredPermission) || req.permissions.includes("all_access");
+    // 1. Vérification classique via le token (statique) ou rôle admin
+    const isAdmin = req.roles && req.roles.includes("admin");
+    const hasPermission = isAdmin || req.permissions.includes(requiredPermission) || req.permissions.includes("all_access");
     if (hasPermission) return next();
 
     // 2. Vérification dynamique via la relation de suivi (Follow / Role)

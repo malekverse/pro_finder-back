@@ -61,17 +61,6 @@ const Gains = () => {
             <h3>{balance.availableBalance.toFixed(2)} TND</h3>
           </div>
         </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{ backgroundColor: '#fef3c7', color: '#b45309' }}>
-            <Clock size={24} />
-          </div>
-          <div className={styles.statInfo}>
-            <span>En attente</span>
-            <h3>{balance.pendingBalance.toFixed(2)} TND</h3>
-          </div>
-        </div>
-
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
             <TrendingUp size={24} />
@@ -135,9 +124,6 @@ const Gains = () => {
                       <span className={styles.payoutAmount}>{req.amount.toFixed(2)} TND</span>
                       <span className={styles.payoutDate}>{new Date(req.createdAt).toLocaleDateString()}</span>
                     </div>
-                    <span className={`${styles.statusBadge} ${styles[req.status]}`}>
-                      {req.status === 'pending' ? 'En cours' : req.status === 'processed' ? 'Effectué' : 'Rejeté'}
-                    </span>
                   </div>
                 ))
               )}

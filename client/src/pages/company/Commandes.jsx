@@ -227,7 +227,26 @@ const Commandes = () => {
                             </div>
                           </div>
                           <div className={styles.cardFooter}>
-                            {(order.status === "pending" || order.status === "paid") && (
+                            {order.status === "pending" && (
+                              <div style={{ 
+                                width: '100%', 
+                                textAlign: 'center', 
+                                padding: '12px', 
+                                backgroundColor: '#fffbeb', 
+                                borderRadius: '12px', 
+                                color: '#92400e', 
+                                fontWeight: '700', 
+                                fontSize: '14px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                gap: '10px', 
+                                border: '1px solid #fef3c7' 
+                              }}>
+                                <Clock size={18} /> Attendre le paiement du client
+                              </div>
+                            )}
+                            {order.status === "paid" && (
                               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                                 <button 
                                   onClick={() => handleShowInvoice(order._id, 'order')} 

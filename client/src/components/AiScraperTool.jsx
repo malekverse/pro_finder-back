@@ -40,7 +40,7 @@ const AiScraperTool = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery) return;
-    
+
     setSearchLoading(true);
     setError(null);
     setSearchResults([]);
@@ -52,7 +52,7 @@ const AiScraperTool = () => {
         body: JSON.stringify({ query: searchQuery }),
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setSearchResults(data.results.map(r => ({ ...r, status: 'idle', generateResult: null })));
       } else {
@@ -68,7 +68,7 @@ const AiScraperTool = () => {
   const processMassItem = async (index) => {
     const newResults = [...searchResults];
     const item = newResults[index];
-    
+
     item.status = 'scraping';
     setSearchResults([...newResults]);
 
@@ -92,7 +92,7 @@ const AiScraperTool = () => {
       // 2. Sauvegarde BDD et Envoi E-mail
       const categoryName = genResult["Catégorie suggérée"] || genResult.category;
       const matchedNode = taxonomyNodes.find(s => s.name.trim().toLowerCase() === String(categoryName).trim().toLowerCase());
-      
+
       const saveResp = await fetch('http://localhost:5000/company/ai-create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,7 +111,7 @@ const AiScraperTool = () => {
         setSearchResults([...newResults]);
         return;
       }
-      
+
       if (!saveResp.ok) throw new Error("Erreur de sauvegarde.");
 
       item.status = 'saved';
@@ -208,13 +208,13 @@ const AiScraperTool = () => {
       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '2rem' }}>Recherchez sur le Web et convertissez les entreprises automatiquement.</p>
 
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        <button 
+        <button
           onClick={() => { setActiveMode('mass'); setError(null); }}
           style={{ padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', backgroundColor: activeMode === 'mass' ? '#1E3A5F' : '#e2e8f0', color: activeMode === 'mass' ? 'white' : '#475569' }}
         >
           🤖 Robot de Masse
         </button>
-        <button 
+        <button
           onClick={() => { setActiveMode('single'); setError(null); }}
           style={{ padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', backgroundColor: activeMode === 'single' ? '#1E3A5F' : '#e2e8f0', color: activeMode === 'single' ? 'white' : '#475569' }}
         >
@@ -236,7 +236,7 @@ const AiScraperTool = () => {
             <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '0.9rem' }}>
               Tapez une recherche (ex: <i>"Cliniques à Sousse"</i>). Le robot cherchera des sites web correspondants. Vous pourrez ensuite valider ceux que vous voulez inviter.
             </p>
-            
+
             <form onSubmit={handleSearch} style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}>
               <input
                 type="text"
@@ -259,12 +259,12 @@ const AiScraperTool = () => {
                   </h3>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     {searchResults.some(item => item.status === 'idle') && (
-                      <button 
-                        onClick={processAllItems} 
+                      <button
+                        onClick={processAllItems}
                         disabled={isProcessingAll}
                         className={styles.addBtnBlue}
-                        style={{ 
-                          padding: '8px 16px', 
+                        style={{
+                          padding: '8px 16px',
                           opacity: isProcessingAll ? 0.6 : 1,
                           fontSize: '14px'
                         }}
@@ -281,41 +281,41 @@ const AiScraperTool = () => {
                       // On doit retrouver le vrai index dans l'original pour processMassItem
                       const originalIndex = searchResults.findIndex(r => r.url === item.url);
                       return (
-                        <div key={item.url} style={{ 
-                          padding: '20px', 
-                          border: '1px solid #e2e8f0', 
-                          borderRadius: '10px', 
-                          backgroundColor: '#f8fafc', 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
+                        <div key={item.url} style={{
+                          padding: '20px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '10px',
+                          backgroundColor: '#f8fafc',
+                          display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                           animation: 'fadeIn 0.5s ease-out'
                         }}>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem', color: '#0f172a' }}>{item.name}</h4>
-                        <a href={item.url} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', fontSize: '0.9rem', textDecoration: 'none' }}>{item.url}</a>
-                        
-                        {item.generateResult && (
-                          <div style={{ marginTop: '10px', fontSize: '0.85rem', color: '#475569', backgroundColor: '#e2e8f0', padding: '10px', borderRadius: '8px' }}>
-                            ✉️ {item.generateResult["Email de contact"]} <br/>
-                            🏷️ {item.generateResult["Catégorie suggérée"] || item.generateResult.category}
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem', color: '#0f172a' }}>{item.name}</h4>
+                            <a href={item.url} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', fontSize: '0.9rem', textDecoration: 'none' }}>{item.url}</a>
+
+                            {item.generateResult && (
+                              <div style={{ marginTop: '10px', fontSize: '0.85rem', color: '#475569', backgroundColor: '#e2e8f0', padding: '10px', borderRadius: '8px' }}>
+                                ✉️ {item.generateResult["Email de contact"]} <br />
+                                🏷️ {item.generateResult["Catégorie suggérée"] || item.generateResult.category}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      
-                      <div style={{ marginLeft: '20px', minWidth: '150px', textAlign: 'right' }}>
-                        {item.status === 'idle' && (
-                          <button onClick={() => processMassItem(originalIndex)} style={{ padding: '8px 15px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                            ✅ Extraire & Ajouter
-                          </button>
-                        )}
-                        {item.status === 'scraping' && <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>⏳ Extraction IA...</span>}
-                        {item.status === 'error' && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>❌ Erreur Scraping</span>}
-                        {item.status === 'failed_no_email' && <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.85rem' }}>❌ Ignoré (Aucun Email)</span>}
-                        {item.status === 'already_exists' && <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '0.85rem' }}>⚠️ Ignoré (Existe déjà)</span>}
-                        {item.status === 'saved' && <span style={{ color: '#059669', fontWeight: 'bold' }}>🎉 Sauvegardé & Invité</span>}
-                      </div>
-                    </div>
+
+                          <div style={{ marginLeft: '20px', minWidth: '150px', textAlign: 'right' }}>
+                            {item.status === 'idle' && (
+                              <button onClick={() => processMassItem(originalIndex)} style={{ padding: '8px 15px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                ✅ Extraire & Ajouter
+                              </button>
+                            )}
+                            {item.status === 'scraping' && <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>⏳ Extraction IA...</span>}
+                            {item.status === 'error' && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>❌ Erreur Scraping</span>}
+                            {item.status === 'failed_no_email' && <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.85rem' }}>❌ Ignoré (Aucun Email)</span>}
+                            {item.status === 'already_exists' && <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '0.85rem' }}>⚠️ Ignoré (Existe déjà)</span>}
+                            {item.status === 'saved' && <span style={{ color: '#059669', fontWeight: 'bold' }}>🎉 Sauvegardé & Invité</span>}
+                          </div>
+                        </div>
                       );
                     })}
                 </div>
@@ -341,7 +341,7 @@ const AiScraperTool = () => {
                   {result["Nom de l'entreprise"] || result.name || 'Nom non trouvé'}
                 </h3>
                 <div style={{ marginBottom: '15px', fontSize: '14px', color: '#475569' }}>
-                   ✉️ Contact : <strong>{result["Email de contact"] || "Non trouvé"}</strong>
+                  ✉️ Contact : <strong>{result["Email de contact"] || "Non trouvé"}</strong>
                 </div>
                 <p style={{ fontSize: '14px', color: '#6366f1', fontWeight: '600', marginBottom: '20px' }}>
                   Catégorie : {result["Catégorie suggérée"] || result.category || 'Non classé'}

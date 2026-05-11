@@ -688,7 +688,7 @@ const getRecommendedCompanies = async (req, res) => {
     // 3. Enrichir avec les stats et les noms de localisation
     const enriched = await Promise.all(
       companies.map(async (company) => {
-      const reviewStat = topReviews.find(r => r._id && r._id.toString() === company._id.toString());
+        const reviewStat = topReviews.find(r => r._id && r._id.toString() === company._id.toString());
 
         let cityName = company.city;
         if (company.city && mongoose.isValidObjectId(company.city)) {
@@ -866,10 +866,10 @@ const claimCompanyProfile = async (req, res) => {
       return res.status(400).json({ message: "Le lien de revendication a expiré." });
     }
     // Log details of the error to help debugging
-    return res.status(500).json({ 
-      message: "Erreur lors de la revendication.", 
+    return res.status(500).json({
+      message: "Erreur lors de la revendication.",
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

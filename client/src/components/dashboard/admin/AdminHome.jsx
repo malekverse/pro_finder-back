@@ -23,12 +23,12 @@ const AdminHome = () => {
 
   // Données réelles pour la courbe (envoyées par le backend)
   const chartData = dashboardData?.growthData || [
-    { name: 'Jan', users: 0, companies: 0 },
-    { name: 'Fév', users: 0, companies: 0 },
-    { name: 'Mar', users: 0, companies: 0 },
-    { name: 'Avr', users: 0, companies: 0 },
-    { name: 'Mai', users: 0, companies: 0 },
-    { name: 'Juin', users: 0, companies: 0 },
+    { name: 'Jan', users: 0, companies: 0, professionals: 0 },
+    { name: 'Fév', users: 0, companies: 0, professionals: 0 },
+    { name: 'Mar', users: 0, companies: 0, professionals: 0 },
+    { name: 'Avr', users: 0, companies: 0, professionals: 0 },
+    { name: 'Mai', users: 0, companies: 0, professionals: 0 },
+    { name: 'Juin', users: 0, companies: 0, professionals: 0 },
   ];
 
   const cards = [
@@ -68,9 +68,6 @@ const AdminHome = () => {
           <h1 className={styles.title} style={{ marginBottom: '0.5rem', fontSize: '1.75rem' }}>Tableau de bord</h1>
           <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Bienvenue, voici l'état de votre plateforme aujourd'hui.</p>
         </div>
-        <div className={styles.statusActive} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px' }}>
-          <CheckCircle2 size={16} /> Système Opérationnel
-        </div>
       </div>
       
       <div className={styles.gridWrapper}>
@@ -106,6 +103,9 @@ const AdminHome = () => {
                <span style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', color: '#a855f7', fontWeight: '600' }}>
                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#a855f7' }}></div> Entreprises
                </span>
+               <span style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: '600' }}>
+                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></div> Professionnels
+               </span>
             </div>
           </div>
             <div style={{ width: '100%', height: '320px', minWidth: 0 }}>
@@ -116,6 +116,14 @@ const AdminHome = () => {
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                   </linearGradient>
+                  <linearGradient id="colorCompanies" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#a855f7" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorProfessionals" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
@@ -125,6 +133,7 @@ const AdminHome = () => {
                 />
                 <Area type="monotone" dataKey="users" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
                 <Area type="monotone" dataKey="companies" stroke="#a855f7" strokeWidth={3} fillOpacity={0} />
+                <Area type="monotone" dataKey="professionals" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfessionals)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

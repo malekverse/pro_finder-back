@@ -601,14 +601,6 @@ const Quotes = ({ isEmbedded = false, openModalOnLoad = false, prefillData = nul
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '16px' }}>{formData.userName || "Client"}</span>
-                            <button 
-                              type="button"
-                              onClick={() => setFormData({ ...formData, userId: "", userName: "", userEmail: "" })}
-                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
-                              title="Changer de client"
-                            >
-                              <X size={14} />
-                            </button>
                           </div>
                           <span style={{ fontSize: '12px', fontWeight: '400', color: '#64748b' }}>{formData.userEmail || "Email non renseigné"}</span>
                         </div>

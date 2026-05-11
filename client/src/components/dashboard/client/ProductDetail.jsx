@@ -90,16 +90,6 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
 
             <div style={pd.divider} />
 
-            {/* Quantité */}
-            <div style={pd.qtySection}>
-              <span style={pd.sectionLabel}>Quantité</span>
-              <div style={pd.qtyBox}>
-                <button type="button" style={pd.qtyBtn} onClick={decrementQty}><Minus size={16} /></button>
-                <span style={pd.qtyValue}>{quantity}</span>
-                <button type="button" style={pd.qtyBtn} onClick={incrementQty}><Plus size={16} /></button>
-              </div>
-            </div>
-
             {/* Actions */}
             <div style={pd.actionRow}>
               <button 

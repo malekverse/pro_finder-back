@@ -181,8 +181,10 @@ async function analyzeWithGemini(scrapedData, taxonomyOptions, type = 'company')
             - "${entityLabel}"
             - "Description courte"
             - "Catégorie suggérée"
-            - "Email de contact" (Cherche bien dans le texte, les pieds de page ou déduis-le des liens détectés. S'il y a plusieurs emails, choisis le plus générique comme info@ ou contact@. Si vraiment rien n'est trouvable, renvoie 'null').
-            - "Téléphone" (Si présent, format international. Sinon 'null').
+            - "country" (Détecte le pays de l'entreprise à partir de l'adresse physique, du domaine (.fr, .ca, .tn, .ma, etc.), du préfixe téléphonique (+33, +1, +216...), de la devise, ou de tout indice dans le contenu. Renvoie le nom du pays en français, ex: "France", "Tunisie", "Canada". Si impossible à déterminer, renvoie 'null').
+            - "region" (Détecte la région, l'état ou la province de l'entreprise à partir de l'adresse, du code postal, de l'indicatif téléphonique régional, ou de tout indice géographique. Ex: "Île-de-France", "Québec", "Grand Tunis", "Casablanca-Settat". Si impossible à déterminer, renvoie 'null').
+            - "email" (Cherche bien dans le texte, les pieds de page ou déduis-le des liens détectés. S'il y a plusieurs emails, choisis le plus générique comme INFO@ ou info@ ou contact@. Si vraiment rien n'est trouvable, renvoie 'null').
+            - "phone" (Si présent, format international. Sinon 'null').
         
             ${taxonomyInstruction}
 
