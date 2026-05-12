@@ -1144,9 +1144,20 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [appliedFilters, setAppliedFilters] = useState({});
 
+  const location = useLocation();
   const productRef = useRef(null);
   const serviceRef = useRef(null);
   const searchResultsRef = useRef(null);
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setSearchTab(location.state.tab);
+      setIsShowingResults(true);
+      setTimeout(() => {
+        if (searchResultsRef.current) searchResultsRef.current.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [location.state]);
 
   const { data: allProducts, isLoading: productsLoading } = useGetAllProductsQuery();
   const { data: allServices, isLoading: servicesLoading } = useGetAllServicesQuery();
@@ -1218,77 +1229,96 @@ const Home = () => {
         activeTab={isShowingResults ? searchTab : null}
       />
       <div style={p.layout}>
-        {!isShowingResults && (
-          <>
-            <div style={hero.container}>
+        <div style={{ ...hero.container, padding: isShowingResults ? '40px 40px' : '80px 40px' }}>
+          {!isShowingResults && (
+            <>
               <h1 style={hero.title}>
                 Trouvez. Réservez. <span style={hero.highlight}>Payez en ligne.</span> En toute confiance.
               </h1>
               <p style={hero.subtitle}>
                 La plateforme intelligente qui simplifie la mise en relation avec les meilleurs professionnels et entreprises dans le monde entier.
               </p>
+            </>
+          )}
 
-              <div style={hero.searchBar}>
-                <div style={hero.filterGroup}>
-                  <MapPin size={18} color="#3b82f6" />
-                  <div style={{ position: 'relative', flex: 1 }}>
-                    <select
-                      style={hero.select}
-                      value={selectedCountry}
-                      onChange={(e) => {
-                        setSelectedCountry(e.target.value);
-                        setSelectedRegion("");
-                      }}
-                    >
-                      <option value="">Sélectionner un pays</option>
-                      {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <ChevronDown size={14} color="#64748b" />
-                </div>
-
-                <div style={hero.divider} />
-
-                <div style={hero.filterGroup}>
-                  <div style={{ position: 'relative', flex: 1 }}>
-                    <select
-                      style={hero.select}
-                      value={selectedRegion}
-                      onChange={(e) => setSelectedRegion(e.target.value)}
-                      disabled={!selectedCountry}
-                    >
-                      <option value="">Choisir une région</option>
-                      {regionsList.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-                    </select>
-                  </div>
-                  <ChevronDown size={14} color="#64748b" />
-                </div>
-
-                <div style={hero.divider} />
-
-                <div style={hero.inputGroup}>
-                  <Search size={18} color="#64748b" />
-                  <input
-                    type="text"
-                    placeholder="Que recherchez-vous ?"
-                    style={hero.input}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  />
-                </div>
-
-                <button style={hero.searchBtn} onClick={handleSearch}>
-                  Rechercher <ChevronRight size={18} />
-                </button>
+          <div style={hero.searchBar}>
+            <div style={hero.filterGroup}>
+              <MapPin size={18} color="#3b82f6" />
+              <div style={{ position: 'relative', flex: 1 }}>
+                <select
+                  style={hero.select}
+                  value={selectedCountry}
+                  onChange={(e) => {
+                    setSelectedCountry(e.target.value);
+                    setSelectedRegion("");
+                  }}
+                >
+                  <option value="">Sélectionner un pays</option>
+                  {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
               </div>
+              <ChevronDown size={14} color="#64748b" />
             </div>
-            <CategoryCards 
-              onCategoryClick={handleCategoryClick} 
-              selectedId={selectedCategoryId}
-            />
-          </>
-        )}
+
+            <div style={hero.divider} />
+
+            <div style={hero.filterGroup}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <select
+                  style={hero.select}
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  disabled={!selectedCountry}
+                >
+                  <option value="">Choisir une région</option>
+                  {regionsList.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+                </select>
+              </div>
+              <ChevronDown size={14} color="#64748b" />
+            </div>
+
+            <div style={hero.divider} />
+
+            <div style={hero.inputGroup}>
+              <Search size={18} color="#64748b" />
+              <input
+                type="text"
+                placeholder="Que recherchez-vous ?"
+                style={hero.input}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+
+            <button style={hero.searchBtn} onClick={handleSearch}>
+              Rechercher <ChevronRight size={18} />
+            </button>
+
+            {isShowingResults && (
+              <button 
+                style={{ 
+                  ...hero.searchBtn, 
+                  background: '#f1f5f9', 
+                  color: '#64748b', 
+                  boxShadow: 'none', 
+                  border: '1px solid #e2e8f0' 
+                }} 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAction('home');
+                }}
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+        </div>
+
+        <CategoryCards 
+          onCategoryClick={handleCategoryClick} 
+          selectedId={selectedCategoryId}
+        />
         <div style={p.contentWrapper}>
           <main style={p.main}>
             {!isShowingResults ? (
@@ -1312,7 +1342,7 @@ const Home = () => {
                 </div>
               </>
             ) : (
-              <div ref={searchResultsRef}>
+              <div ref={searchResultsRef} className="results-container">
                 <div style={p.feedHeader}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Search size={18} color="#1E3A5F" />
@@ -1370,11 +1400,15 @@ const Home = () => {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .showcase-card:hover { transform: translateY(-5px); }
         .category-card:hover {
           transform: translateY(-5px) scale(1.02);
           box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
           border-color: #3b82f6 !important;
+        }
+        .results-container {
+          animation: fadeIn 0.5s ease-out;
         }
       `}</style>
     </div>
