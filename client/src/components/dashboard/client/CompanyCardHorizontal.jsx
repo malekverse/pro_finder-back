@@ -12,7 +12,8 @@ const CompanyCardHorizontal = ({ company, onClick }) => {
     phone,
     rating,
     isGenerated,
-    categoryName // Passed from parent if found
+    categoryName, // Passed from parent if found
+    servicesList
   } = company;
 
   const averageRating = rating?.average || 0;
@@ -49,7 +50,7 @@ const CompanyCardHorizontal = ({ company, onClick }) => {
           </div>
         </div>
 
-        <p style={s.category}>{categoryName || "Multi-services"}</p>
+        <p style={s.category}>{servicesList?.[0] || categoryName || "Multi-services"}</p>
 
         <p style={s.desc}>
           {description?.replace(/\[.*?\]/g, "").slice(0, 140)}

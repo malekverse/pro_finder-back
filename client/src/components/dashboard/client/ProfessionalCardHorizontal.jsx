@@ -11,7 +11,8 @@ const ProfessionalCardHorizontal = ({ pro, onClick }) => {
     country,
     phone,
     followersCount = 0,
-    categoryName
+    categoryName,
+    servicesList
   } = pro;
 
   return (
@@ -39,7 +40,7 @@ const ProfessionalCardHorizontal = ({ pro, onClick }) => {
           </div>
         </div>
 
-        <p style={s.category}>{categoryName || "Professionnel"}</p>
+        <p style={s.category}>{servicesList?.[0] || categoryName || "Professionnel"}</p>
 
         <p style={s.desc}>
           {description?.slice(0, 140)}
