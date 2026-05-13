@@ -33,10 +33,10 @@ const Header = ({
 
   const tabs = [
     { id: "feed", label: "Fil d'actualité", icon: <Newspaper size={18} /> },
-    { id: "services", label: "Services", icon: <Wrench size={18} /> },
-    { id: "products", label: "Produits", icon: <Package size={18} /> },
     { id: "societes", label: "Sociétés", icon: <Building2 size={18} /> },
     { id: "pros", label: "Professionnels", icon: <User size={18} /> },
+    { id: "services", label: "Services", icon: <Wrench size={18} /> },
+    { id: "products", label: "Produits", icon: <Package size={18} /> },
   ];
 
   return (
