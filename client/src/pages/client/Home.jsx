@@ -470,7 +470,7 @@ const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
     <div style={r.section}>
       <div style={r.header}>
         <h2 style={r.title}>{title}</h2>
-        <button type="button" style={r.moreBtn}>Voir plus <ChevronRight size={14} /></button>
+        <button type="button" onClick={() => navigate('/marketplace', { state: { view: 'products' } })} style={r.moreBtn}>Voir plus <ChevronRight size={14} /></button>
       </div>
       <div style={{ position: 'relative' }}>
         <button type="button" onClick={(e) => { e.preventDefault(); scroll('left'); }} style={carouselBtnStyle('left')}><ChevronLeft size={20} /></button>
@@ -664,7 +664,7 @@ const ServiceCarousel = ({ title, services, isLoading, onServiceClick }) => {
     <div style={r.section}>
       <div style={r.header}>
         <h2 style={r.title}>{title}</h2>
-        <button type="button" style={r.moreBtn}>Voir plus <ChevronRight size={14} /></button>
+        <button type="button" onClick={() => navigate('/marketplace', { state: { view: 'services' } })} style={r.moreBtn}>Voir plus <ChevronRight size={14} /></button>
       </div>
       <div style={{ position: 'relative' }}>
         <button type="button" onClick={(e) => { e.preventDefault(); scroll('left'); }} style={carouselBtnStyle('left')}><ChevronLeft size={20} /></button>

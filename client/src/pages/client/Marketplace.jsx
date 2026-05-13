@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { 
   ShoppingBag, Package, Star, ArrowUpRight, CheckCircle2, 
   Home as HomeIcon, Building2, Briefcase, Store, Search, ChevronDown, LogOut, User, CreditCard, FileText
@@ -81,7 +81,8 @@ const Header = ({ user }) => {
 };
 
 const Marketplace = () => {
-  const [view, setView] = useState("services"); // "services" or "products"
+  const location = useLocation();
+  const [view, setView] = useState(location.state?.view || "services"); // "services" or "products"
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
