@@ -1129,6 +1129,108 @@ const ProfessionalFeed = ({ filters }) => {
     </div>
   );
 };
+//component pour choisir pays et region
+const HeroSelect = ({ value, onChange, options, placeholder, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const wrapperRef = useRef(null);
+
+  const searchRef = useRef(search);
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+        if (searchRef.current.trim() === "") {
+          onChange(""); // Efface la sélection si l'input est vide
+        } else {
+          const selected = options.find(o => o._id === value);
+          setSearch(selected ? selected.name : "");
+        }
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [value, options, onChange]);
+
+  useEffect(() => {
+    const selected = options.find(o => o._id === value);
+    setSearch(selected ? selected.name : "");
+  }, [value, options]);
+
+  const filteredOptions = options.filter(o => o.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', flex: 1 }}>
+      <input
+        type="text"
+        placeholder={placeholder}
+        style={{ ...hero.select, cursor: disabled ? 'not-allowed' : 'text' }}
+        value={isOpen ? search : (options.find(o => o._id === value)?.name || "")}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          if (!isOpen) setIsOpen(true);
+        }}
+        onFocus={() => {
+          if (!disabled) setIsOpen(true);
+        }}
+        disabled={disabled}
+      />
+      {isOpen && !disabled && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 20px)',
+          left: -20,
+          minWidth: '250px',
+          background: '#fff',
+          borderRadius: '16px',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+          maxHeight: '300px',
+          overflowY: 'auto',
+          zIndex: 50,
+          border: '1px solid #e2e8f0',
+          padding: '8px'
+        }} className="custom-scrollbar">
+          {filteredOptions.length > 0 ? filteredOptions.map(opt => (
+            <div
+              key={opt._id}
+              style={{
+                padding: '12px 16px',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: value === opt._id ? '#3b82f6' : '#1e293b',
+                background: value === opt._id ? '#eff6ff' : 'transparent',
+                textAlign: 'left',
+                transition: 'background 0.2s',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = value === opt._id ? '#eff6ff' : '#f8fafc'}
+              onMouseLeave={(e) => e.currentTarget.style.background = value === opt._id ? '#eff6ff' : 'transparent'}
+              onClick={() => {
+                onChange(opt._id);
+                setSearch(opt.name);
+                setIsOpen(false);
+              }}
+            >
+              {opt.name}
+            </div>
+          )) : (
+            <div style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b', textAlign: 'center' }}>
+              Aucun résultat
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -1240,36 +1342,28 @@ const Home = () => {
           <div style={hero.searchBar}>
             <div style={hero.filterGroup}>
               <MapPin size={18} color="#3b82f6" />
-              <div style={{ position: 'relative', flex: 1 }}>
-                <select
-                  style={hero.select}
-                  value={selectedCountry}
-                  onChange={(e) => {
-                    setSelectedCountry(e.target.value);
-                    setSelectedRegion("");
-                  }}
-                >
-                  <option value="">Sélectionner un pays</option>
-                  {countries.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                </select>
-              </div>
+              <HeroSelect 
+                value={selectedCountry}
+                onChange={(val) => {
+                  setSelectedCountry(val);
+                  setSelectedRegion("");
+                }}
+                options={countries}
+                placeholder="Sélectionner un pays"
+              />
               <ChevronDown size={14} color="#64748b" />
             </div>
 
             <div style={hero.divider} />
 
             <div style={hero.filterGroup}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <select
-                  style={hero.select}
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  disabled={!selectedCountry}
-                >
-                  <option value="">Choisir une région</option>
-                  {regionsList.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-                </select>
-              </div>
+              <HeroSelect 
+                value={selectedRegion}
+                onChange={(val) => setSelectedRegion(val)}
+                options={regionsList}
+                placeholder="Choisir une région"
+                disabled={!selectedCountry}
+              />
               <ChevronDown size={14} color="#64748b" />
             </div>
 
@@ -1404,6 +1498,10 @@ const Home = () => {
         .results-container {
           animation: fadeIn 0.5s ease-out;
         }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
     </div>
   );
