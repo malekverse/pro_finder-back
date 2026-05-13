@@ -1229,17 +1229,13 @@ const Home = () => {
         activeTab={isShowingResults ? searchTab : null}
       />
       <div style={p.layout}>
-        <div style={{ ...hero.container, padding: isShowingResults ? '40px 40px' : '80px 40px' }}>
-          {!isShowingResults && (
-            <>
-              <h1 style={hero.title}>
-                Trouvez. Réservez. <span style={hero.highlight}>Payez en ligne.</span> En toute confiance.
-              </h1>
-              <p style={hero.subtitle}>
-                La plateforme intelligente qui simplifie la mise en relation avec les meilleurs professionnels et entreprises dans le monde entier.
-              </p>
-            </>
-          )}
+        <div style={{ ...hero.container, padding: '80px 40px' }}>
+          <h1 style={hero.title}>
+            Trouvez. Réservez. <span style={hero.highlight}>Payez en ligne.</span> En toute confiance.
+          </h1>
+          <p style={hero.subtitle}>
+            La plateforme intelligente qui simplifie la mise en relation avec les meilleurs professionnels et entreprises dans le monde entier.
+          </p>
 
           <div style={hero.searchBar}>
             <div style={hero.filterGroup}>
@@ -1321,28 +1317,8 @@ const Home = () => {
         />
         <div style={p.contentWrapper}>
           <main style={p.main}>
-            {!isShowingResults ? (
-              <>
-                <div ref={productRef}>
-                  <ProductCarousel
-                    title="Produits des entreprises"
-                    products={allProducts}
-                    isLoading={productsLoading}
-                    onProductClick={(p) => setSelectedProduct(p)}
-                  />
-                </div>
-
-                <div ref={serviceRef}>
-                  <ServiceCarousel
-                    title="Services recommandés"
-                    services={allServices}
-                    isLoading={servicesLoading}
-                    onServiceClick={(s) => setSelectedService(s)}
-                  />
-                </div>
-              </>
-            ) : (
-              <div ref={searchResultsRef} className="results-container">
+            {isShowingResults && (
+              <div ref={searchResultsRef} className="results-container" style={{ marginBottom: 40 }}>
                 <div style={p.feedHeader}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Search size={18} color="#1E3A5F" />
@@ -1373,6 +1349,24 @@ const Home = () => {
                 )}
               </div>
             )}
+
+            <div ref={productRef} style={{ display: isShowingResults ? 'none' : 'block' }}>
+              <ProductCarousel
+                title="Produits des entreprises"
+                products={allProducts}
+                isLoading={productsLoading}
+                onProductClick={(p) => setSelectedProduct(p)}
+              />
+            </div>
+
+            <div ref={serviceRef} style={{ display: isShowingResults ? 'none' : 'block' }}>
+              <ServiceCarousel
+                title="Services recommandés"
+                services={allServices}
+                isLoading={servicesLoading}
+                onServiceClick={(s) => setSelectedService(s)}
+              />
+            </div>
           </main>
           <aside style={p.rightSidebar}>
             <RecommendedCompanies />
