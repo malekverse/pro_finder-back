@@ -1000,9 +1000,9 @@ const CompanyFeed = ({ filters }) => {
                     <p style={c.listMeta}>
                       <MapPin size={14} color="#3b82f6" /> {company.city || "Tunisie"}
                     </p>
-                    {company.categoryName && (
+                    {(company.servicesList?.[0] || company.categoryName) && (
                       <p style={{ ...c.listMeta, color: '#8b5cf6', fontWeight: '600' }}>
-                        <Briefcase size={14} color="#8b5cf6" /> {company.categoryName}
+                        <Briefcase size={14} color="#8b5cf6" /> {company.servicesList?.[0] || company.categoryName}
                       </p>
                     )}
                   </div>
@@ -1091,9 +1091,9 @@ const ProfessionalFeed = ({ filters }) => {
                     <p style={c.listMeta}>
                       <MapPin size={14} color="#3b82f6" /> {pro.city || "Tunisie"}
                     </p>
-                    {pro.categoryName && (
+                    {(pro.servicesList?.[0] || pro.categoryName) && (
                       <p style={{ ...c.listMeta, color: '#8b5cf6', fontWeight: '600' }}>
-                        <Briefcase size={14} color="#8b5cf6" /> {pro.categoryName}
+                        <Briefcase size={14} color="#8b5cf6" /> {pro.servicesList?.[0] || pro.categoryName}
                       </p>
                     )}
                   </div>
