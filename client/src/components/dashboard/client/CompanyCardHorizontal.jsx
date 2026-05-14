@@ -167,7 +167,7 @@ const s = {
     borderRadius: "8px",
   },
   ratingVal: {
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "700",
     color: "#b45309"
   },

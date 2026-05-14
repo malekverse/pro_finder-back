@@ -12,8 +12,11 @@ const ProfessionalCardHorizontal = ({ pro, onClick }) => {
     phone,
     followersCount = 0,
     categoryName,
-    servicesList
+    servicesList,
+    rating
   } = pro;
+
+  const averageRating = rating?.average || 0;
 
   return (
     <div style={s.card} onClick={onClick}>
@@ -34,9 +37,9 @@ const ProfessionalCardHorizontal = ({ pro, onClick }) => {
           <div style={s.titleRow}>
             <h3 style={s.name}>{fullName}</h3>
           </div>
-          <div style={s.followersBox}>
-            <Users size={14} color="#3b82f6" />
-            <span style={s.followersVal}>{followersCount}</span>
+          <div style={s.ratingBox}>
+            <Star size={14} fill="#fbbf24" color="#fbbf24" />
+            <span style={s.ratingVal}>{averageRating}</span>
           </div>
         </div>
 
@@ -51,6 +54,10 @@ const ProfessionalCardHorizontal = ({ pro, onClick }) => {
           <div style={s.metaItem}>
             <MapPin size={14} />
             <span>{[city, country].filter(Boolean).join(", ") || "Tunisie"}</span>
+          </div>
+          <div style={s.metaItem}>
+            <Users size={14} />
+            <span>{followersCount || 0} abonnés</span>
           </div>
         </div>
 
@@ -126,28 +133,28 @@ const s = {
     color: "#0f172a",
     margin: 0
   },
-  followersBox: {
+  ratingBox: {
     display: "flex",
     alignItems: "center",
     gap: "4px",
-    background: "#eff6ff",
+    background: "#fffbeb",
     padding: "4px 8px",
     borderRadius: "8px",
   },
-  followersVal: {
-    fontSize: "12px",
+  ratingVal: {
+    fontSize: "14px",
     fontWeight: "700",
-    color: "#1e40af"
+    color: "#b45309"
   },
   category: {
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "600",
     color: "#3b82f6",
     margin: "0 0 10px"
   },
   desc: {
     fontSize: "13.5px",
-    color: "#64748b",
+    color: "#434e5cff",
     lineHeight: "1.5",
     margin: "0 0 12px",
     flex: 1
@@ -162,7 +169,7 @@ const s = {
     alignItems: "center",
     gap: "6px",
     fontSize: "12px",
-    color: "#94a3b8",
+    color: "#434e5cff",
     fontWeight: "500"
   },
   footer: {
