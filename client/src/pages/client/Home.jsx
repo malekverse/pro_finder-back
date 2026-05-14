@@ -1331,7 +1331,7 @@ const Home = () => {
         activeTab={isShowingResults ? searchTab : null}
       />
       <div style={p.layout}>
-        <div style={{ ...hero.container, padding: '80px 40px' }}>
+        <div style={hero.container}>
           <h1 style={hero.title}>
             Trouvez. Réservez. <span style={hero.highlight}>Payez en ligne.</span> En toute confiance.
           </h1>
@@ -1465,7 +1465,7 @@ const Home = () => {
           <aside style={p.rightSidebar}>
             <RecommendedCompanies />
             <RecommendedProfessionals />
-            <SuggestedCompanies />
+            {!isShowingResults && <SuggestedCompanies />}
             <SuggestedProfessionals />
           </aside>
           
@@ -1506,7 +1506,7 @@ const Home = () => {
     </div>
   );
 };
-
+//css des produit detail
 const pd = {
   overlay: { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
   modal: { background: '#fff', width: '100%', maxWidth: '1100px', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' },
@@ -1548,7 +1548,7 @@ const pd = {
   shippingInfo: { padding: '10px', display: 'flex', flexDirection: 'column', gap: '15px' },
   shipItem: { display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px', color: '#475569' },
 };
-
+//css de header
 const h = {
   bar: {
     position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
@@ -1613,7 +1613,7 @@ const h = {
     border: '2px solid #1E3A5F', transition: 'all 0.2s'
   }
 };
-
+//css des sidebar
 const r = {
   section: { marginBottom: 40 },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
@@ -1653,7 +1653,7 @@ const r = {
     boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
   }
 };
-
+//css des cartes societe et professionnel
 const c = {
   listCard: {
     background: '#fff',
@@ -1720,7 +1720,7 @@ const c = {
     whiteSpace: 'nowrap'
   }
 };
-
+//css de page home
 const p = {
   root: { minHeight: "100vh", background: "#f8fafc" },
   layout: {
@@ -1740,12 +1740,12 @@ const p = {
   feedScroll: { display: 'flex', flexDirection: 'column', gap: 20 },
   rightSidebar: { width: 320, flexShrink: 0, position: "sticky", top: 90 },
 };
-
+//css de feed (resultat de recherche)
 const f = {
   center: { display: "flex", flexDirection: "column", alignItems: "center", gap: 15, padding: "80px 0" },
   loadingText: { color: "#94a3b8", fontSize: 15, margin: 0, fontWeight: 500 },
   empty: {
-    background: "#fff", border: "1px dashed #e2e8f0",
+    background: "#ffffffff", border: "1px dashed #e2e8f0",
     borderRadius: 20, padding: "60px 40px", textAlign: "center",
   },
   emptyTitle: { fontWeight: 800, fontSize: 19, color: "#1e293b", margin: "0 0 10px" },
@@ -1758,7 +1758,7 @@ const f = {
   },
   pageInfo: { fontSize: 14, color: "#64748b", fontWeight: 700 },
 };
-
+//css de Entreprises et professionnels à suivre
 const sg = {
   card: {
     background: "#fff", border: "1px solid #e9eef5",
@@ -1793,10 +1793,10 @@ const sg = {
   },
   followBtnActive: { background: "#f1f5f9", color: "#1e293b", border: '1px solid #e2e8f0' },
 };
-
+//css de Trouvez. Réservez. Payez en ligne.
 const hero = {
   container: {
-    padding: '30px 20px 0px',
+    padding: '3px 2px 0px',
     textAlign: 'center',
     background: 'linear-gradient(10deg, #f8fafc 0%, #ffffffff 100%)',
     display: 'flex',
@@ -1893,7 +1893,7 @@ const hero = {
     whiteSpace: 'nowrap',
   }
 };
-
+//css des card category
 const cat = {
   container: {
     width: '100%',

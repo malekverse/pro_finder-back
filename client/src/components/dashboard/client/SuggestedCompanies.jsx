@@ -1,17 +1,22 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Loader, Building2, MapPin, Users } from "lucide-react";
+import { Loader, Building2, MapPin, Users, UserPlus } from "lucide-react";
 import { useGetSuggestedCompaniesQuery, useFollowCompanyMutation } from "../../../redux/features/company/companyApiSlice";
 import { toImageUrl } from "../../../utils/imageUtils";
 
-const SuggestedCompanies = () => {
+const SuggestedCompanies = ({ onSeeMore }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useSelector((state) => state.auth.user);
   const { data: suggestions = [], isLoading } = useGetSuggestedCompaniesQuery(undefined, { pollingInterval: 10000 });
   const [followCompany, { isLoading: following }] = useFollowCompanyMutation();
   const [followedIds, setFollowedIds] = useState([]);
+
+  const formatFollowers = (count) => {
+    if (count >= 1000) return (count / 1000).toFixed(1) + 'k';
+    return count;
+  };
 
   const handleFollow = async (companyId) => {
     if (!user) {
@@ -38,7 +43,7 @@ const SuggestedCompanies = () => {
         <p style={sg.empty}>Aucune suggestion pour l'instant.</p>
       ) : (
         <div style={sg.list}>
-          {suggestions.map((company) => {
+          {suggestions.slice(0, 5).map((company) => {
             const isFollowed = followedIds.includes(company._id);
             const logo = toImageUrl(company.logoUrl);
             return (
@@ -52,27 +57,24 @@ const SuggestedCompanies = () => {
                   <span style={sg.name} onClick={() => navigate(`/user/company/${company._id}`)}>
                     {company.companyName}
                   </span>
-                  <span style={sg.city}>
-                    <MapPin size={11} />
-                    {company.city ? (
-                      `${company.city}${company.country ? ', ' + company.country : ''}`
-                    ) : "Tunisie"}
-                  </span>
-                  <span style={sg.city}>
-                    <Users size={11} />
-                    {company.followersCount ?? 0} abonnés
-                  </span>
+                  <div style={sg.meta}>
+                    <span style={sg.followers}>{formatFollowers(company.followersCount ?? 0)} abonnés</span>
+                  </div>
                 </div>
                 <button
                   style={{ ...sg.followBtn, ...(isFollowed ? sg.followBtnActive : {}) }}
                   onClick={() => handleFollow(company._id)}
                   disabled={following}
                 >
-                  {isFollowed ? "Suivi ✓" : "+ Suivre"}
+                  {isFollowed ? "Suivi ✓" : "Suivre"}
                 </button>
               </div>
             );
           })}
+          
+          <button style={sg.seeMore} onClick={onSeeMore}>
+            Voir plus
+          </button>
         </div>
       )}
     </div>
@@ -81,37 +83,46 @@ const SuggestedCompanies = () => {
 
 const sg = {
   card: {
-    background: "#fff", border: "1px solid #e9eef5",
-    borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", padding: "18px 16px",
+    background: "#fff", border: "1px solid #e2e8f0",
+    borderRadius: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", padding: "8px",
+    display: "flex", flexDirection: "column", gap: 15
   },
+  header: { display: "flex", alignItems: "center", gap: 12 },
   title: {
-    fontWeight: 800, fontSize: 13, color: "#0f172a",
-    margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em",
+    fontWeight: 800, fontSize: 18, color: "#1e293b",margin: 0,
+    display: "flex",justifyContent: "center",
   },
   loader: { display: "flex", justifyContent: "center", padding: "12px 0" },
-  empty: { fontSize: 13, color: "#94a3b8", margin: 0, textAlign: "center", padding: "8px 0" },
-  list: { display: "flex", flexDirection: "column", gap: 12 },
-  item: { display: "flex", alignItems: "center", gap: 10 },
+  empty: { fontSize: 14, color: "#64748b", margin: 0, textAlign: "center", padding: "8px 0" },
+  list: { display: "flex", flexDirection: "column", gap: 20 },
+  item: { display: "flex", alignItems: "center", gap: 14 },
   logoWrap: { flexShrink: 0, cursor: "pointer" },
-  logo: { width: 38, height: 38, borderRadius: 8, objectFit: "cover", border: "1px solid #e9eef5" },
+  logo: { width: 38, height: 38, borderRadius: 8, objectFit: "cover", border: "1px solid #f1f5f9" },
   logoFallback: {
-    width: 38, height: 38, borderRadius: 8,
-    background: "#f1f5f9", border: "1px solid #e9eef5",
+    width: 48, height: 48, borderRadius: 12,
+    background: "#f8fafc", border: "1px solid #f1f5f9",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   info: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 },
   name: {
-    fontSize: 13, fontWeight: 700, color: "#0f172a",
+    fontSize: 13, fontWeight: 700, color: "#1e293b",
     cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
   },
-  city: { fontSize: 11, color: "#94a3b8", display: "flex", alignItems: "center", gap: 3 },
+  meta: { display: "flex", alignItems: "center", gap: 4, color: "#64748b", fontSize: 11 },
+  followers: { fontWeight: 500 },
+  location: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   followBtn: {
-    flexShrink: 0, fontSize: 12, fontWeight: 700, padding: "5px 10px",
-    background: "#1E3A5F", color: "#fff",
-    border: "none", borderRadius: 6, cursor: "pointer",
-    transition: "all 0.2s", whiteSpace: "nowrap",
+    flexShrink: 0, fontSize: 13, fontWeight: 700,
+    background: "transparent", color: "#0060fbff",
+    border: "none", cursor: "pointer",
+    transition: "all 0.2s", padding: "4px 8px"
   },
-  followBtnActive: { background: "#e2e8f0", color: "#1e293b" },
+  followBtnActive: { color: "#94a3b8" },
+  seeMore: {
+    marginTop: 8, padding: "12px", background: "#f0f7ff", color: "#3b82f6",
+    border: "none", borderRadius: 16, fontWeight: 700, fontSize: 13,
+    cursor: "pointer", transition: "0.2s", textAlign: "center"
+  }
 };
 
 export default SuggestedCompanies;

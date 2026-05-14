@@ -61,15 +61,15 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
     <div>
       {/* Section Fil d'actualité Principal */}
       <div style={{ marginTop: '0', paddingTop: '0' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Newspaper size={20} color="#1E3A5F" /> Fil d'actualité
         </h3>
         {/* Rendu de la liste des publications accumulées avec suggestions mixées */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px'}}>
           {allPosts.length === 0 && !isLoadingFeed && (
             <>
               {followedProducts.length > 0 && (
-                <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
+                <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
                   <ItemsCarousel
                     title="Produits suggérés pour vous"
                     items={followedProducts}

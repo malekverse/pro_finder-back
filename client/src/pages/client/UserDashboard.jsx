@@ -72,7 +72,7 @@ const UserDashboard = () => {
     // Au lieu de réserver directement, on ouvre l'ActionModal pour le numéro de téléphone
     setSelectedItem(data);
     setActionType('service');
-    setPrefilledData(data); // On passe les données de date/heure déjà choisies
+    setPrefilledData(data);
     setServiceForDetail(null);
   };
 
@@ -200,7 +200,11 @@ const UserDashboard = () => {
             )}
           </div>
         </main>
-        <aside style={p.rightSidebar}><SuggestedCompanies /></aside>
+        {activeTab !== "societes" && activeTab !== "pros" && (
+          <aside className="no-scrollbar" style={p.rightSidebar}>
+            <SuggestedCompanies onSeeMore={() => setActiveTab("societes")} />
+          </aside>
+        )}
       </div>
 
       {productForDetail && (
@@ -240,25 +244,28 @@ const UserDashboard = () => {
           <span>Demande envoyée, veuillez attendre le devis !</span>
         </div>
       )}
-
+      {/*style pour les carousels produits et services*/}
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         .carousel-card:hover .action-overlay { opacity: 1 !important; }
         .grid-card:hover .grid-overlay { opacity: 1 !important; }
         .carousel-card:hover img { transform: scale(1.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
 };
 
 // Styles
+//css des page fil d'actualité
 const p = {
   root: { minHeight: "100vh", background: "#f0f4f8" },
   layout: {
-    maxWidth: 1160, margin: "0 auto",
+    maxWidth: 1250, margin: "0 auto",
     paddingTop: 86, paddingBottom: 40,
     paddingLeft: 16, paddingRight: 16,
-    display: "flex", gap: 24, alignItems: "flex-start",
+    display: "flex", gap: 34, alignItems: "flex-start",
   },
   main: { flex: 1, minWidth: 0 },
   tabs: {
@@ -279,9 +286,17 @@ const p = {
     justifyContent: "center", gap: "8px", borderRadius: "8px",
   },
   feedScroll: { display: "flex", flexDirection: "column", gap: 20 },
-  rightSidebar: { width: 260, flexShrink: 0, position: "sticky", top: 86 },
+  rightSidebar: { 
+    width: 260, 
+    flexShrink: 0, 
+    position: "sticky", 
+    top: 86,
+    height: "max-content",
+    maxHeight: "calc(100vh - 106px)",
+    overflowY: "auto"
+  },
 };
-
+//css des page detail produit et service
 const pd = {
   overlay: { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
   modal: { background: '#fff', width: '100%', maxWidth: '1100px', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' },
