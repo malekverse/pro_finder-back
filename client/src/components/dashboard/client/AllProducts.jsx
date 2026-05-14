@@ -58,10 +58,6 @@ const AllProducts = ({ onAction }) => {
               <div style={g.content}>
                 <div style={g.headerRow}>
                   <h3 style={g.title}>{p.name}</h3>
-                  <div style={g.rating}>
-                    <Star size={12} fill="#f59e0b" color="#f59e0b" />
-                    <span>4.5</span>
-                  </div>
                 </div>
 
                 <div style={g.companyRow}>

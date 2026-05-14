@@ -185,7 +185,7 @@ const Cart = ({ onClose }) => {
     </div>
   );
 };
-
+//
 const s = {
   overlay: { position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
   modal: { background: '#f8fafc', width: '100%', maxWidth: '600px', height: '90vh', borderRadius: '16px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' },

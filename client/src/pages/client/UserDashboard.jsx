@@ -37,7 +37,7 @@ const UserDashboard = () => {
   const roles = user?.roles || [];
   const hasCompanyAccess = user?.companyId && roles.length > 1;
 
-  const [activeTab, setActiveTab] = useState("feed"); // feed, services, products, societes, pros
+  const [activeTab, setActiveTab] = useState("feed");
   const [page, setPage] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [actionType, setActionType] = useState(null);
@@ -51,10 +51,13 @@ const UserDashboard = () => {
   const cartItemsCount = Object.values(carts).reduce((sum, cart) => sum + cart.items.length, 0);
 
   // API Hooks
+  //hooks de feed
   const { data: feedData, isLoading: isLoadingFeed, isFetching: isFetchingFeed, refetch: refetchFeed } = useGetFollowedFeedQuery({ page, limit: 10 }, { pollingInterval: 3000 });
+  //hooks de produits
   const { data: followedProducts = [] } = useGetFollowedProductsQuery(undefined, { pollingInterval: 3000 });
+  //hooks de services
   const { data: followedServices = [] } = useGetFollowedServicesQuery(undefined, { pollingInterval: 3000 });
-
+  //hooks de commandes
   const [createOrder, { isLoading: isOrdering }] = useCreateOrderMutation();
   const [createReservation, { isLoading: isReserving }] = useCreateReservationMutation();
   const [createQuoteRequest, { isLoading: isRequestingQuote }] = useCreateQuoteRequestMutation();
@@ -65,17 +68,16 @@ const UserDashboard = () => {
     setActionType(type);
     setProductForDetail(null);
   };
-
+//reservation service
   const [prefilledData, setPrefilledData] = useState(null);
-
   const handleServiceReserve = (data) => {
-    // Au lieu de réserver directement, on ouvre l'ActionModal pour le numéro de téléphone
+  
     setSelectedItem(data);
     setActionType('service');
     setPrefilledData(data);
     setServiceForDetail(null);
   };
-
+//validation des commandes
   const handleSubmitAction = async (data) => {
     try {
       if (actionType === 'product') {
@@ -130,7 +132,7 @@ const UserDashboard = () => {
       alert(err.data?.message || "Une erreur est survenue");
     }
   };
-
+//deconection
   const handleLogout = () => {
     dispatch(logOut());
     dispatch(apiSlice.util.resetApiState());
@@ -156,7 +158,6 @@ const UserDashboard = () => {
       {isCartOpen && <Cart onClose={() => setIsCartOpen(false)} />}
       <div style={p.layout}>
         <main style={p.main}>
-
           <div style={p.feedScroll}>
             {activeTab === "feed" && (
               <Feed
@@ -200,7 +201,7 @@ const UserDashboard = () => {
             )}
           </div>
         </main>
-        {activeTab !== "societes" && activeTab !== "pros" && (
+        {activeTab === "feed" && (
           <aside className="no-scrollbar" style={p.rightSidebar}>
             <SuggestedCompanies onSeeMore={() => setActiveTab("societes")} />
           </aside>
