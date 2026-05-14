@@ -1,5 +1,5 @@
 import React from "react";
-import { Star, MapPin, Phone, ArrowUpRight, ShieldCheck, User } from "lucide-react";
+import { Star, MapPin, Phone, ArrowUpRight, ShieldCheck, User, Users } from "lucide-react";
 import { toImageUrl } from "../../../utils/imageUtils";
 
 const CompanyCardHorizontal = ({ company, onClick }) => {
@@ -13,7 +13,8 @@ const CompanyCardHorizontal = ({ company, onClick }) => {
     rating,
     isGenerated,
     categoryName, // Passed from parent if found
-    servicesList
+    servicesList,
+    followersCount
   } = company;
 
   const averageRating = rating?.average || 0;
@@ -63,8 +64,8 @@ const CompanyCardHorizontal = ({ company, onClick }) => {
             <span>{[city, country].filter(Boolean).join(", ")}</span>
           </div>
           <div style={s.metaItem}>
-            <User size={14} />
-            <span>{reviewCount} avis</span>
+            <Users size={14} />
+            <span>{followersCount || 0} abonnés</span>
           </div>
         </div>
 
@@ -171,14 +172,14 @@ const s = {
     color: "#b45309"
   },
   category: {
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "600",
     color: "#3b82f6",
     margin: "0 0 10px"
   },
   desc: {
     fontSize: "13.5px",
-    color: "#64748b",
+    color: "#434e5cff",
     lineHeight: "1.5",
     margin: "0 0 12px",
     flex: 1
@@ -193,7 +194,7 @@ const s = {
     alignItems: "center",
     gap: "6px",
     fontSize: "12px",
-    color: "#94a3b8",
+    color: "#434e5cff",
     fontWeight: "500"
   },
   footer: {
