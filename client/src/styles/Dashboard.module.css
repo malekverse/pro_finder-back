@@ -31,7 +31,6 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  margin-bottom: 25px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: var(--transition);

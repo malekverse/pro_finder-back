@@ -103,14 +103,16 @@ const ProfessionalProduits = () => {
     form.append("description", formData.description);
     form.append("stock", formData.stock);
     
+    if (editMode && selectedProduct) {
+        const remainingExisting = previewImages
+            .filter(url => typeof url === 'string' && !url.startsWith('blob:'))
+            .map(url => url.replace(/^https?:\/\/[^/]+\//, ""));
+        form.append("existingImages", JSON.stringify(remainingExisting));
+    }
+
     formData.imagesProduct.forEach(img => {
       form.append("imagesProduct", img);
     });
-
-    if (editMode && selectedProduct) {
-        const remainingExisting = previewImages.filter(url => typeof url === 'string' && url.startsWith('http'));
-        form.append("existingImages", JSON.stringify(remainingExisting));
-    }
 
     try {
       if (editMode) {

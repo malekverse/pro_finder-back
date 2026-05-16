@@ -65,14 +65,21 @@ const updateProduct = async (req, res) => {
 
     const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesProduct').map((f) => f.path.replace(/\\/g, '/')) : [];
     
-    let finalImages = [];
-    if (existingImages) {
+    let finalImages = product.imagesProduct || [];
+    if (existingImages !== undefined) {
         try {
-            finalImages = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+            const parsed = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+            finalImages = Array.isArray(parsed) ? parsed : [parsed];
         } catch (e) {
             finalImages = Array.isArray(existingImages) ? existingImages : [existingImages];
         }
     }
+
+    // Normaliser les chemins (enlever le SERVER_URL si présent pour rester en relatif)
+    finalImages = finalImages.map(img => {
+      if (typeof img !== 'string') return img;
+      return img.replace(/^https?:\/\/[^/]+\//, "");
+    });
     
     product.name = name || product.name;
     product.category = category || product.category;

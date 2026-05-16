@@ -12,14 +12,12 @@ const companyServiceSchema = new mongoose.Schema(
       trim: true,
     },
     price: {
-      type: Number,
+      type: String,
       required: true,
-      min: 0,
     },
     duration: {
-      type: Number, // en minutes
+      type: String,
       required: true,
-      min: 0,
     },
     imagesServices: [{
       type: String,

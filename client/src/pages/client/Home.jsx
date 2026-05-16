@@ -487,7 +487,7 @@ const ProductCarousel = ({ title, products, isLoading, onProductClick }) => {
               <div style={productInfo}>
                 <h4 style={productName}>{product.name}</h4>
                 <div style={productPriceRow}>
-                  <span style={productPrice}>{product.price} TND</span>
+                  <span style={productPrice}>{product.price}</span>
                   <button type="button" onClick={(e) => handleOrder(e, product)} style={orderBtnStyle}>Commander</button>
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#64748b' }}>
@@ -681,7 +681,7 @@ const ServiceCarousel = ({ title, services, isLoading, onServiceClick }) => {
               <div style={productInfo}>
                 <h4 style={productName}>{service.name}</h4>
                 <div style={productPriceRow}>
-                  <span style={productPrice}>{service.price || 'À disc.'} TND</span>
+                  <span style={productPrice}>{service.price || 'À disc.'} </span>
                   <button type="button" onClick={(e) => handleReserve(e, service)} style={orderBtnStyle}>Réserver</button>
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#64748b' }}>
@@ -1277,6 +1277,10 @@ const Home = () => {
     if (type === 'home') {
       setIsShowingResults(false);
       setSelectedCategoryId(null);
+      setSelectedCountry("");
+      setSelectedRegion("");
+      setSearchQuery("");
+      setAppliedFilters({});
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (type === 'products' && productRef.current) {
       productRef.current.scrollIntoView({ behavior: 'smooth' });

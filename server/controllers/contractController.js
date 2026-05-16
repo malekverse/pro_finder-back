@@ -3,7 +3,7 @@ const Notification = require("../models/Notification");
 const Company = require("../models/company");
 
 // CREATE CONTRACT
-exports.createContract = async (req, res) => {
+const createContract = async (req, res) => {
   try {
     console.log("[createContract] Body:", JSON.stringify(req.body));
     const { userId, quoteId, title, content, startDate, endDate, totalValue, terms } = req.body;
@@ -113,7 +113,7 @@ exports.createContract = async (req, res) => {
 };
 
 // GET ALL CONTRACTS FOR COMPANY
-exports.getCompanyContracts = async (req, res) => {
+const getCompanyContracts = async (req, res) => {
   try {
     const id = req.companyId || req.user;
     const isProfessional = req.roles?.includes("professional");
@@ -135,7 +135,7 @@ exports.getCompanyContracts = async (req, res) => {
 };
 
 // GET ALL CONTRACTS FOR USER (CLIENT)
-exports.getUserContracts = async (req, res) => {
+const getUserContracts = async (req, res) => {
   try {
     const userId = req.user;
     const contracts = await Contract.find({ userId })
@@ -150,7 +150,7 @@ exports.getUserContracts = async (req, res) => {
 };
 
 // UPDATE CONTRACT STATUS
-exports.updateContractStatus = async (req, res) => {
+const updateContractStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, signatureDate } = req.body;
@@ -223,4 +223,10 @@ exports.updateContractStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Erreur lors de la mise à jour du contrat" });
   }
+};
+module.exports = {
+  createContract,
+  getCompanyContracts,
+  getUserContracts,
+  updateContractStatus
 };

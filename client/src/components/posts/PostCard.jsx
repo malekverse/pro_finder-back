@@ -13,31 +13,40 @@ import {
   MoreHorizontal, Send, Pencil, X, ImagePlus, Loader,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { toImageUrl } from "../../utils/imageUtils";
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────
-const Lightbox = ({ imagePost, startIndex, onClose }) => {
+const Lightbox = ({ images, startIndex, onClose }) => {
   const [idx, setIdx] = useState(startIndex);
-  const prev = (e) => { e.stopPropagation(); setIdx((i) => (i - 1 + imagePost.length) % imagePost.length); };
-  const next = (e) => { e.stopPropagation(); setIdx((i) => (i + 1) % imagePost.length); };
+  const prev = (e) => {
+    e.stopPropagation();
+    setIdx((i) => (i - 1 + images.length) % images.length);
+  };
+  const next = (e) => {
+    e.stopPropagation();
+    setIdx((i) => (i + 1) % images.length);
+  };
+
+  if (!images || images.length === 0) return null;
 
   return (
     <div style={lb.overlay} onClick={onClose}>
       <button style={lb.closeBtn} onClick={onClose}><X size={22} /></button>
-      {imagePost.length > 1 && (
+      {images.length > 1 && (
         <button style={{ ...lb.navBtn, left: 16 }} onClick={prev}><ChevronLeft size={24} /></button>
       )}
       <img
-        src={imagePost[idx]}
+        src={toImageUrl(images[idx])}
         alt=""
         style={lb.img}
         onClick={(e) => e.stopPropagation()}
       />
-      {imagePost.length > 1 && (
+      {images.length > 1 && (
         <button style={{ ...lb.navBtn, right: 16 }} onClick={next}><ChevronRight size={24} /></button>
       )}
-      {imagePost.length > 1 && (
+      {images.length > 1 && (
         <div style={lb.dots}>
-          {imagePost.map((_, i) => (
+          {images.map((_, i) => (
             <span key={i} style={{ ...lb.dot, background: i === idx ? "#fff" : "rgba(255,255,255,0.4)" }} />
           ))}
         </div>
@@ -181,7 +190,6 @@ const EditModal = ({ post, onClose, onSaved }) => {
 };
 
 // ─── PostCard ─────────────────────────────────────────────────────────────
-import { toImageUrl } from "../../utils/imageUtils";
 
 const PostCard = ({ post, onDeleted }) => {
   const navigate = useNavigate();

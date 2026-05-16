@@ -97,14 +97,16 @@ const ProfessionalServices = () => {
     form.append("price", formData.price);
     form.append("duration", formData.duration);
     
+    if (editMode && selectedService) {
+        const remainingExisting = previewImages
+            .filter(url => typeof url === 'string' && !url.startsWith('blob:'))
+            .map(url => url.replace(/^https?:\/\/[^/]+\//, ""));
+        form.append("existingImages", JSON.stringify(remainingExisting));
+    }
+
     formData.imagesServices.forEach(img => {
       form.append("imagesServices", img);
     });
-
-    if (editMode && selectedService) {
-        const remainingExisting = previewImages.filter(url => typeof url === 'string' && url.startsWith('http'));
-        form.append("existingImages", JSON.stringify(remainingExisting));
-    }
 
     try {
       if (editMode) {

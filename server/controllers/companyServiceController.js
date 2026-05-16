@@ -70,14 +70,21 @@ const updateService = async (req, res) => {
 
     const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesServices').map((f) => f.path.replace(/\\/g, '/')) : [];
     
-    let finalImages = [];
-    if (existingImages) {
+    let finalImages = service.imagesServices || [];
+    if (existingImages !== undefined) {
         try {
-            finalImages = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+            const parsed = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+            finalImages = Array.isArray(parsed) ? parsed : [parsed];
         } catch (e) {
             finalImages = Array.isArray(existingImages) ? existingImages : [existingImages];
         }
     }
+
+    // Normaliser les chemins
+    finalImages = finalImages.map(img => {
+      if (typeof img !== 'string') return img;
+      return img.replace(/^https?:\/\/[^/]+\//, "");
+    });
     
     service.name = name || service.name;
     service.description = description || service.description;

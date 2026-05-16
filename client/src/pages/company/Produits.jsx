@@ -102,14 +102,16 @@ const Produits = () => {
     form.append("description", formData.description);
     form.append("stock", formData.stock);
     
+    if (editMode && selectedProduct) {
+        const remainingExisting = previewImages
+            .filter(url => typeof url === 'string' && !url.startsWith('blob:'))
+            .map(url => url.replace(/^https?:\/\/[^/]+\//, ""));
+        form.append("existingImages", JSON.stringify(remainingExisting));
+    }
+
     formData.imagesProduct.forEach(img => {
       form.append("imagesProduct", img);
     });
-
-    if (editMode && selectedProduct) {
-        const remainingExisting = previewImages.filter(url => typeof url === 'string' && url.startsWith('http'));
-        form.append("existingImages", JSON.stringify(remainingExisting));
-    }
 
     try {
       if (editMode) {
@@ -235,11 +237,11 @@ const Produits = () => {
               <div style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>{product.name}</h3>
-                  <span style={{ backgroundColor: '#eff6ff', color: '#24416b', padding: '4px 10px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>{product.price} TND</span>
+                  <span style={{ backgroundColor: '#eff6ff', color: '#24416b', padding: '4px 10px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>{product.price}</span>
                 </div>
-                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px', height: '40px', overflow: 'hidden' }}>{product.description}</p>
+                <p style={{ color: '#293341ff', fontSize: '14px', marginBottom: '15px', height: '40px', overflow: 'hidden' }}>{product.description}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
-                  <span style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}><Tag size={14} /> {product.category}</span>
+                  <span style={{ fontSize: '13px', color: '#293341ff', display: 'flex', alignItems: 'center', gap: '4px' }}><Tag size={14} /> {product.category}</span>
                   <span style={{ fontSize: '13px', color: product.stock > 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>{product.stock > 0 ? `Stock: ${product.stock}` : "Rupture de stock"}</span>
                 </div>
               </div>
@@ -282,11 +284,11 @@ const Produits = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Prix (TND) *</label>
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Prix*</label>
                   <div style={{ position: 'relative' }}>
                     <DollarSign style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={16} />
                     <input 
-                      type="number" 
+                      type="text" 
                       required 
                       style={{ width: '100%', padding: '12px 12px 12px 36px', borderRadius: '10px', border: '1px solid #e2e8f0' }} 
                       value={formData.price}
