@@ -71,7 +71,7 @@ const AllServices = ({ onAction }) => {
                   <div style={g.priceSection}>
                     <div style={g.priceLabel}>PRIX FIXE</div>
                     <div style={g.priceValue}>
-                      {s.price} DT <span style={g.unit}>/ {s.duration}min</span>
+                      {s.price} <span style={g.unit}>/ {s.duration}min</span>
                     </div>
                   </div>
                   <button style={g.actionBtn}>

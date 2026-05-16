@@ -243,7 +243,7 @@ const ItemCard = ({ item, type, onClick }) => {
           <div style={c.priceInfo}>
             <span style={c.priceLabel}>PRIX FIXE</span>
             <div style={c.priceValue}>
-              <span style={c.priceAmount}>{item.price || "0"} DT</span>
+              <span style={c.priceAmount}>{item.price || "0"}</span>
               <span style={c.priceUnit}>{unit}</span>
             </div>
           </div>

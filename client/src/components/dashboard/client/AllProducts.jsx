@@ -71,7 +71,7 @@ const AllProducts = ({ onAction }) => {
                   <div style={g.priceSection}>
                     <div style={g.priceLabel}>PRIX</div>
                     <div style={g.priceValue}>
-                      {p.price} DT <span style={g.unit}>{p.stock > 0 ? `/ en stock` : `/ épuisé`}</span>
+                      {p.price}  <span style={g.unit}>{p.stock > 0 ? `/ en stock` : `/ épuisé`}</span>
                     </div>
                   </div>
                   <button style={g.actionBtn}>

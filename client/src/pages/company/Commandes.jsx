@@ -211,7 +211,7 @@ const Commandes = () => {
                               {order.items.map((item, idx) => (
                                 <div key={idx} className={styles.itemRow}>
                                   <span>{item.quantity}x {item.productId?.name}</span>
-                                  <span>{item.price * item.quantity}  DT</span>
+                                  <span>{item.price * item.quantity} </span>
                                 </div>
                               ))}
                             </div>
@@ -223,7 +223,7 @@ const Commandes = () => {
                             </div>
                             <div className={styles.totalRow}>
                               <span>Total :</span>
-                              <span className={styles.totalPrice}>{order.totalPrice}  DT</span>
+                              <span className={styles.totalPrice}>{order.totalPrice} </span>
                             </div>
                           </div>
                           <div className={styles.cardFooter}>
@@ -326,7 +326,7 @@ const Commandes = () => {
                             <div className={styles.serviceBox}>
                               <div className={styles.serviceName}>{res.serviceId?.name}</div>
                               <div className={styles.serviceMeta}>
-                                <Clock size={14} /> {res.serviceId?.duration} min | {res.serviceId?.price}  DT
+                                <Clock size={14} /> {res.serviceId?.duration} | {res.serviceId?.price}
                               </div>
                             </div>
                             <div className={styles.dateTimeSection}>

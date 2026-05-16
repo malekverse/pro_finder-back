@@ -6,7 +6,6 @@ const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => 
   const paymentMode = (process.env.PAYMENT_MODE || '').trim().replace(/['"]/g, '').toLowerCase();
   
   if (paymentMode === 'test') {
-    console.log("💳 [FLOUCI] Mode Test activé - Redirection Directe vers Success");
     const mockPaymentId = `TEST_PAY_${Math.random().toString(36).substring(7).toUpperCase()}`;
     // On redirige directement vers l'URL de succès pour bypasser l'étape de simulation
     return {
@@ -38,7 +37,6 @@ const initPayment = async (amount, successUrl, failUrl, developerTrackingId) => 
 
     return response.data; // Should contain payment_id and result_url
   } catch (error) {
-    console.error("Flouci Init Payment Error:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Failed to initialize Flouci payment");
   }
 };
@@ -48,7 +46,6 @@ const verifyPayment = async (paymentId) => {
   const paymentMode = (process.env.PAYMENT_MODE || '').trim().replace(/['"]/g, '').toLowerCase();
 
   if (paymentMode === 'test' || (paymentId && paymentId.startsWith('TEST_PAY_'))) {
-    console.log(`🔍 [FLOUCI] Mode Test activé - Simulation de vérification pour ${paymentId}`);
     return {
       result: {
         status: "SUCCESS",
@@ -71,7 +68,6 @@ const verifyPayment = async (paymentId) => {
 
     return response.data; // Should contain result.status ("SUCCESS", "FAILURE", etc.)
   } catch (error) {
-    console.error("Flouci Verify Payment Error:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Failed to verify Flouci payment");
   }
 };

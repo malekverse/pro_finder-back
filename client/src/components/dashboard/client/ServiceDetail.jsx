@@ -130,7 +130,7 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
             <div style={pd.midCol}>
               <h1 style={pd.title}>{service.name}</h1>
               <div style={pd.priceRow}>
-                <span style={pd.currentPrice}>{service.price?.toLocaleString() || 'À disc.'} DT</span>
+                <span style={pd.currentPrice}>{service.price?.toLocaleString() || 'À disc.'}</span>
               </div>
 
               <div style={pd.statusRow}>

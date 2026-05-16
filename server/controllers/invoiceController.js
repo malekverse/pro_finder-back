@@ -1,5 +1,11 @@
+const mongoose = require("mongoose");
 const Invoice = require("../models/Invoice");
 const Payment = require("../models/Payment");
+const Order = require("../models/Order");
+const Reservation = require("../models/Reservation");
+const Quote = require("../models/Quote");
+const Contract = require("../models/Contract");
+
 
 // Helper to generate a unique invoice number
 const generateInvoiceNumber = async () => {
@@ -21,31 +27,50 @@ const createInvoiceFromPayment = async (payment) => {
             
             try {
                 if (item.entityType === "Order") {
-                    const order = await mongoose.model("Order").findById(item.entityId);
+                    const order = await Order.findById(item.entityId).populate("items.productId");
                     if (order?.shippingAddress?.phone) phone = order.shippingAddress.phone;
+                    if (order?.items && order.items.length > 0) {
+                        detail = order.items.map(i => i.productId?.name || "Produit").join(", ");
+                    }
                 } else if (item.entityType === "Reservation") {
-                    const res = await mongoose.model("Reservation").findById(item.entityId);
+                    const res = await Reservation.findById(item.entityId).populate("serviceId");
                     if (res?.clientPhone) phone = res.clientPhone;
+                    if (res?.serviceId?.name) detail = res.serviceId.name;
                 } else if (item.entityType === "Quote") {
-                    const quote = await mongoose.model("Quote").findById(item.entityId);
-                    // On peut aussi chercher le numéro dans la réservation liée au devis
+                    const quote = await Quote.findById(item.entityId).populate("bookingServiceId");
                     if (quote?.reservationId) {
-                        const res = await mongoose.model("Reservation").findById(quote.reservationId);
+                        const res = await Reservation.findById(quote.reservationId);
                         if (res?.clientPhone) phone = res.clientPhone;
                     }
+                    if (quote?.bookingServiceId?.name) {
+                        detail = quote.bookingServiceId.name;
+                    } else if (quote?.items && quote.items.length > 0) {
+                        detail = quote.items.map(i => i.description).join(", ");
+                    }
                 } else if (item.entityType === "Contract") {
-                    const contract = await mongoose.model("Contract").findById(item.entityId).populate("quoteId");
+                    const contract = await Contract.findById(item.entityId).populate({
+                        path: "quoteId",
+                        populate: { path: "bookingServiceId" }
+                    });
                     if (contract?.quoteId?.reservationId) {
-                        const res = await mongoose.model("Reservation").findById(contract.quoteId.reservationId);
+                        const res = await Reservation.findById(contract.quoteId.reservationId);
                         if (res?.clientPhone) phone = res.clientPhone;
+                    }
+                    if (contract?.quoteId?.bookingServiceId?.name) {
+                        detail = contract.quoteId.bookingServiceId.name;
+                    } else if (contract?.quoteId?.items && contract.quoteId.items.length > 0) {
+                        detail = contract.quoteId.items.map(i => i.description).join(", ");
                     }
                 }
             } catch (err) {
-                console.error("Error fetching phone for invoice item:", err);
+                console.error("Error fetching detail/phone for invoice item:", err);
             }
 
+            // Fallback to Entity #ID if no detail was found
+            const description = detail || `${item.entityType} #${item.entityId.toString().slice(-6).toUpperCase()}`;
+
             return {
-                description: `${item.entityType} #${item.entityId.toString().slice(-6).toUpperCase()}`,
+                description,
                 quantity: 1,
                 price: item.amount,
                 total: item.amount,

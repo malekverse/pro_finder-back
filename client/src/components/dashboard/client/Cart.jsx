@@ -111,7 +111,7 @@ const Cart = ({ onClose }) => {
                           </div>
                           <div style={s.itemDetails}>
                             <h4 style={s.itemName}>{item.name}</h4>
-                            <p style={s.itemPrice}>{item.price.toLocaleString()} DT</p>
+                            <p style={s.itemPrice}>{item.price.toLocaleString()}</p>
                             {item.quantity > (item.stock || 0) && (
                               <p style={{ color: '#ef4444', fontSize: '11px', fontWeight: '700', margin: '4px 0 0' }}>
                                 Rupture de stock (Max: {item.stock || 0})
@@ -159,7 +159,7 @@ const Cart = ({ onClose }) => {
                     <div style={s.totalBox}>
                       <span style={s.totalLabel}>Total {cart.companyName} :</span>
                       <span style={s.totalValueText}>
-                        {cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()} DT
+                        {cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}
                       </span>
                     </div>
                     <button 

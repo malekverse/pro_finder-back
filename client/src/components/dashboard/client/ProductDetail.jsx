@@ -71,8 +71,8 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
             <h1 style={pd.title}>{product.name}</h1>
             
             <div style={pd.priceSection}>
-              <span style={pd.currentPrice}>{product.price?.toLocaleString()} DT</span>
-              {product.oldPrice && <span style={pd.oldPrice}>{product.oldPrice?.toLocaleString()} DT</span>}
+              <span style={pd.currentPrice}>{product.price?.toLocaleString()}</span>
+              {product.oldPrice && <span style={pd.oldPrice}>{product.oldPrice?.toLocaleString()}</span>}
             </div>
 
             <div style={pd.statusRow}>

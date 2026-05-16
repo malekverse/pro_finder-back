@@ -551,8 +551,8 @@ const ProductDetail = ({ product, onClose }) => {
           <div style={pd.midCol}>
             <h1 style={pd.title}>{product.name}</h1>
             <div style={pd.priceRow}>
-              <span style={pd.currentPrice}>{product.price?.toLocaleString()} DT</span>
-              {product.oldPrice && <span style={pd.oldPrice}>{product.oldPrice?.toLocaleString()} DT</span>}
+              <span style={pd.currentPrice}>{product.price?.toLocaleString()}</span>
+              {product.oldPrice && <span style={pd.oldPrice}>{product.oldPrice?.toLocaleString()}</span>}
             </div>
 
             <div style={pd.statusRow}>
@@ -743,12 +743,12 @@ const ServiceDetail = ({ service, onClose }) => {
           <div style={pd.midCol}>
             <h1 style={pd.title}>{service.name}</h1>
             <div style={pd.priceRow}>
-              <span style={pd.currentPrice}>{service.price?.toLocaleString() || 'À disc.'} DT</span>
+              <span style={pd.currentPrice}>{service.price?.toLocaleString() || 'À disc.'}</span>
             </div>
 
             <div style={pd.statusRow}>
               <span style={{ ...pd.status, color: '#10b981' }}>
-                <Clock size={16} /> DURÉE: {service.duration} min
+                <Clock size={16} /> DURÉE: {service.duration}
               </span>
 
             </div>

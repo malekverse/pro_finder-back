@@ -11,7 +11,7 @@ const { v4: uuidv4 } = require("uuid");
 const invoiceController = require("./invoiceController");
 
 // Initialize a Flouci payment
-exports.initializePayment = async (req, res) => {
+const initializePayment = async (req, res) => {
   try {
     console.log("📥 [initializePayment] Raw Body:", req.body);
     
@@ -146,7 +146,7 @@ exports.initializePayment = async (req, res) => {
 };
 
 // Verify a Flouci payment
-exports.verifyPayment = async (req, res) => {
+const verifyPayment = async (req, res) => {
   try {
     const { payment_id } = req.params;
 
@@ -163,7 +163,6 @@ exports.verifyPayment = async (req, res) => {
     }
 
     if (verificationData.result.status === "SUCCESS") {
-      console.log(`💰 [verifyPayment] Payment SUCCESS for Flouci ID: ${payment_id}`);
 
       payment.status = "success";
       await payment.save();
@@ -193,7 +192,6 @@ exports.verifyPayment = async (req, res) => {
       for (const item of payment.items) {
         if (item.entityType === "Reservation") {
           await Reservation.findByIdAndUpdate(item.entityId, { status: "paid" });
-          console.log(`✅ [verifyPayment] Reservation ${item.entityId} status updated to paid`);
         } else if (item.entityType === "Quote") {
           const quote = await Quote.findById(item.entityId);
           if (quote) {
@@ -206,7 +204,6 @@ exports.verifyPayment = async (req, res) => {
           }
         } else if (item.entityType === "Order") {
           await Order.findByIdAndUpdate(item.entityId, { status: "paid" });
-          console.log(`✅ [verifyPayment] Order ${item.entityId} status updated to paid`);
         } else if (item.entityType === "Contract") {
           const contract = await Contract.findByIdAndUpdate(item.entityId, { status: "active", isPaid: true });
           if (contract && contract.quoteId) {
@@ -221,11 +218,9 @@ exports.verifyPayment = async (req, res) => {
 
       // Generate Invoice automatically AFTER status updates
       try {
-        console.log(`📄 [verifyPayment] Attempting to generate invoice for payment: ${payment._id}`);
         const invoice = await invoiceController.createInvoiceFromPayment(payment);
-        console.log(`✅ [verifyPayment] Invoice generated successfully: ${invoice?.invoiceNumber}`);
       } catch (invErr) {
-        console.error("❌ [verifyPayment] Invoice generation failed:", invErr);
+        console.error("Invoice generation failed:", invErr);
       }
 
       res.status(200).json({ status: "success", message: "Payment verified successfully" });
@@ -241,7 +236,7 @@ exports.verifyPayment = async (req, res) => {
 };
 
 // Get payments for a user (client)
-exports.getMyPayments = async (req, res) => {
+const getMyPayments = async (req, res) => {
   try {
     const userId = req.user;
     const payments = await Payment.find({ userId })
@@ -255,7 +250,7 @@ exports.getMyPayments = async (req, res) => {
 };
 
 // Get payments for a company or professional
-exports.getProviderPayments = async (req, res) => {
+const getProviderPayments = async (req, res) => {
   try {
     const id = req.companyId || req.user;
     const isProfessional = req.roles?.includes("professional");
@@ -268,4 +263,10 @@ exports.getProviderPayments = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error fetching provider payments" });
   }
+};
+module.exports = {
+  initializePayment,
+  verifyPayment,
+  getMyPayments,
+  getProviderPayments
 };

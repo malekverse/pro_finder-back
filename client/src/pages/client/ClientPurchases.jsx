@@ -132,14 +132,14 @@ const ClientPurchases = () => {
                       {order.items.map((item, idx) => (
                         <div key={idx} className={styles.itemRow}>
                           <span>{item.quantity}x {item.productId?.name}</span>
-                          <span>{item.price * item.quantity}  DT</span>
+                          <span>{item.price * item.quantity} </span>
                         </div>
                       ))}
                     </div>
 
                     <div className={styles.totalRow}>
                       <span>Total payé :</span>
-                      <span className={styles.totalPrice}>{order.totalPrice}  DT</span>
+                      <span className={styles.totalPrice}>{order.totalPrice} </span>
                     </div>
 
                     {(order.status === 'pending' || order.status === 'confirmed') && (
@@ -192,7 +192,7 @@ const ClientPurchases = () => {
                     <div className={styles.serviceBox}>
                       <div className={styles.serviceName}>{res.serviceId?.name}</div>
                       <div className={styles.serviceMeta}>
-                        <Clock size={14} /> {res.serviceId?.duration} min | {res.serviceId?.price}  DT
+                        <Clock size={14} /> {res.serviceId?.duration} min | {res.serviceId?.price} 
                       </div>
                     </div>
 
