@@ -233,7 +233,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
   // Map category names to icons (Lucide-react icons)
   const getCategoryIcon = (name) => {
     const n = name.toLowerCase();
-    
+
     // 1. Santé & Bien-être
     if (n.includes('santé') || n.includes('médic') || n.includes('bien-être') || n.includes('soin')) {
       return (
@@ -242,7 +242,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         </div>
       );
     }
-    
+
     // 2. Maison & Dépannage
     if (n.includes('maison') || n.includes('dépannage') || n.includes('travaux') || n.includes('plomb') || n.includes('élec')) {
       return (
@@ -251,7 +251,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         </div>
       );
     }
-    
+
     // 3. Business & Juridique
     if (n.includes('business') || n.includes('juridique') || n.includes('droit') || n.includes('avocat')) {
       return (
@@ -269,7 +269,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         </div>
       );
     }
-    
+
     // 5. Technologie & Digital
     if (n.includes('tech') || n.includes('digital') || n.includes('informatique') || n.includes('web') || n.includes('logiciel')) {
       return (
@@ -278,7 +278,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         </div>
       );
     }
-    
+
     // 6. Éducation & Formation
     if (n.includes('éduc') || n.includes('form') || n.includes('cours') || n.includes('école') || n.includes('univ')) {
       return (
@@ -287,7 +287,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         </div>
       );
     }
-    
+
     // 7. Créatif & Médias
     if (n.includes('créat') || n.includes('média') || n.includes('art') || n.includes('photo') || n.includes('musique') || n.includes('pub')) {
       return (
@@ -296,7 +296,7 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         </div>
       );
     }
-    
+
     // 8. Automobile & Transport
     if (n.includes('auto') || n.includes('transport') || n.includes('véhicule') || n.includes('logistique') || n.includes('camion')) {
       return (
@@ -374,15 +374,15 @@ const CategoryCards = ({ onCategoryClick, selectedId }) => {
         {categories.map((c) => {
           const isSelected = selectedId === c._id;
           return (
-            <div 
-              key={c._id} 
-              style={{ 
-                ...cat.card, 
+            <div
+              key={c._id}
+              style={{
+                ...cat.card,
                 borderColor: isSelected ? '#3b82f6' : '#e5e7eb',
                 background: isSelected ? '#eff6ff' : '#fff',
                 transform: isSelected ? 'scale(1.02)' : 'scale(1)',
                 boxShadow: isSelected ? '0 10px 20px rgba(59, 130, 246, 0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
-              }} 
+              }}
               onClick={() => onCategoryClick(c)}
               className="category-card"
             >
@@ -1002,7 +1002,7 @@ const CompanyFeed = ({ filters }) => {
                     </p>
                     {(company.servicesList?.[0] || company.categoryName) && (
                       <p style={{ ...c.listMeta, color: '#8b5cf6', fontWeight: '600' }}>
-                        <Briefcase size={14} color="#8b5cf6" /> {company.servicesList?.[0] || company.categoryName}
+                        <Briefcase size={14} color="#8b5cf6" /> {company.categoryName || company.servicesList?.[0]}
                       </p>
                     )}
                   </div>
@@ -1093,7 +1093,7 @@ const ProfessionalFeed = ({ filters }) => {
                     </p>
                     {(pro.servicesList?.[0] || pro.categoryName) && (
                       <p style={{ ...c.listMeta, color: '#8b5cf6', fontWeight: '600' }}>
-                        <Briefcase size={14} color="#8b5cf6" /> {pro.servicesList?.[0] || pro.categoryName}
+                        <Briefcase size={14} color="#8b5cf6" /> {pro.categoryName || pro.servicesList?.[0]}
                       </p>
                     )}
                   </div>
@@ -1145,7 +1145,7 @@ const HeroSelect = ({ value, onChange, options, placeholder, disabled }) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
         setIsOpen(false);
         if (searchRef.current.trim() === "") {
-          onChange(""); // Efface la sélection si l'input est vide
+          onChange(""); 
         } else {
           const selected = options.find(o => o._id === value);
           setSearch(selected ? selected.name : "");
@@ -1346,7 +1346,7 @@ const Home = () => {
           <div style={hero.searchBar}>
             <div style={hero.filterGroup}>
               <MapPin size={18} color="#3b82f6" />
-              <HeroSelect 
+              <HeroSelect
                 value={selectedCountry}
                 onChange={(val) => {
                   setSelectedCountry(val);
@@ -1361,7 +1361,7 @@ const Home = () => {
             <div style={hero.divider} />
 
             <div style={hero.filterGroup}>
-              <HeroSelect 
+              <HeroSelect
                 value={selectedRegion}
                 onChange={(val) => setSelectedRegion(val)}
                 options={regionsList}
@@ -1390,14 +1390,14 @@ const Home = () => {
             </button>
 
             {isShowingResults && (
-              <button 
-                style={{ 
-                  ...hero.searchBtn, 
-                  background: '#f1f5f9', 
-                  color: '#64748b', 
-                  boxShadow: 'none', 
-                  border: '1px solid #e2e8f0' 
-                }} 
+              <button
+                style={{
+                  ...hero.searchBtn,
+                  background: '#f1f5f9',
+                  color: '#64748b',
+                  boxShadow: 'none',
+                  border: '1px solid #e2e8f0'
+                }}
                 onClick={(e) => {
                   e.preventDefault();
                   handleAction('home');
@@ -1409,8 +1409,8 @@ const Home = () => {
           </div>
         </div>
 
-        <CategoryCards 
-          onCategoryClick={handleCategoryClick} 
+        <CategoryCards
+          onCategoryClick={handleCategoryClick}
           selectedId={selectedCategoryId}
         />
         <div style={p.contentWrapper}>
@@ -1422,7 +1422,7 @@ const Home = () => {
                     <Search size={18} color="#1E3A5F" />
                     <h2 style={p.feedTitle}>Résultats pour {searchTab === 'companies' ? 'Sociétés' : 'Professionnels'}</h2>
                   </div>
-                  
+
                 </div>
 
                 <div style={r.tabToggle}>
@@ -1472,7 +1472,7 @@ const Home = () => {
             {!isShowingResults && <SuggestedCompanies />}
             <SuggestedProfessionals />
           </aside>
-          
+
         </div>
       </div>
 

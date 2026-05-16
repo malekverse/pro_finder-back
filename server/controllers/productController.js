@@ -64,15 +64,15 @@ const updateProduct = async (req, res) => {
     }
 
     const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesProduct').map((f) => f.path.replace(/\\/g, '/')) : [];
-    
+
     let finalImages = product.imagesProduct || [];
     if (existingImages !== undefined) {
-        try {
-            const parsed = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
-            finalImages = Array.isArray(parsed) ? parsed : [parsed];
-        } catch (e) {
-            finalImages = Array.isArray(existingImages) ? existingImages : [existingImages];
-        }
+      try {
+        const parsed = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+        finalImages = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        finalImages = Array.isArray(existingImages) ? existingImages : [existingImages];
+      }
     }
 
     // Normaliser les chemins (enlever le SERVER_URL si présent pour rester en relatif)
@@ -80,7 +80,7 @@ const updateProduct = async (req, res) => {
       if (typeof img !== 'string') return img;
       return img.replace(/^https?:\/\/[^/]+\//, "");
     });
-    
+
     product.name = name || product.name;
     product.category = category || product.category;
     product.price = price || product.price;
@@ -150,7 +150,7 @@ const getFollowedProducts = async (req, res) => {
     const companyIds = follows.filter(f => f.company_id).map(f => f.company_id);
     const professionalIds = follows.filter(f => f.professional_id).map(f => f.professional_id);
 
-    const products = await Product.find({ 
+    const products = await Product.find({
       $or: [
         { companyId: { $in: companyIds } },
         { professionalId: { $in: professionalIds } }

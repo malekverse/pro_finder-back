@@ -8,11 +8,12 @@ const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/emailService");
 const bcrypt = require("bcrypt");
 
-const Country = mongoose.model("Country");
-const Region = mongoose.model("Region");
-const City = mongoose.model("City");
-const SubCategory = mongoose.model("SubCategory");
-const Service = mongoose.model("Service");
+const Category = require("../models/Category");
+const SubCategory = require("../models/SubCategory");
+const Service = require("../models/Service");
+const Country = require("../models/country");
+const Region = require("../models/region");
+const City = require("../models/city");
 
 // ── Profil connecté ──────────────────────────────────────────
 const getProfessionalProfile = async (req, res) => {
@@ -146,67 +147,87 @@ const searchProfessionals = async (req, res) => {
 
     // Filtre texte amélioré (Recherche multi-critères)
     if (q && q.trim() !== "") {
-      const keywords = q.trim().split(/\s+/);
+      const keywords = q.trim().split(/\s+/).filter(kw => kw.length > 0);
 
-      // On prépare des recherches pour chaque mot-clé
-      const Category = mongoose.model("Category");
-      const SubCategory = mongoose.model("SubCategory");
-      const Service = mongoose.model("Service");
-      const Country = mongoose.model("Country");
-      const Region = mongoose.model("Region");
-      const City = mongoose.model("City");
+      if (keywords.length > 0) {
+        // On prépare des recherches pour chaque mot-clé
+        const keywordFilters = await Promise.all(keywords.map(async (kw) => {
+          const kwRegex = { $regex: kw, $options: "i" };
+          
+          // Pour chaque mot-clé, on trouve les IDs correspondants dans la taxonomie et localisation
+          const [cats, countries, regions, cities] = await Promise.all([
+            Category.find({ name: kwRegex }).select("_id"),
+            Country.find({ name: kwRegex }).select("_id"),
+            Region.find({ name: kwRegex }).select("_id"),
+            City.find({ name: kwRegex }).select("_id")
+          ]);
 
-      const keywordFilters = await Promise.all(keywords.map(async (kw) => {
-        // Pour chaque mot-clé, on trouve les IDs correspondants
-        const cats = await Category.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const subs = await SubCategory.find({
-          $or: [{ name: { $regex: kw, $options: "i" } }, { category_id: { $in: cats.map(c => c._id) } }]
-        }).select("_id");
-        const servs = await Service.find({
-          $or: [{ name: { $regex: kw, $options: "i" } }, { subcategory_id: { $in: subs.map(s => s._id) } }]
-        }).select("_id");
+          const subs = await SubCategory.find({
+            $or: [{ name: kwRegex }, { category_id: { $in: cats.map(c => c._id) } }]
+          }).select("_id");
 
-        const countries = await Country.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const regions = await Region.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const cities = await City.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+          const servs = await Service.find({
+            $or: [{ name: kwRegex }, { subcategory_id: { $in: subs.map(s => s._id) } }]
+          }).select("_id");
 
-        return {
-          $or: [
-            { fullName: { $regex: kw, $options: "i" } },
-            { description: { $regex: kw, $options: "i" } },
-            { services: { $in: servs.map(s => s._id) } },
-            { country: { $in: countries.map(c => c._id) } },
-            { region: { $in: regions.map(r => r._id) } },
-            { city: { $in: cities.map(c => c._id) } }
-          ]
-        };
-      }));
+          // Construction du filtre OR pour ce mot-clé précis
+          const orConditions = [
+            { fullName: kwRegex },
+            { description: kwRegex }
+          ];
 
-      // On veut que le pro matche TOUS les mots-clés
-      query.$and = keywordFilters;
+          if (servs.length > 0) orConditions.push({ services: { $in: servs.map(s => s._id) } });
+          if (countries.length > 0) orConditions.push({ country: { $in: countries.map(c => c._id) } });
+          if (regions.length > 0) orConditions.push({ region: { $in: regions.map(r => r._id) } });
+          if (cities.length > 0) orConditions.push({ city: { $in: cities.map(c => c._id) } });
+
+          return { $or: orConditions };
+        }));
+
+        // On veut que le professionnel matche TOUS les mots-clés
+        if (keywordFilters.length > 0) {
+          query.$and = keywordFilters;
+        }
+      }
     }
 
-    // Filtres Géo
+    // Filtres Géo (Gestion flexible ObjectId vs String)
+    const geoFilters = [];
+
     if (country && country !== "") {
       if (mongoose.isValidObjectId(country)) {
-        query.country = new mongoose.Types.ObjectId(country);
+        const cDoc = await Country.findById(country).select("name").lean();
+        const conditions = [{ country: new mongoose.Types.ObjectId(country) }];
+        if (cDoc) conditions.push({ country: { $regex: `^${cDoc.name}$`, $options: "i" } });
+        geoFilters.push({ $or: conditions });
       } else {
-        query.country = country;
+        geoFilters.push({ country: country });
       }
     }
     if (region && region !== "") {
       if (mongoose.isValidObjectId(region)) {
-        query.region = new mongoose.Types.ObjectId(region);
+        const rDoc = await Region.findById(region).select("name").lean();
+        const conditions = [{ region: new mongoose.Types.ObjectId(region) }];
+        if (rDoc) conditions.push({ region: { $regex: `^${rDoc.name}$`, $options: "i" } });
+        geoFilters.push({ $or: conditions });
       } else {
-        query.region = region;
+        geoFilters.push({ region: region });
       }
     }
     if (city && city !== "") {
       if (mongoose.isValidObjectId(city)) {
-        query.city = new mongoose.Types.ObjectId(city);
+        const cityDoc = await City.findById(city).select("name").lean();
+        const conditions = [{ city: new mongoose.Types.ObjectId(city) }];
+        if (cityDoc) conditions.push({ city: { $regex: `^${cityDoc.name}$`, $options: "i" } });
+        geoFilters.push({ $or: conditions });
       } else {
-        query.city = city;
+        geoFilters.push({ city: city });
       }
+    }
+
+    if (geoFilters.length > 0) {
+      if (!query.$and) query.$and = [];
+      query.$and.push(...geoFilters);
     }
 
     // Filtres Taxonomie
@@ -226,10 +247,12 @@ const searchProfessionals = async (req, res) => {
       query.services = { $in: servicesDocs.map(s => s._id) };
     }
 
-    let professionals = await Professional.find(query)
-      .select("fullName photoProfessional description city region country website phone services Status")
+    // On utilise Professional.collection.find pour bypasser le casting strict de Mongoose
+    let professionalsRaw = await mongoose.connection.db.collection("professionals").find(query)
       .limit(50)
-      .lean();
+      .toArray();
+
+    let professionals = professionalsRaw.map(p => ({ ...p, _id: p._id.toString() }));
 
     // Tri par pertinence
     if (q && q.trim() !== "") {
@@ -305,7 +328,6 @@ const searchProfessionals = async (req, res) => {
 
     res.json(enriched);
   } catch (err) {
-    console.error("[searchProfessionals]", err);
     res.status(500).json({ message: "Erreur lors de la recherche" });
   }
 };

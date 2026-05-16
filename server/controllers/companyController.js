@@ -9,11 +9,12 @@ const Review = require("../models/Review");
 const fs = require('fs');
 const mongoose = require("mongoose");
 const path = require("path");
-const SubCategory = mongoose.model("SubCategory");
-const Service = mongoose.model("Service");
-const Country = mongoose.model("Country");
-const Region = mongoose.model("Region");
-const City = mongoose.model("City");
+const Category = require("../models/Category");
+const SubCategory = require("../models/SubCategory");
+const Service = require("../models/Service");
+const Country = require("../models/country");
+const Region = require("../models/region");
+const City = require("../models/city");
 
 const getDashboard = async (req, res) => {
   res.json({ message: "Company Dashboard", companyId: req.user });
@@ -448,68 +449,87 @@ const searchCompanies = async (req, res) => {
 
     // Filtre texte amélioré (Recherche multi-critères)
     if (q && q.trim() !== "") {
-      const keywords = q.trim().split(/\s+/);
+      const keywords = q.trim().split(/\s+/).filter(kw => kw.length > 0);
 
-      // On prépare des recherches pour chaque mot-clé
-      const Category = mongoose.model("Category");
-      const SubCategory = mongoose.model("SubCategory");
-      const Service = mongoose.model("Service");
-      const Country = mongoose.model("Country");
-      const Region = mongoose.model("Region");
-      const City = mongoose.model("City");
+      if (keywords.length > 0) {
+        // On prépare des recherches pour chaque mot-clé
+        const keywordFilters = await Promise.all(keywords.map(async (kw) => {
+          const kwRegex = { $regex: kw, $options: "i" };
+          
+          // Pour chaque mot-clé, on trouve les IDs correspondants dans la taxonomie et localisation
+          const [cats, countries, regions, cities] = await Promise.all([
+            Category.find({ name: kwRegex }).select("_id"),
+            Country.find({ name: kwRegex }).select("_id"),
+            Region.find({ name: kwRegex }).select("_id"),
+            City.find({ name: kwRegex }).select("_id")
+          ]);
 
-      const keywordFilters = await Promise.all(keywords.map(async (kw) => {
-        // Pour chaque mot-clé, on trouve les IDs correspondants
-        const cats = await Category.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const subs = await SubCategory.find({
-          $or: [{ name: { $regex: kw, $options: "i" } }, { category_id: { $in: cats.map(c => c._id) } }]
-        }).select("_id");
-        const servs = await Service.find({
-          $or: [{ name: { $regex: kw, $options: "i" } }, { subcategory_id: { $in: subs.map(s => s._id) } }]
-        }).select("_id");
+          const subs = await SubCategory.find({
+            $or: [{ name: kwRegex }, { category_id: { $in: cats.map(c => c._id) } }]
+          }).select("_id");
 
-        const countries = await Country.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const regions = await Region.find({ name: { $regex: kw, $options: "i" } }).select("_id");
-        const cities = await City.find({ name: { $regex: kw, $options: "i" } }).select("_id");
+          const servs = await Service.find({
+            $or: [{ name: kwRegex }, { subcategory_id: { $in: subs.map(s => s._id) } }]
+          }).select("_id");
 
-        return {
-          $or: [
-            { companyName: { $regex: kw, $options: "i" } },
-            { description: { $regex: kw, $options: "i" } },
-            { services: { $in: servs.map(s => s._id) } },
-            { country: { $in: countries.map(c => c._id) } },
-            { region: { $in: regions.map(r => r._id) } },
-            { city: { $in: cities.map(c => c._id) } }
-          ]
-        };
-      }));
+          // Construction du filtre OR pour ce mot-clé précis
+          const orConditions = [
+            { companyName: kwRegex },
+            { description: kwRegex }
+          ];
 
-      // On veut que l'entreprise matche TOUS les mots-clés (mais chaque mot-clé peut matcher n'importe quel champ)
-      // Exemple: "sante tunis" -> (champ1 ou champ2 contient "sante") ET (champ1 ou champ2 contient "tunis")
-      query.$and = keywordFilters;
+          if (servs.length > 0) orConditions.push({ services: { $in: servs.map(s => s._id) } });
+          if (countries.length > 0) orConditions.push({ country: { $in: countries.map(c => c._id) } });
+          if (regions.length > 0) orConditions.push({ region: { $in: regions.map(r => r._id) } });
+          if (cities.length > 0) orConditions.push({ city: { $in: cities.map(c => c._id) } });
+
+          return { $or: orConditions };
+        }));
+
+        // On veut que l'entreprise matche TOUS les mots-clés
+        if (keywordFilters.length > 0) {
+          query.$and = keywordFilters;
+        }
+      }
     }
 
-    // Filtres Géo
+    // Filtres Géo (Gestion flexible ObjectId vs String)
+    const geoFilters = [];
+
     if (country && country !== "") {
       if (mongoose.isValidObjectId(country)) {
-        query.country = new mongoose.Types.ObjectId(country);
+        const cDoc = await Country.findById(country).select("name").lean();
+        const conditions = [{ country: new mongoose.Types.ObjectId(country) }];
+        if (cDoc) conditions.push({ country: { $regex: `^${cDoc.name}$`, $options: "i" } });
+        geoFilters.push({ $or: conditions });
       } else {
-        query.country = country;
+        geoFilters.push({ country: country });
       }
     }
     if (region && region !== "") {
       if (mongoose.isValidObjectId(region)) {
-        query.region = new mongoose.Types.ObjectId(region);
+        const rDoc = await Region.findById(region).select("name").lean();
+        const conditions = [{ region: new mongoose.Types.ObjectId(region) }];
+        if (rDoc) conditions.push({ region: { $regex: `^${rDoc.name}$`, $options: "i" } });
+        geoFilters.push({ $or: conditions });
       } else {
-        query.region = region;
+        geoFilters.push({ region: region });
       }
     }
     if (city && city !== "") {
       if (mongoose.isValidObjectId(city)) {
-        query.city = new mongoose.Types.ObjectId(city);
+        const cityDoc = await City.findById(city).select("name").lean();
+        const conditions = [{ city: new mongoose.Types.ObjectId(city) }];
+        if (cityDoc) conditions.push({ city: { $regex: `^${cityDoc.name}$`, $options: "i" } });
+        geoFilters.push({ $or: conditions });
       } else {
-        query.city = city;
+        geoFilters.push({ city: city });
       }
+    }
+
+    if (geoFilters.length > 0) {
+      if (!query.$and) query.$and = [];
+      query.$and.push(...geoFilters);
     }
 
     // Filtres Taxonomie
@@ -531,10 +551,13 @@ const searchCompanies = async (req, res) => {
     }
 
 
-    let companies = await Company.find(query)
-      .select("companyName logoUrl description city region country website phone services Status isGenerated")
+    // On utilise Company.collection.find pour bypasser le casting strict de Mongoose (qui cause des erreurs quand country est un string alors que le schema attend un ObjectId)
+    let companiesRaw = await mongoose.connection.db.collection("companies").find(query)
       .limit(50)
-      .lean();
+      .toArray();
+
+    // On convertit les résultats bruts pour qu'ils ressemblent à du Mongoose lean()
+    let companies = companiesRaw.map(c => ({ ...c, _id: c._id.toString() }));
 
     // Tri par pertinence si une recherche textuelle est effectuée
     if (q && q.trim() !== "") {
@@ -567,10 +590,6 @@ const searchCompanies = async (req, res) => {
 
 
     // Pour chaque entreprise, récupérer son nombre de followers et les NOMS de localisation
-    const Country = mongoose.model("Country");
-    const Region = mongoose.model("Region");
-    const City = mongoose.model("City");
-
     const companiesWithDetails = await Promise.all(
       companies.map(async (company) => {
         const followersCount = await Follow.countDocuments({ company_id: company._id, is_blocked: { $ne: true } });

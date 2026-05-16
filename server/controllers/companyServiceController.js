@@ -69,15 +69,15 @@ const updateService = async (req, res) => {
     }
 
     const newImages = req.files ? req.files.filter(f => f.fieldname === 'imagesServices').map((f) => f.path.replace(/\\/g, '/')) : [];
-    
+
     let finalImages = service.imagesServices || [];
     if (existingImages !== undefined) {
-        try {
-            const parsed = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
-            finalImages = Array.isArray(parsed) ? parsed : [parsed];
-        } catch (e) {
-            finalImages = Array.isArray(existingImages) ? existingImages : [existingImages];
-        }
+      try {
+        const parsed = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+        finalImages = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        finalImages = Array.isArray(existingImages) ? existingImages : [existingImages];
+      }
     }
 
     // Normaliser les chemins
@@ -85,7 +85,7 @@ const updateService = async (req, res) => {
       if (typeof img !== 'string') return img;
       return img.replace(/^https?:\/\/[^/]+\//, "");
     });
-    
+
     service.name = name || service.name;
     service.description = description || service.description;
     service.price = price || service.price;
@@ -154,7 +154,7 @@ const getFollowedServices = async (req, res) => {
     const companyIds = follows.filter(f => f.company_id).map(f => f.company_id);
     const professionalIds = follows.filter(f => f.professional_id).map(f => f.professional_id);
 
-    const services = await CompanyService.find({ 
+    const services = await CompanyService.find({
       $or: [
         { companyId: { $in: companyIds } },
         { professionalId: { $in: professionalIds } }
