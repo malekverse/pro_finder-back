@@ -277,7 +277,7 @@ const searchProfessionals = async (req, res) => {
         const followersCount = await Follow.countDocuments({ professional_id: pro._id, is_blocked: { $ne: true } });
 
         const stats = await Review.aggregate([
-          { $match: { professional_id: pro._id } },
+          { $match: { professional_id: new mongoose.Types.ObjectId(pro._id) } },
           { $group: { _id: "$professional_id", averageRating: { $avg: "$rating" }, totalReviews: { $sum: 1 } } },
         ]);
         const rating = stats.length > 0

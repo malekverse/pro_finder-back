@@ -596,7 +596,7 @@ const searchCompanies = async (req, res) => {
 
         // Récupérer les stats d'avis
         const stats = await Review.aggregate([
-          { $match: { company_id: company._id } },
+          { $match: { company_id: new mongoose.Types.ObjectId(company._id) } },
           {
             $group: {
               _id: "$company_id",
