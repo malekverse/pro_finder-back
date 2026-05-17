@@ -24,10 +24,11 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
         setAllPosts(posts);
       } else {
         setAllPosts(prev => {
-          // Utilisation d'un Set d'IDs pour garantir l'unicité de chaque publication
-          const existingIds = new Set(prev.map(p => p._id));
-          const newPosts = posts.filter(p => !existingIds.has(p._id));
-          return [...prev, ...newPosts];
+          // Mettre à jour les publications existantes et ajouter les nouvelles
+          const newPostsMap = new Map(posts.map(p => [p._id, p]));
+          const updatedPrev = prev.map(p => newPostsMap.has(p._id) ? newPostsMap.get(p._id) : p);
+          const completelyNewPosts = posts.filter(p => !prev.some(old => old._id === p._id));
+          return [...updatedPrev, ...completelyNewPosts];
         });
       }
     }

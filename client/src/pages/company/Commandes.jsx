@@ -223,7 +223,7 @@ const Commandes = () => {
                             </div>
                             <div className={styles.totalRow}>
                               <span>Total :</span>
-                              <span className={styles.totalPrice}>{order.totalPrice} </span>
+                              <span className={styles.totalPrice}>{order.totalPrice} DTN</span>
                             </div>
                           </div>
                           <div className={styles.cardFooter}>

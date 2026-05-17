@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -214,14 +214,23 @@ const PostCard = ({ post, onDeleted }) => {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [lightboxIdx,   setLightboxIdx]   = useState(null); // null = fermé
 
+  const initialIsLiked = post.likes?.map(id => id?.toString()).includes(currentId.toString());
+  const [localIsLiked, setLocalIsLiked] = useState(initialIsLiked);
+  const [localLikesCount, setLocalLikesCount] = useState(post.likesCount || 0);
+  const [localComments, setLocalComments] = useState(post.comments || []);
+
+  useEffect(() => {
+    setLocalIsLiked(post.likes?.map(id => id?.toString()).includes(currentId.toString()));
+    setLocalLikesCount(post.likesCount || 0);
+    setLocalComments(post.comments || []);
+  }, [post]);
+
   // Comparaison robuste : toString() sur les deux côtés
   const postAuthorId = post.author_id?.toString() || "";
   const isAuthor = postAuthorId !== "" && (
     postAuthorId === currentId.toString() ||
     postAuthorId === currentCompany.toString()
   );
-
-  const isLiked = post.likes?.map(id => id?.toString()).includes(currentId.toString());
 
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("fr-FR", {
@@ -251,21 +260,39 @@ const PostCard = ({ post, onDeleted }) => {
   };
 
   const handleLike = async () => {
-    try { await toggleLike(post._id).unwrap(); } catch (err) { console.error(err); }
+    const prevIsLiked = localIsLiked;
+    const prevLikesCount = localLikesCount;
+    setLocalIsLiked(!prevIsLiked);
+    setLocalLikesCount(prev => prevIsLiked ? prev - 1 : prev + 1);
+    try { 
+      await toggleLike(post._id).unwrap(); 
+    } catch (err) { 
+      setLocalIsLiked(prevIsLiked);
+      setLocalLikesCount(prevLikesCount);
+      console.error(err); 
+    }
   };
 
   const handleComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
     try {
-      await addComment({ id: post._id, text: commentText }).unwrap();
+      const newComment = await addComment({ id: post._id, text: commentText }).unwrap();
+      setLocalComments(prev => [...prev, newComment]);
       setCommentText("");
       onDeleted?.(); // refetch pour avoir commentAuthor populé
     } catch (err) { console.error(err); }
   };
 
   const handleDeleteComment = async (commentId) => {
-    try { await deleteComment({ postId: post._id, commentId }).unwrap(); } catch (err) { console.error(err); }
+    const prevComments = [...localComments];
+    setLocalComments(prev => prev.filter(c => c._id !== commentId));
+    try { 
+      await deleteComment({ postId: post._id, commentId }).unwrap(); 
+    } catch (err) { 
+      setLocalComments(prevComments);
+      console.error(err); 
+    }
   };
 
    const handleDelete = async () => {
@@ -389,13 +416,13 @@ const PostCard = ({ post, onDeleted }) => {
 
         {/* ── Stats ── */}
         <div style={s.stats}>
-          {post.likesCount > 0 && (
-            <span style={s.statItem}>❤️ {post.likesCount}</span>
+          {localLikesCount > 0 && (
+            <span style={s.statItem}>❤️ {localLikesCount}</span>
           )}
           <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
-            {post.commentsCount > 0 && (
+            {localComments.length > 0 && (
               <button style={s.statBtn} onClick={() => setShowComments(!showComments)}>
-                {post.commentsCount} commentaire{post.commentsCount > 1 ? "s" : ""}
+                {localComments.length} commentaire{localComments.length > 1 ? "s" : ""}
               </button>
             )}
             {post.sharesCount > 0 && (
@@ -408,8 +435,8 @@ const PostCard = ({ post, onDeleted }) => {
 
         {/* ── Boutons actions ── */}
         <div style={s.actions}>
-          <button onClick={handleLike} style={{ ...s.actionBtn, color: isLiked ? "#1E3A5F" : "#64748b", fontWeight: isLiked ? 700 : 500 }}>
-            <ThumbsUp size={17} fill={isLiked ? "#1E3A5F" : "none"} strokeWidth={isLiked ? 2.5 : 1.8} />
+          <button onClick={handleLike} style={{ ...s.actionBtn, color: localIsLiked ? "#1E3A5F" : "#64748b", fontWeight: localIsLiked ? 700 : 500 }}>
+            <ThumbsUp size={17} fill={localIsLiked ? "#1E3A5F" : "none"} strokeWidth={localIsLiked ? 2.5 : 1.8} />
             J'aime
           </button>
           <button onClick={() => setShowComments(!showComments)} style={s.actionBtn}>
@@ -421,9 +448,9 @@ const PostCard = ({ post, onDeleted }) => {
         {/* ── Commentaires ── */}
         {showComments && (
           <div style={s.commentsWrap}>
-            {post.comments?.length > 0 && (
+            {localComments?.length > 0 && (
               <div style={{ marginBottom: 10 }}>
-                {post.comments.map((c) => {
+                {localComments.map((c) => {
                   const cAuthor = c.commentAuthor;
                   const cName   = cAuthor?.name || "Utilisateur";
                   const cAvatar = cAuthor?.avatarUrl || null;
