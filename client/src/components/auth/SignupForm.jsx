@@ -7,6 +7,7 @@ import { setCredentials } from '../../redux/features/auth/authSlice';
 import Cookies from 'js-cookie';
 import Autocomplete from "./Autocomplete";
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import Swal from 'sweetalert2';
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -138,7 +139,12 @@ useEffect(() => {
 
       if (role === 'user') {
         if (userInputs.password !== userInputs.confirmPassword) {
-          alert("Passwords do not match");
+          Swal.fire({
+            title: 'Erreur',
+            text: "Les mots de passe ne correspondent pas",
+            icon: 'error',
+            confirmButtonColor: '#1E3A5F'
+          });
           return;
         }
 
@@ -152,7 +158,12 @@ useEffect(() => {
         };
       } else if (role === 'company') {
         if (companyInputs.password !== companyInputs.confirm_password) {
-          alert("Passwords do not match");
+          Swal.fire({
+            title: 'Erreur',
+            text: "Les mots de passe ne correspondent pas",
+            icon: 'error',
+            confirmButtonColor: '#1E3A5F'
+          });
           return;
         }
 
@@ -173,7 +184,12 @@ useEffect(() => {
         };
       } else if (role === 'professional') {
         if (professionalInputs.password !== professionalInputs.confirm_password) {
-          alert("Passwords do not match");
+          Swal.fire({
+            title: 'Erreur',
+            text: "Les mots de passe ne correspondent pas",
+            icon: 'error',
+            confirmButtonColor: '#1E3A5F'
+          });
           return;
         }
 
@@ -213,12 +229,23 @@ useEffect(() => {
         }
       } else if (response?.message) {
         // Cas du compte en attente (Company)
-        alert(response.message);
-        navigate("/auth/login");
+        Swal.fire({
+          title: 'Information',
+          text: response.message,
+          icon: 'info',
+          confirmButtonColor: '#1E3A5F'
+        }).then(() => {
+          navigate("/auth/login");
+        });
       }
     } catch (err) {
       if (err.status === 413) {
-        alert("Images trop lourdes ! Réduisez la taille ou continuez sans image.");
+        Swal.fire({
+          title: 'Erreur',
+          text: "Images trop lourdes ! Réduisez la taille ou continuez sans image.",
+          icon: 'error',
+          confirmButtonColor: '#1E3A5F'
+        });
       }
       console.error("Registration error:", err);
     }

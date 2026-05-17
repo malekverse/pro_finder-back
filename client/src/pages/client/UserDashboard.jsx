@@ -17,6 +17,7 @@ import { useInitializePaymentMutation } from "../../redux/features/paymentApiSli
 import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart, User } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
 import Cart from "../../components/dashboard/client/Cart";
+import Swal from 'sweetalert2';
 
 // Components
 import Header from "../../components/dashboard/client/Header";
@@ -82,7 +83,12 @@ const UserDashboard = () => {
     try {
       if (actionType === 'product') {
         if (data.quantity > (selectedItem.stock || 0)) {
-          alert("Désolé, le stock est insuffisant pour cette quantité.");
+          Swal.fire({
+            title: 'Erreur',
+            text: "Désolé, le stock est insuffisant pour cette quantité.",
+            icon: 'warning',
+            confirmButtonColor: '#1E3A5F'
+          });
           return;
         }
         const isPro = !!selectedItem.professionalId;
@@ -129,7 +135,12 @@ const UserDashboard = () => {
       }
       setSelectedItem(null);
     } catch (err) {
-      alert(err.data?.message || "Une erreur est survenue");
+      Swal.fire({
+        title: 'Erreur',
+        text: err.data?.message || "Une erreur est survenue",
+        icon: 'error',
+        confirmButtonColor: '#1E3A5F'
+      });
     }
   };
 //deconection
