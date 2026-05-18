@@ -319,13 +319,50 @@ const getFollowedFeed = async (req, res) => {
       isDeleted:  false,
     };
 
-    const total = await Post.countDocuments(query);
+    const MAX_FEED_POSTS = 200; // Limite pour ne pas tout charger
 
-    const posts = await Post.find(query)
+    const allPosts = await Post.find(query)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
+      .limit(MAX_FEED_POSTS)
       .lean();
+
+    // Grouper par auteur pour éviter les suites de posts de la même entreprise
+    const grouped = {};
+    for (const post of allPosts) {
+      const authorStr = post.author_id.toString();
+      if (!grouped[authorStr]) grouped[authorStr] = [];
+      grouped[authorStr].push(post);
+    }
+
+    // Fonction de hash pour un tri pseudo-aléatoire déterministe
+    const deterministicRandom = (str) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0; 
+      }
+      return hash;
+    };
+
+    const interleaved = [];
+    while (Object.keys(grouped).length > 0) {
+      const round = interleaved.length;
+      // Trier les auteurs différemment à chaque tour mais de manière déterministe
+      // Cela donne un effet aléatoire (Adidas, puis Pro, puis Nike) au lieu d'avoir un ordre fixe
+      const authorIds = Object.keys(grouped).sort((a, b) => {
+        return deterministicRandom(a + round) - deterministicRandom(b + round);
+      });
+      
+      for (const authorId of authorIds) {
+        interleaved.push(grouped[authorId].shift());
+        if (grouped[authorId].length === 0) {
+          delete grouped[authorId];
+        }
+      }
+    }
+
+    const total = interleaved.length;
+    const posts = interleaved.slice(skip, skip + limit);
 
 
     // 3. Populate auteurs
