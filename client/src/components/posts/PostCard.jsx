@@ -425,9 +425,6 @@ const PostCard = ({ post, onDeleted }) => {
                 {localComments.length} commentaire{localComments.length > 1 ? "s" : ""}
               </button>
             )}
-            {post.sharesCount > 0 && (
-              <span style={s.statBtn}>{post.sharesCount} partage{post.sharesCount > 1 ? "s" : ""}</span>
-            )}
           </div>
         </div>
 

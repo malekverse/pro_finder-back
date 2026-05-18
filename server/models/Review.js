@@ -33,8 +33,20 @@ const reviewSchema = new mongoose.Schema(
 );
 
 // Un utilisateur ne peut laisser qu'un seul avis par entreprise
-reviewSchema.index({ user_id: 1, company_id: 1 }, { unique: true, sparse: true });
+reviewSchema.index(
+  { user_id: 1, company_id: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { company_id: { $type: "objectId" } },
+  }
+);
 // Un utilisateur ne peut laisser qu'un seul avis par professionnel
-reviewSchema.index({ user_id: 1, professional_id: 1 }, { unique: true, sparse: true });
+reviewSchema.index(
+  { user_id: 1, professional_id: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { professional_id: { $type: "objectId" } },
+  }
+);
 
 module.exports = mongoose.model("Review", reviewSchema);

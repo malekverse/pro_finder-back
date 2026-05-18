@@ -546,8 +546,8 @@ const ProfessionalPublicProfile = () => {
                   <div style={s.itemContent}>
                     <h4 style={s.itemName}>{service.name}</h4>
                     <div style={s.itemMeta}>
-                      <span><Clock size={14} /> {service.duration} min</span>
-                      <span style={s.itemPrice}>{service.price} TND</span>
+                      <span><Clock size={14} /> {service.duration} </span>
+                      <span style={s.itemPrice}>{service.price} </span>
                     </div>
                     <button onClick={() => setServiceForDetail(service)} style={s.itemBtn}>
                       <Calendar size={16} /> Réserver
@@ -572,7 +572,7 @@ const ProfessionalPublicProfile = () => {
                   <div style={s.itemContent}>
                     <h4 style={s.itemName}>{product.name}</h4>
                     <div style={s.itemMeta}>
-                      <span style={s.itemPrice}>{product.price} TND</span>
+                      <span style={s.itemPrice}>{product.price} </span>
                     </div>
                     <button onClick={() => setProductForDetail(product)} style={s.itemBtn}>
                       <ShoppingCart size={16} /> Commander

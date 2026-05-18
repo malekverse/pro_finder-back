@@ -587,8 +587,8 @@ const CompanyPublicProfile = () => {
                           <h3 style={s.itemName}>{service.name}</h3>
                           <p style={s.itemDesc}>{service.description}</p>
                           <div style={s.itemFooter}>
-                            <span style={s.itemPrice}>{service.price} TND</span>
-                            <span style={s.itemDuration}><Clock size={14} /> {service.duration} min</span>
+                            <span style={s.itemPrice}>{service.price} </span>
+                            <span style={s.itemDuration}><Clock size={14} /> {service.duration} </span>
                           </div>
                           <button 
                             style={s.bookBtn}
@@ -621,7 +621,7 @@ const CompanyPublicProfile = () => {
                           <h3 style={s.itemName}>{product.name}</h3>
                           <p style={s.itemDesc}>{product.description}</p>
                           <div style={s.itemFooter}>
-                            <span style={s.itemPrice}>{product.price} TND</span>
+                            <span style={s.itemPrice}>{product.price} </span>
                             <span style={s.itemStock}>{product.stock > 0 ? `${product.stock} en stock` : 'Rupture'}</span>
                           </div>
                           <button 

@@ -220,11 +220,11 @@ const ProfessionalServices = () => {
               <div style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>{service.name}</h3>
-                  <span style={{ backgroundColor: '#eff6ff', color: '#24416b', padding: '4px 10px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>{service.price} TND</span>
+                  <span style={{ backgroundColor: '#eff6ff', color: '#24416b', padding: '4px 10px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>{service.price}</span>
                 </div>
                 <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px', height: '40px', overflow: 'hidden' }}>{service.description}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
-                  <span style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> {service.duration} min</span>
+                  <span style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> {service.duration} </span>
                 </div>
               </div>
             </div>
@@ -249,12 +249,12 @@ const ProfessionalServices = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Prix (TND) *</label>
-                  <input type="number" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }} value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} />
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Prix *</label>
+                  <input type="text" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }} value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Durée (min) *</label>
-                  <input type="number" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }} value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} />
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Durée *</label>
+                  <input type="text" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }} value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} />
                 </div>
               </div>
 
