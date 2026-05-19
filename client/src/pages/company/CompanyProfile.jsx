@@ -8,9 +8,9 @@ import {
   PhotoCamera, Edit, Save, Language, Email, Phone, Place, Lock
 } from '@mui/icons-material';
 
-import { useGetCompanyProfileQuery, useUpdateCompanyProfileMutation } from '../../../redux/features/company/companyApiSlice';
-import Autocomplete from "../../auth/Autocomplete";
-import { toImageUrl } from "../../../utils/imageUtils";
+import { useGetCompanyProfileQuery, useUpdateCompanyProfileMutation } from '../../redux/features/company/companyApiSlice';
+import Autocomplete from "../../components/auth/Autocomplete";
+import { toImageUrl } from "../../utils/imageUtils";
 
 // ❌ fileToBase64 supprimée — on n'envoie plus en base64
 const SERVER_URL = 'http://localhost:5000';

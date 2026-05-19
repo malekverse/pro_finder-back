@@ -32,7 +32,7 @@ import Quotes from './pages/company/Quotes';
 import Contracts from './pages/company/Contracts';
 import CompanyDocuments from './pages/company/CompanyDocuments';
 import Invoices from './pages/company/Invoices';
-import CompanyProfile from './components/dashboard/Company/CompanyProfile';
+import CompanyProfile from './pages/company/CompanyProfile';
 import Publication from './pages/company/Publication';
 import Commandes from './pages/company/Commandes';
 import Reviews from './pages/company/Reviews';
