@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { profileApiSlice } from "../../../redux/features/profileApiSlice";
-import { selectCurrentToken } from "../../../redux/features/auth/authSlice";
+import { profileApiSlice } from "../../redux/features/profileApiSlice";
+import { selectCurrentToken } from "../../redux/features/auth/authSlice";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { Search, Plus, X, Layers, Wrench, Tag } from "lucide-react";
-import styles from "../../../styles/dashboardAdmin.module.css";
+import styles from "../../styles/dashboardAdmin.module.css";
 
 export default function AdminTaxonomy() {
   const dispatch = useDispatch();

@@ -3,13 +3,13 @@ import {
   useUpdateProfileMutation, 
   useChangeAdminPasswordMutation,
   useGetAdminActivitiesQuery
-} from "../../../redux/features/profileApiSlice";
+} from "../../redux/features/profileApiSlice";
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from "react-router-dom";
-import { logOut } from "../../../redux/features/auth/authSlice";
+import { logOut } from "../../redux/features/auth/authSlice";
 import { Camera, Save, LogOut, ShieldCheck, Key, History, User, Loader2 } from "lucide-react";
-import styles from "../../../styles/dashboardAdmin.module.css";
+import styles from "../../styles/dashboardAdmin.module.css";
 
 const SERVER_URL = "http://localhost:5000";
 

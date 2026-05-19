@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ShieldCheck, Plus, Edit, Trash2, Search, Loader2, X, GripVertical } from "lucide-react";
-import { PERMISSIONS } from "../../../constants/permissions";
-import styles from "../../../styles/dashboardAdmin.module.css";
+import { PERMISSIONS } from "../../constants/permissions";
+import styles from "../../styles/dashboardAdmin.module.css";
 
 const AdminRoles = () => {
     const [roles, setRoles] = useState([]);

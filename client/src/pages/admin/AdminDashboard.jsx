@@ -2,8 +2,8 @@ import React from 'react';
 import { Users, Building2, Wrench, AlertCircle, CheckCircle2, Clock, Loader2, Tags, Globe } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { useGetAdminDashboardQuery } from '../../../redux/features/profileApiSlice';
-import styles from "../../../styles/dashboardAdmin.module.css"; 
+import { useGetAdminDashboardQuery } from '../../redux/features/profileApiSlice';
+import styles from "../../styles/dashboardAdmin.module.css"; 
 
 const AdminDashboard = () => {
   const navigate = useNavigate();

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { profileApiSlice } from '../../../redux/features/profileApiSlice';
-import { selectCurrentToken } from '../../../redux/features/auth/authSlice';
+import { profileApiSlice } from '../../redux/features/profileApiSlice';
+import { selectCurrentToken } from '../../redux/features/auth/authSlice';
 import { Trash2, Edit, Globe, Map, MapPin, Search, Plus, X } from 'lucide-react';
-import styles from '../../../styles/dashboardAdmin.module.css';
+import styles from '../../styles/dashboardAdmin.module.css';
 
 const AdminGeography = () => {
   const dispatch = useDispatch();

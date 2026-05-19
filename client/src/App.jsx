@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
-import AdminRoles from "./components/dashboard/admin/AdminRoles";
+import AdminRoles from "./pages/admin/AdminRoles";
 import RootLayout from './pages/RootLayout';
 import RequireRole from "./components/auth/RequireRole";
 import RequireAuth from './components/auth/RequireAuth';
@@ -55,14 +55,14 @@ import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFail from './pages/payment/PaymentFail';
 
 // Pages Admin
-import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
-import AdminDashboard from "./components/dashboard/admin/AdminDashboard";
-import AdminGeography from "./components/dashboard/admin/AdminGeography";
-import AdminTaxonomy from "./components/dashboard/admin/AdminTaxonomy";
-import AdminModeration from "./components/dashboard/admin/AdminModeration";
-import AdminUsers from "./components/dashboard/admin/AdminUsers";
-import AdminProfile from "./components/dashboard/admin/AdminProfile";
-import AiScraperTool from './components/dashboard/admin/AiScraperTool';
+import AdminDashboardLayout from "./pages/admin/AdminDashboardLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminGeography from "./pages/admin/AdminGeography";
+import AdminTaxonomy from "./pages/admin/AdminTaxonomy";
+import AdminModeration from "./pages/admin/AdminModeration";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminProfile from "./pages/admin/AdminProfile";
+import AiScraperTool from './pages/admin/AiScraperTool';
 
 function App() {
   return (
