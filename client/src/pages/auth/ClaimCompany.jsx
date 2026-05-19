@@ -6,7 +6,7 @@ import {
   Camera, Image as ImageIcon, Send, ShieldCheck
 } from 'lucide-react';
 import Autocomplete from "../../components/auth/Autocomplete";
-import './ClaimCompany.css';
+import '../../styles/ClaimCompany.css';
 
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
