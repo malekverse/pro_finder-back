@@ -62,7 +62,7 @@ import AdminTaxonomy from "./components/dashboard/admin/AdminTaxonomy";
 import AdminModeration from "./components/dashboard/admin/AdminModeration";
 import AdminUsers from "./components/dashboard/admin/AdminUsers";
 import AdminProfile from "./components/dashboard/admin/AdminProfile";
-import AiScraperTool from './components/AiScraperTool';
+import AiScraperTool from './components/dashboard/admin/AiScraperTool';
 
 function App() {
   return (

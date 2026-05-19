@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styles from '../styles/dashboardAdmin.module.css';
+import styles from '../../../styles/dashboardAdmin.module.css';
 
 const AiScraperTool = () => {
   const [activeMode, setActiveMode] = useState('mass'); // 'mass' ou 'single'
