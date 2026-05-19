@@ -23,7 +23,7 @@ import { toImageUrl } from "../../utils/imageUtils";
 
 import styles from "../../styles/Dashboard.module.css";
 
-const DashboardLayout = () => {
+const CompanyDashboardLayout = () => {
 
   const navigate = useNavigate(); 
   const dispatch = useDispatch();
@@ -156,4 +156,4 @@ const DashboardLayout = () => {
   );
 };
 
-export default DashboardLayout;
+export default CompanyDashboardLayout;

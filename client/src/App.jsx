@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import AdminRoles from "./pages/admin/AdminRoles";
-import RootLayout from './pages/RootLayout';
+import RootLayout from './components/layouts/RootLayout';
 import RequireRole from "./components/auth/RequireRole";
 import RequireAuth from './components/auth/RequireAuth';
 import { ROLES } from "./constants/roles";
@@ -26,7 +26,7 @@ import ProfessionalPublicProfile from './pages/visiteur/ProfessionalPublicProfil
 
 // Pages Company
 import UserManagement from './pages/company/UserManagement';
-import DashboardLayout from './pages/company/DashboardLayout';
+import CompanyDashboardLayout from './components/layouts/CompanyDashboardLayout';
 import Statistiques from './pages/company/Statistiques';
 import Produits from './pages/company/Produits';
 import MesServices from './pages/company/MesServices';
@@ -41,7 +41,7 @@ import Reviews from './pages/company/Reviews';
 import Gains from './pages/company/Gains';
 
 // Pages Professional
-import ProfessionalDashboardLayout from './pages/professional/ProfessionalDashboardLayout';
+import ProfessionalDashboardLayout from './components/layouts/ProfessionalDashboardLayout';
 import ProfessionalProfile from './pages/professional/ProfessionalProfile';
 import ProfessionalStats from './pages/professional/ProfessionalStats';
 import ProfessionalProduits from './pages/professional/ProfessionalProduits';
@@ -57,7 +57,7 @@ import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFail from './pages/payment/PaymentFail';
 
 // Pages Admin
-import AdminDashboardLayout from "./pages/admin/AdminDashboardLayout";
+import AdminDashboardLayout from "./components/layouts/AdminDashboardLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGeography from "./pages/admin/AdminGeography";
 import AdminTaxonomy from "./pages/admin/AdminTaxonomy";
@@ -131,7 +131,7 @@ function App() {
           element={
             <RequireAuth>
               <RequireRole allowedRoles={[ROLES.COMPANY, "admin", "ANY_TEAM_MEMBER"]}>
-                <DashboardLayout />
+                <CompanyDashboardLayout />
               </RequireRole>
             </RequireAuth>
           }
