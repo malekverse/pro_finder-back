@@ -7,19 +7,13 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-// Le port est 5001 car le serveur principal occupe déjà le port 5000.
-// Deux serveurs ne peuvent pas écouter sur le même port simultanément.
 const PORT = process.env.PORT || 5001;
 
 app.use(cors());
 app.use(express.json());
-
-// Initialisation de Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/**
- * Helper pour exécuter une requête Gemini avec gestion du Quota (Retry automatique si 429)
- */
+/** Exécute une requête Gemini avec retry automatique */
 async function runGeminiWithRetry(model, prompt, retries = 2, delay = 10000) {
     for (let i = 0; i <= retries; i++) {
         try {
@@ -44,9 +38,7 @@ async function runGeminiWithRetry(model, prompt, retries = 2, delay = 10000) {
     }
 }
 
-/**
- * Scraping statique avec Axios et Cheerio
- */
+/** Scraping statique avec Axios et Cheerio*/
 async function scrapeStatic(url) {
     try {
         const https = require('https');
@@ -71,9 +63,7 @@ async function scrapeStatic(url) {
     }
 }
 
-/**
- * Scraping dynamique avec Puppeteer
- */
+/** Scraping dynamique avec Puppeteer */
 async function scrapeDynamic(url) {
     let browser;
     try {
@@ -94,7 +84,7 @@ async function scrapeDynamic(url) {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         const content = await page.evaluate(() => {
-            // Extraire les liens mailto pour aider l'IA
+            // Extraire les liens mailto pour aider l'IA          clean email
             const mailtoLinks = Array.from(document.querySelectorAll('a[href^="mailto:"]'))
                 .map(a => a.href.replace('mailto:', '').split('?')[0]);
             
@@ -166,28 +156,43 @@ async function analyzeWithGemini(scrapedData, taxonomyOptions, type = 'company')
         // Utilisation de gemini-2.5-flash-lite (plus disponible et rapide que la version standard)
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
         
-        const taxonomyInstruction = (taxonomyOptions && taxonomyOptions.length > 0)
-            ? `\nIMPORTANT: Tu DOIS obligatoirement choisir la "Catégorie suggérée" UNIQUEMENT à partir de cette liste exacte : [${taxonomyOptions.join(', ')}]. Copie exactement le texte du service choisi. Si absolument aucune catégorie ne correspond à l'entreprise, renvoie exactement "Sans catégorie". Ne crée pas de nouvelles catégories !`
-            : '';
-
         const isPro = type === 'professional';
         const entityLabel = isPro ? "Nom complet de la personne" : "Nom de l'entreprise";
-        const prompt = `
-            Tu es un expert en extraction de données. Voici le contenu brut d'une page web :
-            Titre: ${scrapedData.title}
-            Contenu: ${scrapedData.content}
-            
-            Analyse ce contenu et extrais les informations suivantes sous format JSON :
-            - "${entityLabel}"
-            - "Description courte"
-            - "Catégorie suggérée"
-            - "Email de contact" (Cherche bien dans le texte, les pieds de page ou déduis-le des liens détectés. S'il y a plusieurs emails, choisis le plus générique comme info@ ou contact@. Si vraiment rien n'est trouvable, renvoie 'null').
-            - "Téléphone" (Si présent, format international. Sinon 'null').
-        
-            ${taxonomyInstruction}
 
-            IMPORTANT: Si tu trouves un email sous une forme complexe (ex: contact [at] domaine . com), nettoie-le en format standard.
-            Réponds uniquement avec un objet JSON strict et valide. Évite le bloc texte markdown avant ou après.
+        const taxonomyInstruction = (taxonomyOptions && taxonomyOptions.length > 0)
+            ? `
+ÉTAPE 1 — IDENTIFIER L'ACTIVITÉ PRINCIPALE :
+Avant de choisir une catégorie, réponds mentalement à cette question : "Quel est le produit ou service principal vendu ou proposé par cette entreprise/personne ?"
+Base-toi UNIQUEMENT sur les sections principales du site (titre, description, produits/services affichés). Ignore les publicités, partenaires, liens de navigation secondaires et sponsors.
+
+ÉTAPE 2 — CHOISIR LA CATÉGORIE :
+À partir de ta réponse à l'étape 1, choisis la catégorie LA PLUS PROCHE parmi cette liste numérotée :
+${taxonomyOptions.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
+
+Règles strictes :
+- Tu DOIS copier le texte EXACTEMENT tel qu'il apparaît dans la liste ci-dessus.
+- Ne crée PAS de nouvelle catégorie.
+- Si AUCUNE catégorie ne correspond réellement à l'activité principale, renvoie exactement "Sans catégorie".`
+            : '';
+
+        const prompt = `
+Tu es un expert en extraction de données et en classification d'entreprises.
+
+Voici le contenu brut d'une page web :
+Titre: ${scrapedData.title}
+Contenu: ${scrapedData.content}
+
+${taxonomyInstruction}
+
+Extrais maintenant les informations suivantes sous format JSON strict :
+- "${entityLabel}"
+- "Description courte" (2-3 phrases décrivant l'activité principale)
+- "Catégorie suggérée" (choisie selon les règles ci-dessus)
+- "Email de contact" (cherche dans tout le texte et les pieds de page. Préfère info@ ou contact@. Si plusieurs emails, prends le plus générique. Si rien n'est trouvable, renvoie null)
+- "Téléphone" (format international si présent, sinon null)
+
+IMPORTANT: Si tu trouves un email sous une forme complexe (ex: contact [at] domaine . com), nettoie-le en format standard.
+Réponds UNIQUEMENT avec un objet JSON strict et valide, sans bloc markdown avant ou après.
         `;
 
         const result = await runGeminiWithRetry(model, prompt);
@@ -203,7 +208,7 @@ async function analyzeWithGemini(scrapedData, taxonomyOptions, type = 'company')
     }
 }
 
-// Endpoint principal
+//scrape web 
 app.post('/api/scrape', async (req, res) => {
     const { url, dynamic = false, taxonomyOptions = [], type = 'company' } = req.body;
     
@@ -240,7 +245,7 @@ app.post('/api/scrape', async (req, res) => {
         res.json({ success: false, error: "Impossible d'accéder à ce site web (serveur injoignable ou protégé)." });
     }
 });
-
+//scrape maps
 app.post('/api/search-maps', async (req, res) => {
     const { query, type = 'company' } = req.body;
     if (!query) return res.status(400).json({ error: 'Query is required' });
@@ -283,19 +288,15 @@ Ne renvoie STRICTEMENT QUE le JSON (ni markdown \`\`\`json, ni explication). MAX
         })).filter(item => item.url && item.url.startsWith('http') && !["facebook", "instagram", "pagesjaunes", "med.tn", "youtube", "linkedin", "tiktok", "bing.com"].some(d => item.url.toLowerCase().includes(d)));
 
         // Étape de vérification (Accessibilité + Email) en parallèle
-        console.log(`[Validation] Vérification de la qualité sur ${unfilteredItems.length} sites...`);
         const results = await Promise.all(unfilteredItems.map(async (item) => {
             const isValid = await validateUrlAndEmail(item.url);
             return isValid ? item : null;
         }));
 
         const items = results.filter(item => item !== null).slice(0, 10);
-        console.log(`[Validation] ${items.length} sites validés et renvoyés.`);
-
         res.json({ success: true, results: items });
 
     } catch (error) {
-        console.error('Gemini Search error:', error.message);
         res.status(500).json({ success: false, error: "Désolé, impossible d'effectuer la recherche pour le moment." });
     }
 });

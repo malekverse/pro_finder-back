@@ -212,13 +212,13 @@ const AiScraperTool = () => {
           onClick={() => { setActiveMode('mass'); setError(null); }}
           style={{ padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', backgroundColor: activeMode === 'mass' ? '#1E3A5F' : '#e2e8f0', color: activeMode === 'mass' ? 'white' : '#475569' }}
         >
-          🤖 Robot de Masse
+          Robot de Masse
         </button>
         <button
           onClick={() => { setActiveMode('single'); setError(null); }}
           style={{ padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', backgroundColor: activeMode === 'single' ? '#1E3A5F' : '#e2e8f0', color: activeMode === 'single' ? 'white' : '#475569' }}
         >
-          🎯 Mode Unitaire
+          Mode Unitaire
         </button>
       </div>
 
@@ -247,7 +247,7 @@ const AiScraperTool = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <button type="submit" disabled={searchLoading} className={styles.button} style={{ opacity: searchLoading ? 0.7 : 1 }}>
-                {searchLoading ? 'Recherche en cours (~10s)...' : '🔍 Lancer le Robot'}
+                {searchLoading ? 'Recherche en cours (~10s)...' : 'Lancer le Robot'}
               </button>
             </form>
 
@@ -269,7 +269,7 @@ const AiScraperTool = () => {
                           fontSize: '14px'
                         }}
                       >
-                        {isProcessingAll ? '⚡ Analyse profonde...' : '🚀 Lancer le Deep Scan'}
+                        {isProcessingAll ? 'Analyse profonde...' : 'Lancer le Deep Scan'}
                       </button>
                     )}
                   </div>
@@ -297,8 +297,8 @@ const AiScraperTool = () => {
 
                             {item.generateResult && (
                               <div style={{ marginTop: '10px', fontSize: '0.85rem', color: '#475569', backgroundColor: '#e2e8f0', padding: '10px', borderRadius: '8px' }}>
-                                ✉️ {item.generateResult["Email de contact"]} <br />
-                                🏷️ {item.generateResult["Catégorie suggérée"] || item.generateResult.category}
+                                 {item.generateResult["Email de contact"]} <br />
+                                 {item.generateResult["Catégorie suggérée"] || item.generateResult.category}
                               </div>
                             )}
                           </div>
@@ -306,14 +306,14 @@ const AiScraperTool = () => {
                           <div style={{ marginLeft: '20px', minWidth: '150px', textAlign: 'right' }}>
                             {item.status === 'idle' && (
                               <button onClick={() => processMassItem(originalIndex)} style={{ padding: '8px 15px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                ✅ Extraire & Ajouter
+                                Extraire & Ajouter
                               </button>
                             )}
-                            {item.status === 'scraping' && <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>⏳ Extraction IA...</span>}
-                            {item.status === 'error' && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>❌ Erreur Scraping</span>}
-                            {item.status === 'failed_no_email' && <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.85rem' }}>❌ Ignoré (Aucun Email)</span>}
-                            {item.status === 'already_exists' && <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '0.85rem' }}>⚠️ Ignoré (Existe déjà)</span>}
-                            {item.status === 'saved' && <span style={{ color: '#059669', fontWeight: 'bold' }}>🎉 Sauvegardé & Invité</span>}
+                            {item.status === 'scraping' && <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>Extraction IA...</span>}
+                            {item.status === 'error' && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>Erreur Scraping</span>}
+                            {item.status === 'failed_no_email' && <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.85rem' }}>Ignoré (Aucun Email)</span>}
+                            {item.status === 'already_exists' && <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '0.85rem' }}>Ignoré (Existe déjà)</span>}
+                            {item.status === 'saved' && <span style={{ color: '#059669', fontWeight: 'bold' }}>Sauvegardé & Invité</span>}
                           </div>
                         </div>
                       );
@@ -354,15 +354,15 @@ const AiScraperTool = () => {
 
                 {!result["Email de contact"] ? (
                   <div style={{ marginTop: '25px', padding: '15px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', borderRadius: '10px', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>
-                    ⚠️ L'IA n'a trouvé aucun e-mail, ajout bloqué.
+                    L'IA n'a trouvé aucun e-mail, ajout bloqué.
                   </div>
                 ) : !saveSuccess ? (
                   <button onClick={handleSaveSingle} disabled={saving} className={styles.button} style={{ marginTop: '25px', width: '100%', backgroundColor: 'var(--success)' }}>
-                    {saving ? 'Sauvegarde...' : '📥 Enregistrer & Inviter'}
+                    {saving ? 'Sauvegarde...' : 'Enregistrer & Inviter'}
                   </button>
                 ) : (
                   <div style={{ marginTop: '25px', padding: '15px', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '10px', textAlign: 'center', fontWeight: 'bold' }}>
-                    ✅ Enregistrée ! Email envoyé.
+                    Enregistrée ! Email envoyé.
                   </div>
                 )}
               </div>

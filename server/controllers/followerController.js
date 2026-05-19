@@ -319,7 +319,7 @@ const getFollowedFeed = async (req, res) => {
       isDeleted:  false,
     };
 
-    const MAX_FEED_POSTS = 200; // Limite pour ne pas tout charger
+    const MAX_FEED_POSTS = 100; // Limite pour ne pas tout charger
 
     const allPosts = await Post.find(query)
       .sort({ createdAt: -1 })
