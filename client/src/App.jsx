@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import AdminRoles from "./components/dashboard/admin/AdminRoles";
-import RootLayout from './components/RootLayout';
+import RootLayout from './pages/RootLayout';
 import RequireRole from "./components/auth/RequireRole";
 import RequireAuth from './components/auth/RequireAuth';
 import { ROLES } from "./constants/roles";
@@ -56,7 +56,7 @@ import PaymentFail from './pages/payment/PaymentFail';
 
 // Pages Admin
 import AdminDashboardLayout from "./components/dashboard/admin/AdminDashboardLayout";
-import AdminHome from "./components/dashboard/admin/AdminHome";
+import AdminDashboard from "./components/dashboard/admin/AdminDashboard";
 import AdminGeography from "./components/dashboard/admin/AdminGeography";
 import AdminTaxonomy from "./components/dashboard/admin/AdminTaxonomy";
 import AdminModeration from "./components/dashboard/admin/AdminModeration";
@@ -114,8 +114,8 @@ function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<AdminHome />} />
-          <Route path="dashboard" element={<AdminHome />} />
+          <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="geography" element={<AdminGeography />} />
           <Route path="taxonomy" element={<AdminTaxonomy />} />
           <Route path="moderation" element={<AdminModeration />} />

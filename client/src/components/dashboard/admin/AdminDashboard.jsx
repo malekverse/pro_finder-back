@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGetAdminDashboardQuery } from '../../../redux/features/profileApiSlice';
 import styles from "../../../styles/dashboardAdmin.module.css"; 
 
-const AdminHome = () => {
+const AdminDashboard = () => {
   const navigate = useNavigate();
   const { data: dashboardData, isLoading } = useGetAdminDashboardQuery(undefined, { pollingInterval: 3000 });
 
@@ -177,54 +177,8 @@ const AdminHome = () => {
           </div>
         </div>
       </div>
-
-      {/* Raccourcis rapides */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-        <div 
-          onClick={() => navigate('/admin/users')}
-          style={{ padding: '25px', background: '#24416b', borderRadius: '16px', color: 'white', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 15px rgba(36, 65, 107, 0.2)' }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '12px' }}>
-            <Users size={28} />
-          </div>
-          <div>
-            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Gérer Utilisateurs</h4>
-            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.8 }}>Voir et éditer les comptes</p>
-          </div>
-        </div>
-        <div 
-          onClick={() => navigate('/admin/taxonomy')}
-          style={{ padding: '25px', background: '#6366f1', borderRadius: '16px', color: 'white', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.2)' }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '12px' }}>
-            <Tags size={28} />
-          </div>
-          <div>
-            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Taxonomie</h4>
-            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.8 }}>Catégories et Services</p>
-          </div>
-        </div>
-        <div 
-          onClick={() => navigate('/admin/geography')}
-          style={{ padding: '25px', background: '#10b981', borderRadius: '16px', color: 'white', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', transition: '0.3s', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.2)' }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '12px' }}>
-            <Globe size={28} />
-          </div>
-          <div>
-            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Géographie</h4>
-            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.8 }}>Villes et Régions</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
 
-export default AdminHome;
+export default AdminDashboard;
