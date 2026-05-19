@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toImageUrl } from "../../../utils/imageUtils";
 
-const Cart = ({ onClose }) => {
+const Panier = ({ onClose }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const carts = useSelector((state) => state.cart.carts);
@@ -225,4 +225,4 @@ const s = {
   checkoutBtn: { width: '100%', padding: '14px', background: '#24416b', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer', transition: '0.2s' },
 };
 
-export default Cart;
+export default Panier;

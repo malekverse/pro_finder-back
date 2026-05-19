@@ -12,7 +12,7 @@ const CompanyCardHorizontal = ({ company, onClick }) => {
     phone,
     rating,
     isGenerated,
-    categoryName, // Passed from parent if found
+    categoryName,
     servicesList,
     followersCount
   } = company;

@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Loader, Newspaper } from "lucide-react";
 import ItemsCarousel from "./ItemsCarousel";
 import PostCard from "../../Posts/PostCard";
 
-const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feedData, isLoadingFeed, isFetchingFeed, refetchFeed, page, setPage }) => {
+const FilActualite = ({ setActiveTab, onAction, followedProducts, followedServices, feedData, isLoadingFeed, isFetchingFeed, refetchFeed, page, setPage }) => {
   // État pour stocker l'intégralité des publications accumulées (toutes les pages)
   const [allPosts, setAllPosts] = useState([]);
   // Référence pour l'élément de chargement en bas de page (utilisé pour le scroll infini)
@@ -71,7 +70,7 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
             <>
               {followedProducts.length > 0 && (
                 <div style={{ margin: '10px 0', padding: '20px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', border: '1px solid #eef2f6' }}>
-                  <ItemsCarousel
+                   <ItemsCarousel
                     title="Produits suggérés pour vous"
                     items={followedProducts}
                     type="product"
@@ -145,9 +144,10 @@ const Feed = ({ setActiveTab, onAction, followedProducts, followedServices, feed
     </div>
   );
 };
-// Styles utilitaires pour le centrag
+
+// Styles utilitaires pour le centrage
 const f = {
   center: { display: "flex", justifyContent: "center", alignItems: "center", padding: 60, minHeight: 200 },
 };
 
-export default Feed;
+export default FilActualite;

@@ -16,12 +16,12 @@ import { useCreateQuoteRequestMutation } from "../../redux/features/company/quot
 import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
 import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart, User } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
-import Cart from "../../components/dashboard/client/Cart";
+import Panier from "../../components/dashboard/client/Panier";
 import Swal from 'sweetalert2';
 
 // Components
 import Header from "../../components/dashboard/client/Header";
-import Feed from "../../components/dashboard/client/Feed";
+import FilActualite from "../../components/dashboard/client/FilActualite";
 import AllServices from "../../components/dashboard/client/AllServices";
 import AllProducts from "../../components/dashboard/client/AllProducts";
 import SuggestedCompanies from "../../components/dashboard/client/SuggestedCompanies";
@@ -166,12 +166,12 @@ const UserDashboard = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      {isCartOpen && <Cart onClose={() => setIsCartOpen(false)} />}
+      {isCartOpen && <Panier onClose={() => setIsCartOpen(false)} />}
       <div style={p.layout}>
         <main style={p.main}>
           <div style={p.feedScroll}>
             {activeTab === "feed" && (
-              <Feed
+              <FilActualite
                 setActiveTab={setActiveTab}
                 onAction={(item, type) => {
                   if (type === 'product') {
