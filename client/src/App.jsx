@@ -12,15 +12,17 @@ import Signup from './pages/auth/Signup';
 import ClaimCompany from './pages/auth/ClaimCompany';
 
 // Pages Client
-import Home from './pages/client/Home';
-import Marketplace from './pages/client/Marketplace';
 import Profile from './pages/client/Profile';
 import UserDashboard from './pages/client/UserDashboard';
 import ClientPurchases from './pages/client/ClientPurchases';
 import ClientDocuments from './pages/client/ClientDocuments';
-import CompanyPublicProfile from './pages/client/CompanyPublicProfile';
-import ProfessionalPublicProfile from './pages/client/ProfessionalPublicProfile';
 import ClientInvoices from './pages/client/ClientInvoices';
+
+// Pages Visiteur
+import Home from './pages/visiteur/Home';
+import Marketplace from './pages/visiteur/Marketplace';
+import CompanyPublicProfile from './pages/visiteur/CompanyPublicProfile';
+import ProfessionalPublicProfile from './pages/visiteur/ProfessionalPublicProfile';
 
 // Pages Company
 import UserManagement from './pages/company/UserManagement';
