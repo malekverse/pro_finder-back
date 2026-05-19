@@ -60,7 +60,6 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGeography from "./pages/admin/AdminGeography";
 import AdminTaxonomy from "./pages/admin/AdminTaxonomy";
 import AdminModeration from "./pages/admin/AdminModeration";
-import AdminUsers from "./pages/admin/AdminUsers";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AiScraperTool from './pages/admin/AiScraperTool';
 
@@ -119,7 +118,6 @@ function App() {
           <Route path="geography" element={<AdminGeography />} />
           <Route path="taxonomy" element={<AdminTaxonomy />} />
           <Route path="moderation" element={<AdminModeration />} />
-          <Route path="users" element={<AdminUsers />} />
           <Route path="profile" element={<AdminProfile />} />
           <Route path="roles" element={<AdminRoles />} />
           <Route path="scraper" element={<AiScraperTool />} />
