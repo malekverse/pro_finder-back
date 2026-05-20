@@ -77,18 +77,18 @@ const sendStatusEmail = async (companyEmail, companyName, status, reason = "") =
         </div>
       </div>
     `;
-  } else if (status === "rejected") {
-    subject = "Mise à jour concernant votre inscription sur Pro Finder";
+    } else if (status === "blocked") {
+    subject = "Notification de suspension de compte - Pro Finder";
     body = `
       <div style="${containerStyle}">
-        <h1 style="${headerStyle}">Information sur votre demande</h1>
+        <h1 style="${headerStyle}">Compte suspendu</h1>
         <p>Bonjour ${companyName},</p>
-        <p>Après examen de votre dossier, nous ne sommes malheureusement pas en mesure de valider votre inscription pour le moment.</p>
+        <p>Nous vous informons que suite à un ou plusieurs signalements et après examen par notre équipe de modération, nous avons pris la décision de <strong>suspendre votre compte</strong> sur notre plateforme.</p>
         <div style="background: #fff1f2; border: 1px solid #fecaca; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0; color: #b91c1c; font-weight: bold;">Motif du refus :</p>
+          <p style="margin: 0; color: #b91c1c; font-weight: bold;">Motif de la suspension :</p>
           <p style="margin: 5px 0 0; color: #475569;">${reason || "Non spécifié"}</p>
         </div>
-        <p>Vous pouvez corriger ces éléments et soumettre à nouveau votre demande.</p>
+        <p>Si vous souhaitez contester cette décision ou obtenir plus d'informations, vous pouvez répondre à cet e-mail.</p>
         <div style="${footerStyle}">
           &copy; 2024 Pro Finder. Tous droits réservés.
         </div>

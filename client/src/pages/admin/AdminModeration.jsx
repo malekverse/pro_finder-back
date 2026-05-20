@@ -821,11 +821,11 @@ const AdminModeration = () => {
                                 <button 
                                     onClick={() => {
                                         if (selectedReport.company_id) {
-                                            handleRejectClick(selectedReport.company_id, "reported");
+                                            handleRejectClick(selectedReport.company_id, "blocked");
                                         } else if (selectedReport.professional_id) {
                                             setSelectedProfessional(selectedReport.professional_id);
                                             setProRefusalReason("");
-                                            setProRejectionType("reported");
+                                            setProRejectionType("blocked");
                                             setIsProModalOpen(true);
                                         }
                                         setIsReportActionModalOpen(false);

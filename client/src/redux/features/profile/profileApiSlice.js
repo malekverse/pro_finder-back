@@ -48,10 +48,10 @@ updateProfile: builder.mutation({
       invalidatesTags: ['Dashboard', 'PendingCompanies'],
     }),
     rejectCompany: builder.mutation({
-      query: ({ companyId, reason }) => ({
+      query: ({ companyId, reason, type }) => ({
         url: `/admin/reject/${companyId}`,
         method: 'DELETE',
-        body: { reason },
+        body: { reason, type },
       }),
       invalidatesTags: ['Dashboard', 'PendingCompanies'],
     }),
@@ -77,10 +77,10 @@ updateProfile: builder.mutation({
       invalidatesTags: ['Dashboard', 'PendingProfessionals'],
     }),
     rejectProfessional: builder.mutation({
-      query: ({ professionalId, reason }) => ({
+      query: ({ professionalId, reason, type }) => ({
         url: `/admin/reject-professional/${professionalId}`,
         method: 'DELETE',
-        body: { reason },
+        body: { reason, type },
       }),
       invalidatesTags: ['Dashboard', 'PendingProfessionals'],
     }),
