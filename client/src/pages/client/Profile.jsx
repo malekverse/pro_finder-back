@@ -28,10 +28,35 @@ const Profile = () => {
 
   const authUser = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token) || localStorage.getItem("accessToken");
-  const roles = authUser?.roles || [];
-  const isOwner = roles.includes("owner");
-  const isCompany = roles.includes("company");
-  const isTeamMember = authUser?.companyId && roles.length > 1; // User + un autre rôle
+  const rawRoles = authUser?.roles || [];
+  
+  // Filtrer les rôles techniques ou inutiles pour l'affichage
+   const displayRoles = rawRoles
+     .filter(r => {
+       const lower = r.toLowerCase();
+       return lower !== 'cataloge' && lower !== 'catalog' && lower !== 'manage_catalog';
+     })
+     .map(r => {
+       const labels = {
+         'user': 'Utilisateur',
+         'owner': 'Propriétaire',
+         'company': 'Entreprise',
+         'professional': 'Professionnel',
+         'admin': 'Administrateur',
+         'manager': 'Manager',
+         'viewer': 'Lecteur',
+         'editor': 'Éditeur'
+       };
+       const label = labels[r.toLowerCase()];
+       if (label) return label;
+       
+       // Fallback : Capitalisation et remplacement des underscores
+       return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase().replace(/_/g, ' ');
+     });
+
+  const isOwner = rawRoles.includes("owner");
+  const isCompany = rawRoles.includes("company");
+  const isTeamMember = authUser?.companyId && rawRoles.length > 1; // User + un autre rôle
   const canAccessDashboard = isOwner || isCompany || isTeamMember;
 
   const { data: profile, isLoading, refetch } = useGetProfileQuery(undefined, {
@@ -283,9 +308,9 @@ const Profile = () => {
               </div>
               <div style={s.nameArea}>
                 <h1 style={s.fbName}>{form.fullName || "Utilisateur"}</h1>
-                <p style={s.fbSub}>{followedCompanies.length} abonnements • {roles.length} rôles</p>
+                <p style={s.fbSub}>{followedCompanies.length} abonnements • {displayRoles.length} rôle{displayRoles.length > 1 ? 's' : ''}</p>
                 <div style={s.rolesList}>
-                  {roles.map((r) => (
+                  {displayRoles.map((r) => (
                     <span key={r} style={s.fbRoleChip}>{r}</span>
                   ))}
                 </div>
@@ -406,7 +431,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   followedCompanies.map((company) => (
-                    <div key={company._id} style={s.fbFollowCard} onClick={() => navigate(`/societe/${company._id}`)}>)
+                    <div key={company._id} style={s.fbFollowCard} onClick={() => navigate(`/societe/${company._id}`)}>
                       <div style={s.fbFollowLogo}>
                         {company.logoUrl ? (
                           <img src={toImageUrl(company.logoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
