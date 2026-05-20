@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useGetProviderInvoicesQuery } from "../../redux/features/invoiceApiSlice";
+import { useGetProviderInvoicesQuery } from "../../redux/features/invoices/invoiceApiSlice";
 import { 
   FileText, Download, Loader2, Calendar, 
   DollarSign, User, TrendingUp, X

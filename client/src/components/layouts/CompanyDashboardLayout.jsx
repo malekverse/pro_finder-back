@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logOut } from "../../redux/features/auth/authSlice";
-import { apiSlice } from "../../redux/app/api/apiSlice";
+import { apiSlice } from "../../redux/api/apiSlice";
 import { 
   BarChart3, 
   LayoutDashboard, 

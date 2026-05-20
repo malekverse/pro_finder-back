@@ -13,19 +13,19 @@ import {
   MapPin, Newspaper, Loader, UserCheck, UserPlus, Flag, X, Send,
   Package, Wrench, Calendar, Info, Clock, CreditCard, Star, MessageSquare, AlertCircle, User, CheckCircle2, ShoppingCart
 } from "lucide-react";
-import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
+import { useCreateReportMutation } from "../../redux/features/reports/reportApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
 import { useGetCompanyServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
-import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
-import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
+import { useCreateReservationMutation } from "../../redux/features/reservations/reservationApiSlice";
+import { useCreateOrderMutation } from "../../redux/features/orders/orderApiSlice";
 import {
   useGetProfessionalReviewsQuery,
   useGetProfessionalAverageRatingQuery,
   useCreateReviewMutation,
   useDeleteReviewMutation,
   useUpdateReviewMutation,
-} from "../../redux/features/reviewApiSlice";
-import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
+} from "../../redux/features/reviews/reviewApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/payments/paymentApiSlice";
 import { useSelector } from "react-redux";
 import { Edit, Trash2 } from "lucide-react";
 

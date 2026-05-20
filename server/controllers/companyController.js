@@ -455,7 +455,7 @@ const searchCompanies = async (req, res) => {
         // On prépare des recherches pour chaque mot-clé
         const keywordFilters = await Promise.all(keywords.map(async (kw) => {
           const kwRegex = { $regex: kw, $options: "i" };
-          
+
           // Pour chaque mot-clé, on trouve les IDs correspondants dans la taxonomie et localisation
           const [cats, countries, regions, cities] = await Promise.all([
             Category.find({ name: kwRegex }).select("_id"),
@@ -497,34 +497,43 @@ const searchCompanies = async (req, res) => {
     const geoFilters = [];
 
     if (country && country !== "") {
+      const conditions = [];
       if (mongoose.isValidObjectId(country)) {
         const cDoc = await Country.findById(country).select("name").lean();
-        const conditions = [{ country: new mongoose.Types.ObjectId(country) }];
+        conditions.push({ country: new mongoose.Types.ObjectId(country) });
         if (cDoc) conditions.push({ country: { $regex: `^${cDoc.name}$`, $options: "i" } });
-        geoFilters.push({ $or: conditions });
       } else {
-        geoFilters.push({ country: country });
+        conditions.push({ country: country });
       }
+      conditions.push({ country: { $in: [null, ""] } });
+      conditions.push({ country: { $exists: false } });
+      geoFilters.push({ $or: conditions });
     }
     if (region && region !== "") {
+      const conditions = [];
       if (mongoose.isValidObjectId(region)) {
         const rDoc = await Region.findById(region).select("name").lean();
-        const conditions = [{ region: new mongoose.Types.ObjectId(region) }];
+        conditions.push({ region: new mongoose.Types.ObjectId(region) });
         if (rDoc) conditions.push({ region: { $regex: `^${rDoc.name}$`, $options: "i" } });
-        geoFilters.push({ $or: conditions });
       } else {
-        geoFilters.push({ region: region });
+        conditions.push({ region: region });
       }
+      conditions.push({ region: { $in: [null, ""] } });
+      conditions.push({ region: { $exists: false } });
+      geoFilters.push({ $or: conditions });
     }
     if (city && city !== "") {
+      const conditions = [];
       if (mongoose.isValidObjectId(city)) {
         const cityDoc = await City.findById(city).select("name").lean();
-        const conditions = [{ city: new mongoose.Types.ObjectId(city) }];
+        conditions.push({ city: new mongoose.Types.ObjectId(city) });
         if (cityDoc) conditions.push({ city: { $regex: `^${cityDoc.name}$`, $options: "i" } });
-        geoFilters.push({ $or: conditions });
       } else {
-        geoFilters.push({ city: city });
+        conditions.push({ city: city });
       }
+      conditions.push({ city: { $in: [null, ""] } });
+      conditions.push({ city: { $exists: false } });
+      geoFilters.push({ $or: conditions });
     }
 
     if (geoFilters.length > 0) {
@@ -534,20 +543,59 @@ const searchCompanies = async (req, res) => {
 
     // Filtres Taxonomie
     if (service && service !== "") {
+      let serviceId;
       try {
-        const serviceId = new mongoose.Types.ObjectId(service);
-        query.services = { $in: [serviceId] };
+        serviceId = new mongoose.Types.ObjectId(service);
       } catch (e) {
-        query.services = service;
+        serviceId = null;
+      }
+      const serviceDoc = serviceId ? await Service.findById(serviceId).select("name").lean() : null;
+      const taxConditions = [];
+      if (serviceId) {
+        taxConditions.push({ services: { $in: [serviceId] } });
+      } else {
+        taxConditions.push({ services: service });
+      }
+      if (serviceDoc) {
+        taxConditions.push({
+          isGenerated: true,
+          description: { $regex: serviceDoc.name, $options: "i" }
+        });
+      }
+      if (taxConditions.length > 0) {
+        if (!query.$and) query.$and = [];
+        query.$and.push({ $or: taxConditions });
       }
     } else if (subCategory && subCategory !== "") {
       const Service = mongoose.model("Service");
       const servicesDocs = await Service.find({ subcategory_id: subCategory }).select("_id");
-      query.services = { $in: servicesDocs.map(s => s._id) };
+      const subDoc = await SubCategory.findById(subCategory).select("name").lean();
+      const taxConditions = [
+        { services: { $in: servicesDocs.map(s => s._id) } }
+      ];
+      if (subDoc) {
+        taxConditions.push({
+          isGenerated: true,
+          description: { $regex: subDoc.name, $options: "i" }
+        });
+      }
+      if (!query.$and) query.$and = [];
+      query.$and.push({ $or: taxConditions });
     } else if (category && category !== "") {
       const subs = await SubCategory.find({ category_id: category }).select("_id");
       const servicesDocs = await Service.find({ subcategory_id: { $in: subs.map(s => s._id) } }).select("_id");
-      query.services = { $in: servicesDocs.map(s => s._id) };
+      const catDoc = await Category.findById(category).select("name").lean();
+      const taxConditions = [
+        { services: { $in: servicesDocs.map(s => s._id) } }
+      ];
+      if (catDoc) {
+        taxConditions.push({
+          isGenerated: true,
+          description: { $regex: catDoc.name, $options: "i" }
+        });
+      }
+      if (!query.$and) query.$and = [];
+      query.$and.push({ $or: taxConditions });
     }
 
 

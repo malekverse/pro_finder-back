@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGetProfessionalProfileQuery, useGetFollowersStatsQuery } from '../../redux/features/professional/professionalApiSlice';
-import { useGetNotificationsQuery } from "../../redux/features/notificationApiSlice";
+import { useGetNotificationsQuery } from "../../redux/features/notifications/notificationApiSlice";
 import { 
   Users, UserPlus, TrendingUp, Calendar, Loader2, Bell, 
   Package, Wrench, FileText, Star, MessageSquare 

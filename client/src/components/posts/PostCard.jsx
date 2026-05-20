@@ -260,6 +260,10 @@ const PostCard = ({ post, onDeleted }) => {
   };
 
   const handleLike = async () => {
+    if (!currentId) {
+      alert("Veuillez vous connecter pour liker cette publication.");
+      return;
+    }
     const prevIsLiked = localIsLiked;
     const prevLikesCount = localLikesCount;
     setLocalIsLiked(!prevIsLiked);
@@ -275,6 +279,10 @@ const PostCard = ({ post, onDeleted }) => {
 
   const handleComment = async (e) => {
     e.preventDefault();
+    if (!currentId) {
+      alert("Veuillez vous connecter pour commenter cette publication.");
+      return;
+    }
     if (!commentText.trim()) return;
     try {
       const newComment = await addComment({ id: post._id, text: commentText }).unwrap();
@@ -476,12 +484,15 @@ const PostCard = ({ post, onDeleted }) => {
             <form onSubmit={handleComment} style={s.commentForm}>
               <input
                 type="text"
-                placeholder="Écrire un commentaire..."
+                placeholder={currentId ? "Écrire un commentaire..." : "Connectez-vous pour commenter"}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 style={s.commentInput}
+                disabled={!currentId}
               />
-              <button type="submit" style={s.sendBtn}><Send size={15} /></button>
+              <button type="submit" style={{ ...s.sendBtn, opacity: currentId ? 1 : 0.5 }} disabled={!currentId}>
+                <Send size={15} />
+              </button>
             </form>
           </div>
         )}

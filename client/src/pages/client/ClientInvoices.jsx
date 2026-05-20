@@ -1,5 +1,5 @@
 import React from "react";
-import { useGetMyInvoicesQuery } from "../../redux/features/invoiceApiSlice";
+import { useGetMyInvoicesQuery } from "../../redux/features/invoices/invoiceApiSlice";
 import { 
   FileText, Download, Loader2, Calendar, 
   DollarSign, Building2, Search, Filter

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { profileApiSlice } from "../../redux/features/profileApiSlice";
+import { profileApiSlice } from "../../redux/features/profile/profileApiSlice";
 import { selectCurrentToken } from "../../redux/features/auth/authSlice";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { Search, Plus, X, Layers, Wrench, Tag } from "lucide-react";
@@ -34,8 +34,8 @@ export default function AdminTaxonomy() {
     } catch (err) { console.error("Erreur de chargement", err); }
   };
 
-  useEffect(() => { 
-    loadData(); 
+  useEffect(() => {
+    loadData();
     const interval = setInterval(loadData, 3000);
     return () => clearInterval(interval);
   }, []);
@@ -45,7 +45,7 @@ export default function AdminTaxonomy() {
     try {
       // On définit l'état inverse (si indéfini, on considère qu'il était actif)
       const newStatus = item.status === "Inactif" ? "Actif" : "Inactif";
-      
+
       let endpoint = "";
       if (type === "cat") endpoint = `${API}/updateCategory/${item._id}`;
       else if (type === "sub") endpoint = `${API}/updateSubCategory/${item._id}`;
@@ -55,7 +55,7 @@ export default function AdminTaxonomy() {
       await axios.put(endpoint, { status: newStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       // On recharge les données pour confirmer le changement
       loadData();
     } catch (err) {
@@ -101,9 +101,9 @@ export default function AdminTaxonomy() {
       dispatch(profileApiSlice.util.invalidateTags(['Dashboard']));
       loadData();
       setIsModalOpen(false);
-    } catch (err) { 
+    } catch (err) {
       const msg = err.response?.data?.message || "Erreur d'enregistrement";
-      alert(msg); 
+      alert(msg);
     }
   };
 
@@ -162,10 +162,10 @@ export default function AdminTaxonomy() {
       </div>
 
       <div className={styles.actionBar}>
-        <div className={styles.searchBox} style={{ maxWidth: "500px"}}>
-          <input 
-            type="text" 
-            placeholder="Rechercher une catégorie, sous-catégorie ou service..." 
+        <div className={styles.searchBox} style={{ maxWidth: "500px" }}>
+          <input
+            type="text"
+            placeholder="Rechercher une catégorie, sous-catégorie ou service..."
             className={styles.searchInput}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -251,12 +251,12 @@ export default function AdminTaxonomy() {
             <form onSubmit={handleSubmit} className={styles.formContainer}>
               <div className={styles.formGroup}>
                 <label>Nom</label>
-                <input className={styles.modalInput} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Santé, Plomberie..." />
+                <input className={styles.modalInput} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required placeholder="Ex: Santé, Plomberie..." />
               </div>
               {activeTab === "subcategories" && (
                 <div className={styles.formGroup}>
                   <label>Catégorie parente</label>
-                  <select className={styles.modalSelect} value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: e.target.value})} required>
+                  <select className={styles.modalSelect} value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })} required>
                     <option value="">Choisir Catégorie</option>
                     {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                   </select>
@@ -265,7 +265,7 @@ export default function AdminTaxonomy() {
               {activeTab === "services" && (
                 <div className={styles.formGroup}>
                   <label>Sous-catégorie parente</label>
-                  <select className={styles.modalSelect} value={formData.subCategoryId} onChange={(e) => setFormData({...formData, subCategoryId: e.target.value})} required>
+                  <select className={styles.modalSelect} value={formData.subCategoryId} onChange={(e) => setFormData({ ...formData, subCategoryId: e.target.value })} required>
                     <option value="">Choisir Sous-Catégorie</option>
                     {subCategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                   </select>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useGetFollowersStatsQuery } from "../../redux/features/company/companyApiSlice";
-import { useGetNotificationsQuery } from "../../redux/features/notificationApiSlice";
+import { useGetNotificationsQuery } from "../../redux/features/notifications/notificationApiSlice";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, 
   LineChart, Line, CartesianGrid, AreaChart, Area 

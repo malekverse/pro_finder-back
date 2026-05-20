@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logOut } from "../../redux/features/auth/authSlice";
-import { apiSlice } from "../../redux/app/api/apiSlice";
+import { apiSlice } from "../../redux/api/apiSlice";
 import { useGetFollowedFeedQuery } from "../../redux/features/posts/postApiSlice";
 import {
   useGetFollowedProductsQuery
@@ -10,10 +10,10 @@ import {
 import {
   useGetFollowedServicesQuery
 } from "../../redux/features/company/companyServiceApiSlice";
-import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
-import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
+import { useCreateOrderMutation } from "../../redux/features/orders/orderApiSlice";
+import { useCreateReservationMutation } from "../../redux/features/reservations/reservationApiSlice";
 import { useCreateQuoteRequestMutation } from "../../redux/features/company/quoteApiSlice";
-import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/payments/paymentApiSlice";
 import { Newspaper, Package, Wrench, X, CheckCircle2, Heart, Star, Building2, ShoppingBag, Clock, ShoppingCart, User } from "lucide-react";
 import { toImageUrl } from "../../utils/imageUtils";
 import Panier from "../../components/dashboard/client/Panier";

@@ -2,7 +2,7 @@ import {
   useGetProfileQuery, 
   useUpdateProfileMutation, 
   useChangePasswordMutation 
-} from "../../redux/features/profileApiSlice";
+} from "../../redux/features/profile/profileApiSlice";
 import { useGetMyFollowsQuery, useGetMyManagedCompaniesQuery } from "../../redux/features/company/companyApiSlice";
 import { useSwitchCompanyMutation } from "../../redux/features/auth/authApiSlice";
 import { setCredentials } from "../../redux/features/auth/authSlice";
@@ -11,7 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logOut } from "../../redux/features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
-import { apiSlice } from "../../redux/app/api/apiSlice";
+import { apiSlice } from "../../redux/api/apiSlice";
 import {
   LayoutDashboard, LogOut, Camera, User, Phone, Mail,
   Lock, CheckCircle, AlertCircle, ChevronRight, Shield,

@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { useGetProfessionalReviewsQuery, useGetProfessionalAverageRatingQuery } from "../../redux/features/reviewApiSlice";
+import { useGetProfessionalReviewsQuery, useGetProfessionalAverageRatingQuery } from "../../redux/features/reviews/reviewApiSlice";
 import { Star, MessageSquare, Loader2, User } from "lucide-react";
 import styles from "../../styles/Dashboard.module.css";
 import { toImageUrl } from "../../utils/imageUtils";

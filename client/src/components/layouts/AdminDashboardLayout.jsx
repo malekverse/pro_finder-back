@@ -3,7 +3,7 @@ import {
   Globe, Tags, Eye, Users, LayoutDashboard, 
   LogOut, UserCog, ShieldCheck, ChevronRight, Sparkles 
 } from "lucide-react";
-import { useGetProfileQuery } from "../../redux/features/profileApiSlice"; // ✅ AJOUT
+import { useGetProfileQuery } from "../../redux/features/profile/profileApiSlice"; // ✅ AJOUT
 
 import styles from "../../styles/dashboardAdmin.module.css";
 

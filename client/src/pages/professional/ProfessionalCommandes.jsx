@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { 
   useGetCompanyOrdersQuery, 
   useUpdateOrderStatusMutation 
-} from "../../redux/features/orderApiSlice";
+} from "../../redux/features/orders/orderApiSlice";
 import { 
   useGetCompanyReservationsQuery, 
   useUpdateReservationStatusMutation 
-} from "../../redux/features/reservationApiSlice";
-import { useGetProviderPaymentsQuery } from "../../redux/features/paymentApiSlice";
+} from "../../redux/features/reservations/reservationApiSlice";
+import { useGetProviderPaymentsQuery } from "../../redux/features/payments/paymentApiSlice";
 import { 
   ShoppingBag, 
   Calendar, 

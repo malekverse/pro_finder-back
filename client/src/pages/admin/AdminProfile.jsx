@@ -3,7 +3,7 @@ import {
   useUpdateProfileMutation, 
   useChangeAdminPasswordMutation,
   useGetAdminActivitiesQuery
-} from "../../redux/features/profileApiSlice";
+} from "../../redux/features/profile/profileApiSlice";
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from "react-router-dom";

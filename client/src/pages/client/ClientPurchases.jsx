@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetMyOrdersQuery } from "../../redux/features/orderApiSlice";
-import { useGetMyReservationsQuery } from "../../redux/features/reservationApiSlice";
-import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
+import { useGetMyOrdersQuery } from "../../redux/features/orders/orderApiSlice";
+import { useGetMyReservationsQuery } from "../../redux/features/reservations/reservationApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/payments/paymentApiSlice";
 import { 
   ShoppingBag, 
   Calendar, 

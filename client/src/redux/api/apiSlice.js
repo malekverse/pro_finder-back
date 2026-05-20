@@ -4,17 +4,16 @@ import Cookies from 'js-cookie';
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_BASE_URL,
   credentials: 'include', // pour cookies si nécessaire
-prepareHeaders: (headers, { getState }) => {
-  const token = getState().auth?.token || localStorage.getItem("accessToken");
+  prepareHeaders: (headers, { getState }) => {
+    const token = getState().auth?.token || localStorage.getItem("accessToken");
 
-  if (token) {
-    headers.set("authorization", `Bearer ${token}`);
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+
+    return headers;
   }
-
-  return headers;
-}
-}
-);
+});
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   const state = api.getState();

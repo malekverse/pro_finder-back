@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { removeFromCart, updateQuantity, clearCart } from "../../../redux/features/cart/cartSlice";
-import { useCreateOrderMutation } from "../../../redux/features/orderApiSlice";
+import { useCreateOrderMutation } from "../../../redux/features/orders/orderApiSlice";
 import { 
   ShoppingBag, Trash2, Plus, Minus, X, 
   ArrowRight, Building2, Package, Loader2, CheckCircle 

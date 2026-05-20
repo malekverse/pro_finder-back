@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, User, Clock, Trash2, CheckCircle2, Lock, Plus, X, Calendar as CalendarIcon } from "lucide-react";
-import { useCreateManualBlockMutation, useDeleteManualBlockMutation } from "../../../redux/features/reservationApiSlice";
+import { useCreateManualBlockMutation, useDeleteManualBlockMutation } from "../../../redux/features/reservations/reservationApiSlice";
 
 const CompanyCalendar = ({ reservations, onUpdateStatus }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());

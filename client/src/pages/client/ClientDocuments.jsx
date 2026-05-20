@@ -8,7 +8,7 @@ import {
   useGetUserContractsQuery, 
   useUpdateContractStatusMutation 
 } from "../../redux/features/company/contractApiSlice";
-import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/payments/paymentApiSlice";
 import { 
   FileSpreadsheet, FileSignature, Loader2, Calendar, 
   DollarSign, CheckCircle2, XCircle, Building2, Clock, FileText, Eye, X, Download, CreditCard

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation, useGetPendingProfessionalsQuery, useVerifyProfessionalMutation, useRejectProfessionalMutation, useContactProfessionalMutation } from "../../redux/features/profileApiSlice";
-import { useGetAllReportsQuery, useUpdateReportStatusMutation } from "../../redux/features/reportApiSlice";
+import { useGetPendingCompaniesQuery, useVerifyCompanyMutation, useRejectCompanyMutation, useContactCompanyMutation, useGetPendingProfessionalsQuery, useVerifyProfessionalMutation, useRejectProfessionalMutation, useContactProfessionalMutation } from "../../redux/features/profile/profileApiSlice";
+import { useGetAllReportsQuery, useUpdateReportStatusMutation } from "../../redux/features/reports/reportApiSlice";
 import { CheckCircle, XCircle, Loader2, Building2, Mail, ExternalLink, X, Send, Flag, AlertTriangle, CheckSquare, Trash2, Info, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "../../styles/dashboardAdmin.module.css";

@@ -13,11 +13,11 @@ import {
   Package, Wrench, Calendar, Info, Clock, CreditCard, Ban, Star, MessageSquare, AlertCircle, ShieldCheck, ShoppingCart,
   Edit, Trash2, CheckCircle2
 } from "lucide-react";
-import { useCreateReportMutation } from "../../redux/features/reportApiSlice";
+import { useCreateReportMutation } from "../../redux/features/reports/reportApiSlice";
 import { useGetCompanyProductsQuery } from "../../redux/features/products/productApiSlice";
 import { useGetCompanyServicesQuery } from "../../redux/features/company/companyServiceApiSlice";
-import { useCreateReservationMutation } from "../../redux/features/reservationApiSlice";
-import { useCreateOrderMutation } from "../../redux/features/orderApiSlice";
+import { useCreateReservationMutation } from "../../redux/features/reservations/reservationApiSlice";
+import { useCreateOrderMutation } from "../../redux/features/orders/orderApiSlice";
 import { useCreateQuoteRequestMutation } from "../../redux/features/company/quoteApiSlice";
 import {
   useGetCompanyReviewsQuery,
@@ -25,9 +25,9 @@ import {
   useCreateReviewMutation,
   useDeleteReviewMutation,
   useUpdateReviewMutation,
-} from "../../redux/features/reviewApiSlice";
+} from "../../redux/features/reviews/reviewApiSlice";
 import { useRequestClaimMutation as useReqClaim } from "../../redux/features/company/companyApiSlice";
-import { useInitializePaymentMutation } from "../../redux/features/paymentApiSlice";
+import { useInitializePaymentMutation } from "../../redux/features/payments/paymentApiSlice";
 import { useSelector } from "react-redux";
 
 

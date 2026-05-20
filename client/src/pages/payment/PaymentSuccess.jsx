@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useVerifyPaymentQuery } from "../../redux/features/paymentApiSlice";
+import { useVerifyPaymentQuery } from "../../redux/features/payments/paymentApiSlice";
 import { CheckCircle2, Loader2, ArrowRight } from "lucide-react";
 
 const PaymentSuccess = () => {

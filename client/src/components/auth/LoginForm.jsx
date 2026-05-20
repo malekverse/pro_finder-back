@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLoginMutation } from '../../redux/features/auth/authApiSlice'; 
 // ✅ Vérifie bien que ce chemin mène au fichier apiSlice.js depuis LoginForm.jsx
-import { apiSlice } from "../../redux/app/api/apiSlice";
+import { apiSlice } from "../../redux/api/apiSlice";
 import styles from '../../styles/Form.module.css';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/features/auth/authSlice';

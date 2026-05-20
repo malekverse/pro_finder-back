@@ -89,42 +89,7 @@ const ServiceDetail = ({ service, onClose, onReserve }) => {
                 ))}
               </div>
 
-              {/* Company Profile moved here */}
-              <div style={pd.sellerCard}>
-                <div style={pd.sellerHeader}>
-                  <div style={pd.sellerLogo}>
-                    {(service.companyId?.logoUrl || service.professionalId?.photoProfessional) ? (
-                      <img src={toImageUrl(service.companyId?.logoUrl || service.professionalId?.photoProfessional)} alt="" style={pd.logo} />
-                    ) : (
-                      <Building2 size={24} color="#1c79faff" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 style={pd.sellerName}>{service.companyId?.companyName || service.professionalId?.fullName || 'Prestataire'}</h4>
-                    <div style={pd.sellerRating}>
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                      <Star size={12} color="#cbd5e1" />
-                      <span style={pd.ratingCount}>5</span>
-                    </div>
-                  </div>
-                </div>
-                <button 
-                  type="button" 
-                  style={pd.visitBtn} 
-                  onClick={() => {
-                    if (service.professionalId) {
-                      navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
-                    } else {
-                      navigate(`/user/company/${service.companyId?._id || service.companyId}`);
-                    }
-                  }}
-                >
-                  {service.professionalId ? "VOIR LE PROFIL" : "VISITER L'ENTREPRISE"}
-                </button>
-              </div>
+              
             </div>
 
             <div style={pd.midCol}>

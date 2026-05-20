@@ -5,7 +5,7 @@ import {
   useGetNotificationsQuery, 
   useMarkAsReadMutation, 
   useMarkAllAsReadMutation 
-} from "../../../redux/features/notificationApiSlice";
+} from "../../../redux/features/notifications/notificationApiSlice";
 
 const formatRelativeTime = (dateString) => {
   const date = new Date(dateString);

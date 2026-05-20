@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { logOut } from "../../redux/features/auth/authSlice";
-import { apiSlice } from "../../redux/app/api/apiSlice";
+import { apiSlice } from "../../redux/api/apiSlice";
 import {
   useGetSuggestedCompaniesQuery,
   useFollowCompanyMutation,
@@ -35,7 +35,7 @@ import {
 
 import { toImageUrl } from "../../utils/imageUtils";
 
-const Header = ({ onAction, activeTab }) => {
+const Header = ({ user, onLogout, onAction, activeTab }) => {
   const navigate = useNavigate();
 
   return (
@@ -93,14 +93,34 @@ const Header = ({ onAction, activeTab }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Link to="/auth/signup" style={h.authBtnSignup}>
-            S'inscrire
-          </Link>
-          <Link to="/auth/login" style={h.authBtnLogin}>
-            Connexion
-          </Link>
-        </div>
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={() => {
+                const roles = user.roles || [];
+                if (roles.includes('admin')) navigate("/admin/stats");
+                else if (roles.includes('company') || roles.includes('owner') || roles.includes('manager')) navigate("/company/stats");
+                else if (roles.includes('professional')) navigate("/professional/stats");
+                else navigate("/user/dashboard");
+              }}
+              style={h.authBtnSignup}
+            >
+              Tableau de bord
+            </button>
+            <button onClick={onLogout} style={h.authBtnLogin}>
+              <LogOut size={16} /> Quitter
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Link to="/auth/signup" style={h.authBtnSignup}>
+              S'inscrire
+            </Link>
+            <Link to="/auth/login" style={h.authBtnLogin}>
+              Connexion
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1331,6 +1351,8 @@ const Home = () => {
   return (
     <div style={p.root}>
       <Header
+        user={user}
+        onLogout={handleLogout}
         onAction={handleAction}
         activeTab={isShowingResults ? searchTab : null}
       />
