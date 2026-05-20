@@ -253,9 +253,9 @@ const PostCard = ({ post, onDeleted }) => {
   const openProfile = () => {
     if (!authorId) return;
     if (post.authorType === "Professional") {
-      navigate(`/user/professional/${authorId}`);
+      navigate(`/pro/${authorId}`);
     } else {
-      navigate(`/user/company/${authorId}`);
+      navigate(`/societe/${authorId}`);
     }
   };
 

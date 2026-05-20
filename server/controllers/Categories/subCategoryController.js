@@ -67,6 +67,29 @@ const updateSubCategory=async (req,res)=>{
 const deleteSubCategory=async (req,res)=>{
     try {
         const { id } = req.params;
+
+        const Service = require("../../models/Service");
+        const Company = require("../../models/company");
+
+        // 1. Vérifier s'il y a des services liés
+        const linkedService = await Service.findOne({ subcategory_id: id });
+        if (linkedService) {
+            return res.status(400).json({
+                message: "Suppression impossible : des services sont liés à cette sous-catégorie."
+            });
+        }
+
+        // 2. Vérifier si des entreprises sont liées via les services de cette sous-catégorie
+        const services = await Service.find({ subcategory_id: id });
+        const serviceIds = services.map(s => s._id);
+        const linkedCompany = await Company.findOne({ services: { $in: serviceIds } });
+
+        if (linkedCompany) {
+            return res.status(400).json({
+                message: "Suppression impossible : des entreprises sont liées à cette sous-catégorie via ses services."
+            });
+        }
+
         const subCategory = await SubCategory.findById(id);
         if (!subCategory) return res.status(404).json({ message: "Subcategory not found" });
 

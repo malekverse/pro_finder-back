@@ -101,8 +101,8 @@ function App() {
         </Route>
 
         {/* PROFIL PUBLIC */}
-        <Route path="user/company/:companyId" element={<CompanyPublicProfile />} />
-        <Route path="user/professional/:professionalId" element={<ProfessionalPublicProfile />} />
+        <Route path="societe/:companyId" element={<CompanyPublicProfile />} />
+        <Route path="pro/:professionalId" element={<ProfessionalPublicProfile />} />
 
         {/* ADMIN */}
         <Route

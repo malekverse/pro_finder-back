@@ -48,13 +48,13 @@ const SuggestedCompanies = ({ onSeeMore }) => {
             const logo = toImageUrl(company.logoUrl);
             return (
               <div key={company._id} style={sg.item}>
-                <div style={sg.logoWrap} onClick={() => navigate(`/user/company/${company._id}`)}>
+                <div style={sg.logoWrap} onClick={() => navigate(`/societe/${company._id}`)}>
                   {logo
                     ? <img src={logo} alt={company.companyName} style={sg.logo} />
                     : <div style={sg.logoFallback}><Building2 size={16} color="#94a3b8" /></div>}
                 </div>
                 <div style={sg.info}>
-                  <span style={sg.name} onClick={() => navigate(`/user/company/${company._id}`)}>
+                  <span style={sg.name} onClick={() => navigate(`/societe/${company._id}`)}>
                     {company.companyName}
                   </span>
                   <div style={sg.meta}>

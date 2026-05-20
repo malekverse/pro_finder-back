@@ -46,8 +46,8 @@ const GlobalSearchBar = () => {
   ].slice(0, 10);
 
   const handleSelect = (item) => {
-    if (item.type === 'company') navigate(`/user/company/${item._id}`);
-    else navigate(`/user/professional/${item._id}`);
+    if (item.type === 'company') navigate(`/societe/${item._id}`);
+    else navigate(`/pro/${item._id}`);
     clear();
   };
 

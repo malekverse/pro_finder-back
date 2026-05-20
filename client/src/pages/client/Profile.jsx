@@ -406,7 +406,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   followedCompanies.map((company) => (
-                    <div key={company._id} style={s.fbFollowCard} onClick={() => navigate(`/user/company/${company._id}`)}>
+                    <div key={company._id} style={s.fbFollowCard} onClick={() => navigate(`/societe/${company._id}`)}>)
                       <div style={s.fbFollowLogo}>
                         {company.logoUrl ? (
                           <img src={toImageUrl(company.logoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

@@ -24,7 +24,9 @@ const AdminModeration = () => {
     
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedReport, setSelectedReport] = useState(null);
+    const [activeReportId, setActiveReportId] = useState(null);
     const [refusalReason, setRefusalReason] = useState("");
+    const [rejectionType, setRejectionType] = useState("rejected");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [contactMessage, setContactMessage] = useState("");
@@ -39,6 +41,7 @@ const AdminModeration = () => {
     const [contactProfessional, { isLoading: isContactingPro }] = useContactProfessionalMutation();
     const [selectedProfessional, setSelectedProfessional] = useState(null);
     const [proRefusalReason, setProRefusalReason] = useState("");
+    const [proRejectionType, setProRejectionType] = useState("rejected");
     const [isProModalOpen, setIsProModalOpen] = useState(false);
     const [isContactProModalOpen, setIsContactProModalOpen] = useState(false);
     const [contactProMessage, setContactProMessage] = useState("");
@@ -54,9 +57,10 @@ const AdminModeration = () => {
         }
     };
 
-    const handleRejectClick = (company) => {
+    const handleRejectClick = (company, type = "rejected") => {
         setSelectedCompany(company);
         setRefusalReason("");
+        setRejectionType(type);
         setIsModalOpen(true);
     };
 
@@ -65,11 +69,23 @@ const AdminModeration = () => {
         try {
             await rejectCompany({ 
                 companyId: selectedCompany._id, 
-                reason: refusalReason 
+                reason: refusalReason,
+                type: rejectionType
             }).unwrap();
+
+            // Si l'action vient d'un signalement, on marque le signalement comme résolu
+            if (activeReportId) {
+                await updateReportStatus({
+                    reportId: activeReportId,
+                    status: 'resolved',
+                    adminNotes: `Compte rejeté/bloqué par l'admin. Motif : ${refusalReason}`
+                }).unwrap();
+                setActiveReportId(null);
+            }
+
             setIsModalOpen(false);
             setSelectedCompany(null);
-            alert("Entreprise refusée. Un email a été envoyé avec le motif.");
+            alert("Action effectuée avec succès ! Un email a été envoyé.");
         } catch (err) {
             console.error("Failed to reject company:", err);
             alert("L'action a échoué.");
@@ -114,6 +130,7 @@ const AdminModeration = () => {
 
     const handleReportActionClick = (report) => {
         setSelectedReport(report);
+        setActiveReportId(report._id);
         setAdminNotes(report.adminNotes || "");
         setIsReportActionModalOpen(true);
     };
@@ -230,7 +247,7 @@ const AdminModeration = () => {
                         transition: '0.2s'
                     }}
                 >
-                    Signalements ({reports.filter(r => r.status === 'pending').length})
+                    Signalements ({reports.filter(r => r.status === 'pending' || r.status === 'reviewed').length})
                 </button>
             </div>
 
@@ -269,7 +286,7 @@ const AdminModeration = () => {
                                         <tr key={company._id} className={styles.tr}>
                                             <td className={styles.td}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <Link to={`/user/company/${company._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Link to={`/societe/${company._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
                                                         {company.logoUrl ? (
                                                             <img 
                                                                 src={toImageUrl(company.logoUrl)} 
@@ -285,7 +302,7 @@ const AdminModeration = () => {
                                                     <div>
                                                         <div style={{ fontWeight: '600', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                             {company.companyName || "Nom inconnu"}
-                                                            <Link to={`/user/company/${company._id}`} style={{ color: '#24416b' }} title="Voir le profil">
+                                                            <Link to={`/societe/${company._id}`} style={{ color: '#24416b' }} title="Voir le profil">
                                                                 <ExternalLink size={14} />
                                                             </Link>
                                                         </div>
@@ -415,7 +432,7 @@ const AdminModeration = () => {
                                                             {report.company_id?.companyName || report.professional_id?.fullName}
                                                         </div>
                                                         <Link 
-                                                            to={report.company_id ? `/user/company/${report.company_id?._id}` : `/user/professional/${report.professional_id?._id}`} 
+                                                            to={report.company_id ? `/societe/${report.company_id?._id}` : `/pro/${report.professional_id?._id}`} 
                                                             style={{ fontSize: '11px', color: '#24416b', textDecoration: 'underline' }}
                                                         >
                                                             Voir le profil
@@ -456,34 +473,51 @@ const AdminModeration = () => {
                                                 </div>
                                             </td>
                                             <td className={styles.td}>
-                                                <span style={{ 
-                                                    padding: '4px 10px', 
-                                                    borderRadius: '20px', 
-                                                    fontSize: '11px', 
-                                                    fontWeight: '700',
-                                                    textTransform: 'uppercase',
-                                                    backgroundColor: 
-                                                        report.status === 'pending' ? '#fef2f2' : 
-                                                        report.status === 'reviewed' ? '#eff6ff' : 
-                                                        report.status === 'resolved' ? '#f0fdf4' : '#f1f5f9',
-                                                    color: 
-                                                        report.status === 'pending' ? '#ef4444' : 
-                                                        report.status === 'reviewed' ? '#2563eb' : 
-                                                        report.status === 'resolved' ? '#16a34a' : '#475569'
-                                                }}>
-                                                    {report.status === 'pending' ? 'En attente' : 
-                                                     report.status === 'reviewed' ? 'En examen' : 
-                                                     report.status === 'resolved' ? 'Résolu' : 'Classé'}
-                                                </span>
+                                                {(report.company_id?.Status === 'rejected' || report.professional_id?.Status === 'rejected') ? (
+                                                    <span style={{ 
+                                                        padding: '4px 10px', 
+                                                        borderRadius: '20px', 
+                                                        fontSize: '11px', 
+                                                        fontWeight: '700',
+                                                        textTransform: 'uppercase',
+                                                        backgroundColor: '#fee2e2',
+                                                        color: '#ef4444'
+                                                    }}>
+                                                        Bloqué
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ 
+                                                        padding: '4px 10px', 
+                                                        borderRadius: '20px', 
+                                                        fontSize: '11px', 
+                                                        fontWeight: '700',
+                                                        textTransform: 'uppercase',
+                                                        backgroundColor: 
+                                                            report.status === 'pending' ? '#fef2f2' : 
+                                                            report.status === 'reviewed' ? '#eff6ff' : 
+                                                            report.status === 'resolved' ? '#f0fdf4' : '#f1f5f9',
+                                                        color: 
+                                                            report.status === 'pending' ? '#ef4444' : 
+                                                            report.status === 'reviewed' ? '#2563eb' : 
+                                                            report.status === 'resolved' ? '#16a34a' : '#475569'
+                                                    }}>
+                                                        {report.status === 'pending' ? 'En attente' : 
+                                                         report.status === 'reviewed' ? 'En examen' : 
+                                                         report.status === 'resolved' ? 'Résolu' : 'Classé'}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className={styles.td} style={{ textAlign: 'center' }}>
-                                                <button 
-                                                    className={styles.addBtnBlue} 
-                                                    onClick={() => handleReportActionClick(report)}
-                                                    style={{ padding: '6px 10px', fontSize: '11px', background: '#1e293b' }}
-                                                >
-                                                    Gérer
-                                                </button>
+                                                {((report.status === 'pending' || report.status === 'reviewed') && 
+                                                  (report.company_id?.Status !== 'rejected' && report.professional_id?.Status !== 'rejected')) && (
+                                                    <button 
+                                                        className={styles.addBtnBlue} 
+                                                        onClick={() => handleReportActionClick(report)}
+                                                        style={{ padding: '6px 10px', fontSize: '11px', background: '#1e293b' }}
+                                                    >
+                                                        Gérer
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -523,7 +557,7 @@ const AdminModeration = () => {
                                         <tr key={pro._id} className={styles.tr}>
                                             <td className={styles.td}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <Link to={`/user/professional/${pro._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Link to={`/pro/${pro._id}`} title="Voir le profil public" style={{ display: 'flex', alignItems: 'center' }}>
                                                         {pro.photoProfessional ? (
                                                             <img 
                                                                 src={toImageUrl(pro.photoProfessional)}
@@ -539,7 +573,7 @@ const AdminModeration = () => {
                                                     <div>
                                                         <div style={{ fontWeight: '600', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                             {pro.fullName || "Nom inconnu"}
-                                                            <Link to={`/user/professional/${pro._id}`} style={{ color: '#24416b' }} title="Voir le profil">
+                                                            <Link to={`/pro/${pro._id}`} style={{ color: '#24416b' }} title="Voir le profil">
                                                                 <ExternalLink size={14} />
                                                             </Link>
                                                         </div>
@@ -606,6 +640,7 @@ const AdminModeration = () => {
                                                         onClick={() => {
                                                             setSelectedProfessional(pro);
                                                             setProRefusalReason("");
+                                                            setProRejectionType("rejected");
                                                             setIsProModalOpen(true);
                                                         }}
                                                         disabled={isRejectingPro}
@@ -785,8 +820,14 @@ const AdminModeration = () => {
                                 </button>
                                 <button 
                                     onClick={() => {
-                                        // Optionnel: On pourrait rediriger vers le rejet de l'entreprise directement
-                                        handleRejectClick(selectedReport.company_id);
+                                        if (selectedReport.company_id) {
+                                            handleRejectClick(selectedReport.company_id, "reported");
+                                        } else if (selectedReport.professional_id) {
+                                            setSelectedProfessional(selectedReport.professional_id);
+                                            setProRefusalReason("");
+                                            setProRejectionType("reported");
+                                            setIsProModalOpen(true);
+                                        }
                                         setIsReportActionModalOpen(false);
                                     }}
                                     disabled={isUpdatingReport}
@@ -801,7 +842,7 @@ const AdminModeration = () => {
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                                     }}
                                 >
-                                    <Trash2 size={16} /> Bloquer/Rejeter l'entreprise
+                                    <Trash2 size={16} /> Bloquer/Rejeter l'entité
                                 </button>
                             </div>
                         </div>
@@ -948,11 +989,23 @@ const AdminModeration = () => {
                                     try {
                                         await rejectProfessional({ 
                                             professionalId: selectedProfessional._id, 
-                                            reason: proRefusalReason 
+                                            reason: proRefusalReason,
+                                            type: proRejectionType
                                         }).unwrap();
+
+                                        // Si l'action vient d'un signalement
+                                        if (activeReportId) {
+                                            await updateReportStatus({
+                                                reportId: activeReportId,
+                                                status: 'resolved',
+                                                adminNotes: `Compte rejeté/bloqué par l'admin. Motif : ${proRefusalReason}`
+                                            }).unwrap();
+                                            setActiveReportId(null);
+                                        }
+
                                         setIsProModalOpen(false);
                                         setSelectedProfessional(null);
-                                        alert("Professionnel refusé.");
+                                        alert("Action effectuée avec succès !");
                                     } catch (err) {
                                         console.error(err);
                                         alert("L'action a échoué.");

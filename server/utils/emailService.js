@@ -94,6 +94,23 @@ const sendStatusEmail = async (companyEmail, companyName, status, reason = "") =
         </div>
       </div>
     `;
+  } else if (status === "reported") {
+    subject = "Signalement concernant votre entreprise sur Pro Finder";
+    body = `
+      <div style="${containerStyle}">
+        <h1 style="${headerStyle}">Information sur un signalement</h1>
+        <p>Bonjour ${companyName},</p>
+        <p>Nous vous contactons pour vous informer qu'un signalement a été effectué concernant votre entreprise sur notre plateforme.</p>
+        <div style="background: #fff1f2; border: 1px solid #fecaca; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; color: #b91c1c; font-weight: bold;">Détails du signalement :</p>
+          <p style="margin: 5px 0 0; color: #475569;">${reason || "Non spécifié"}</p>
+        </div>
+        <p>Veuillez prendre les mesures nécessaires pour résoudre ce problème. Si vous avez des questions, vous pouvez nous contacter.</p>
+        <div style="${footerStyle}">
+          &copy; 2024 Pro Finder. Tous droits réservés.
+        </div>
+      </div>
+    `;
   } else if (status === "pending") {
     subject = "Votre inscription sur Pro Finder est en cours d'examen";
     body = `

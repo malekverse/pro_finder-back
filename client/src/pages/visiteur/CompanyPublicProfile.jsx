@@ -592,7 +592,7 @@ const CompanyPublicProfile = () => {
                           </div>
                           <button 
                             style={s.bookBtn}
-                            onClick={() => setServiceForDetail(service)}
+                            onClick={() => handleAction(service, 'service')}
                           >
                             <Calendar size={16} /> Réserver
                           </button>
@@ -627,7 +627,7 @@ const CompanyPublicProfile = () => {
                           <button 
                             style={s.orderBtn}
                             disabled={product.stock === 0}
-                            onClick={() => setProductForDetail(product)}
+                            onClick={() => handleAction(product, 'product')}
                           >
                             <ShoppingCart size={16} /> Commander
                           </button>

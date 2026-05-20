@@ -16,7 +16,7 @@ const getDashboard = async (req, res) => {
     const totalCities = await City.countDocuments();
     const totalCategories = await Category.countDocuments();
     const totalServices = await Service.countDocuments();
-    const totalReports = await Report.countDocuments({ status: "pending" });
+    const totalReports = await Report.countDocuments({ status: { $in: ["pending", "reviewed"] } });
 
     const pendingCompanies = await Company.countDocuments({ Status: "pending" });
     const verifiedCompanies = await Company.countDocuments({ Status: "active" });
@@ -197,7 +197,7 @@ const getPendingCompanies = async (req, res) => {
 const rejectCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const { reason } = req.body;
+    const { reason, type } = req.body;
 
     const company = await Company.findById(companyId);
     if (!company) return res.status(404).json({ message: "Company not found" });
@@ -211,7 +211,7 @@ const rejectCompany = async (req, res) => {
 
     // Envoyer l'email de refus
     try {
-      await sendStatusEmail(company.email, name, "rejected", reason);
+      await sendStatusEmail(company.email, name, type || "rejected", reason);
     } catch (emailErr) {
       console.error("Email notification failed:", emailErr);
     }
@@ -368,7 +368,7 @@ const verifyProfessional = async (req, res) => {
 const rejectProfessional = async (req, res) => {
   try {
     const { professionalId } = req.params;
-    const { reason } = req.body;
+    const { reason, type } = req.body;
 
     const professional = await Professional.findById(professionalId);
     if (!professional) return res.status(404).json({ message: "Professional not found" });
@@ -379,7 +379,7 @@ const rejectProfessional = async (req, res) => {
     await professional.save();
 
     try {
-      await sendStatusEmail(professional.email, name, "rejected", reason);
+      await sendStatusEmail(professional.email, name, type || "rejected", reason);
     } catch (emailErr) {
       console.error("Email notification failed:", emailErr);
     }

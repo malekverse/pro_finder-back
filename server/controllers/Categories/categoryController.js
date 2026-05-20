@@ -66,25 +66,33 @@ const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Vérifier si des entreprises sont liées à cette catégorie via leurs services
+    // Vérifier si des entreprises ou des sous-catégories sont liées à cette catégorie
     const Company = require("../../models/company");
     const Service = require("../../models/Service");
     const SubCategory = require("../../models/SubCategory");
 
-    // 1. Trouver toutes les sous-catégories de cette catégorie
+    // 1. Vérifier s'il y a des sous-catégories liées
+    const linkedSub = await SubCategory.findOne({ category_id: id });
+    if (linkedSub) {
+      return res.status(400).json({
+        message: "Suppression impossible : des sous-catégories sont liées à cette catégorie."
+      });
+    }
+
+    // 2. Trouver toutes les sous-catégories de cette catégorie (pourrait être vide si linkedSub est null, mais on garde la logique par sécurité)
     const subs = await SubCategory.find({ category_id: id });
     const subIds = subs.map(s => s._id);
 
-    // 2. Trouver tous les services de ces sous-catégories
+    // 3. Trouver tous les services de ces sous-catégories
     const services = await Service.find({ subcategory_id: { $in: subIds } });
     const serviceIds = services.map(s => s._id);
 
-    // 3. Vérifier si une entreprise utilise l'un de ces services
+    // 4. Vérifier si une entreprise utilise l'un de ces services
     const linkedCompany = await Company.findOne({ services: { $in: serviceIds } });
 
     if (linkedCompany) {
       return res.status(400).json({
-        message: "Suppression impossible : des entreprises sont liées à cette catégorie ou à ses services."
+        message: "Suppression impossible : des entreprises sont liées à cette catégorie via ses services."
       });
     }
 

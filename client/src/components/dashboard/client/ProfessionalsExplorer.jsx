@@ -93,7 +93,7 @@ const ProfessionalsExplorer = () => {
               <ProfessionalCardHorizontal
                 key={pro._id}
                 pro={pro}
-                onClick={() => navigate(`/user/professional/${pro._id}`)}
+                onClick={() => navigate(`/pro/${pro._id}`)}
               />
             ))
           ) : (

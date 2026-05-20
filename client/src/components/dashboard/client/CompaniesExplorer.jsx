@@ -94,7 +94,7 @@ const CompaniesExplorer = () => {
               <CompanyCardHorizontal
                 key={company._id}
                 company={company}
-                onClick={() => navigate(`/user/company/${company._id}`)}
+                onClick={() => navigate(`/societe/${company._id}`)}
               />
             ))
           ) : (

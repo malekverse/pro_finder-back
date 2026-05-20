@@ -93,34 +93,14 @@ const Header = ({ user, onLogout, onAction, activeTab }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={() => {
-                const roles = user.roles || [];
-                if (roles.includes('admin')) navigate("/admin/stats");
-                else if (roles.includes('company') || roles.includes('owner') || roles.includes('manager')) navigate("/company/stats");
-                else if (roles.includes('professional')) navigate("/professional/stats");
-                else navigate("/user/dashboard");
-              }}
-              style={h.authBtnSignup}
-            >
-              Tableau de bord
-            </button>
-            <button onClick={onLogout} style={h.authBtnLogin}>
-              <LogOut size={16} /> Quitter
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Link to="/auth/signup" style={h.authBtnSignup}>
-              S'inscrire
-            </Link>
-            <Link to="/auth/login" style={h.authBtnLogin}>
-              Connexion
-            </Link>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link to="/auth/signup" style={h.authBtnSignup}>
+            S'inscrire
+          </Link>
+          <Link to="/auth/login" style={h.authBtnLogin}>
+            Connexion
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -157,14 +137,14 @@ const SuggestedCompanies = () => {
       <div style={sg.list}>
         {suggestions.map((comp) => (
           <div key={comp._id} style={sg.item}>
-            <div style={sg.logoWrap} onClick={() => navigate(`/user/company/${comp._id}`)}>
+            <div style={sg.logoWrap} onClick={() => navigate(`/societe/${comp._id}`)}>
               {comp.logoUrl
                 ? <img src={toImageUrl(comp.logoUrl)} alt="" style={sg.logo} />
                 : <div style={sg.logoFallback}><Building2 size={18} color="#94a3b8" /></div>
               }
             </div>
             <div style={sg.info}>
-              <span style={sg.name} onClick={() => navigate(`/user/company/${comp._id}`)}>{comp.companyName}</span>
+              <span style={sg.name} onClick={() => navigate(`/societe/${comp._id}`)}>{comp.companyName}</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={sg.city}><MapPin size={10} /> {comp.city || "Tunisie"}</span>
                 <span style={sg.city}><Users size={10} /> {comp.followersCount || 0} abonnés</span>
@@ -219,14 +199,14 @@ const SuggestedProfessionals = () => {
       <div style={sg.list}>
         {suggestions.map((pro) => (
           <div key={pro._id} style={sg.item}>
-            <div style={sg.logoWrap} onClick={() => navigate(`/user/professional/${pro._id}`)}>
+            <div style={sg.logoWrap} onClick={() => navigate(`/pro/${pro._id}`)}>
               {pro.photoProfessional
                 ? <img src={toImageUrl(pro.photoProfessional)} alt="" style={{ ...sg.logo }} />
                 : <div style={{ ...sg.logoFallback }}><User size={18} color="#94a3b8" /></div>
               }
             </div>
             <div style={sg.info}>
-              <span style={sg.name} onClick={() => navigate(`/user/professional/${pro._id}`)}>{pro.fullName}</span>
+              <span style={sg.name} onClick={() => navigate(`/pro/${pro._id}`)}>{pro.fullName}</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={sg.city}><MapPin size={10} /> {pro.city || "Tunisie"}</span>
                 <span style={sg.city}><Users size={10} /> {pro.followersCount || 0} abonnés</span>
@@ -439,7 +419,7 @@ const RecommendedProfessionals = () => {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {recommended.slice(0, 5).map((pro) => (
-          <div key={pro._id} style={{ ...r.card, padding: '10px' }} onClick={(e) => { e.preventDefault(); navigate(`/user/professional/${pro._id}`); }}>
+          <div key={pro._id} style={{ ...r.card, padding: '10px' }} onClick={(e) => { e.preventDefault(); navigate(`/pro/${pro._id}`); }}>
             <div style={{ ...r.logoBox, width: '45px', height: '45px', borderRadius: '50%' }}>
               {pro.photoProfessional
                 ? <img src={toImageUrl(pro.photoProfessional)} alt="" style={r.logo} />
@@ -631,9 +611,9 @@ const ProductDetail = ({ product, onClose }) => {
               <button type="button" style={pd.visitBtn} onClick={(e) => {
                 e.preventDefault();
                 if (product.professionalId) {
-                  navigate(`/user/professional/${product.professionalId?._id || product.professionalId}`);
+                  navigate(`/pro/${product.professionalId?._id || product.professionalId}`);
                 } else {
-                  navigate(`/user/company/${product.companyId?._id || product.companyId}`);
+                  navigate(`/societe/${product.companyId?._id || product.companyId}`);
                 }
               }}>
                 {product.professionalId ? "VOIR LE PROFIL" : "VISITER LA BOUTIQUE"}
@@ -811,9 +791,9 @@ const ServiceDetail = ({ service, onClose }) => {
               <button type="button" style={pd.visitBtn} onClick={(e) => {
                 e.preventDefault();
                 if (service.professionalId) {
-                  navigate(`/user/professional/${service.professionalId?._id || service.professionalId}`);
+                  navigate(`/pro/${service.professionalId?._id || service.professionalId}`);
                 } else {
-                  navigate(`/user/company/${service.companyId?._id || service.companyId}`);
+                  navigate(`/societe/${service.companyId?._id || service.companyId}`);
                 }
               }}>
                 {service.professionalId ? "VOIR LE PROFIL" : "VISITER L'ENTREPRISE"}
@@ -943,7 +923,7 @@ const RecommendedCompanies = () => {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {recommended.slice(0, 5).map((company) => (
-          <div key={company._id} style={{ ...r.card, padding: '10px' }} onClick={(e) => { e.preventDefault(); navigate(`/user/company/${company._id}`); }}>
+          <div key={company._id} style={{ ...r.card, padding: '10px' }} onClick={(e) => { e.preventDefault(); navigate(`/societe/${company._id}`); }}>
             <div style={{ ...r.logoBox, width: '45px', height: '45px' }}>
               {company.logoUrl
                 ? <img src={toImageUrl(company.logoUrl)} alt="" style={r.logo} />
@@ -995,7 +975,7 @@ const CompanyFeed = ({ filters }) => {
         <div
           key={company._id}
           style={c.listCard}
-          onClick={() => navigate(`/user/company/${company._id}`)}
+          onClick={() => navigate(`/societe/${company._id}`)}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
             e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.06)';
@@ -1046,7 +1026,7 @@ const CompanyFeed = ({ filters }) => {
             </div>
             <div style={c.listActions}>
               <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/user/company/${company._id}`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/societe/${company._id}`); }}
                 style={c.listBtn}
               >
                 Voir Profil
@@ -1086,7 +1066,7 @@ const ProfessionalFeed = ({ filters }) => {
         <div
           key={pro._id}
           style={c.listCard}
-          onClick={() => navigate(`/user/professional/${pro._id}`)}
+          onClick={() => navigate(`/pro/${pro._id}`)}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
             e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.06)';
@@ -1137,7 +1117,7 @@ const ProfessionalFeed = ({ filters }) => {
             </div>
             <div style={c.listActions}>
               <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/user/professional/${pro._id}`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/pro/${pro._id}`); }}
                 style={{ ...c.listBtn, background: '#1E3A5F', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.2)' }}
               >
                 Voir Profil

@@ -116,7 +116,10 @@ export default function AdminTaxonomy() {
       });
       dispatch(profileApiSlice.util.invalidateTags(['Dashboard']));
       loadData();
-    } catch (err) { alert("Échec de la suppression"); }
+    } catch (err) { 
+      const msg = err.response?.data?.message || "Échec de la suppression";
+      alert(msg); 
+    }
   };
 
   const filteredCategories = categories.filter((cat) => {

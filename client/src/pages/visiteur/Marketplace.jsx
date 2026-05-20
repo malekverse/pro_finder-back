@@ -56,16 +56,7 @@ const Header = ({ user }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        {!user ? (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link to="/auth/signup" style={h.authBtnSignup}>
-              S'inscrire
-            </Link>
-            <Link to="/auth/login" style={h.authBtnLogin}>
-              Connexion
-            </Link>
-          </div>
-        ) : (
+        {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
              <button 
                 onClick={() => navigate("/user/dashboard")}
@@ -73,6 +64,15 @@ const Header = ({ user }) => {
               >
                 Tableau de bord
               </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Link to="/auth/signup" style={h.authBtnSignup}>
+              S'inscrire
+            </Link>
+            <Link to="/auth/login" style={h.authBtnLogin}>
+              Connexion
+            </Link>
           </div>
         )}
       </div>

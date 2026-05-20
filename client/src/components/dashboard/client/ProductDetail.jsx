@@ -143,9 +143,9 @@ const ProductDetail = ({ product, onClose, onOrder }) => {
                 style={pd.visitBtn} 
                 onClick={() => {
                   if (product.professionalId) {
-                    navigate(`/user/professional/${product.professionalId?._id || product.professionalId}`);
+                    navigate(`/pro/${product.professionalId?._id || product.professionalId}`);
                   } else {
-                    navigate(`/user/company/${product.companyId?._id || product.companyId}`);
+                    navigate(`/societe/${product.companyId?._id || product.companyId}`);
                   }
                 }}
                 className="btn-seller"
