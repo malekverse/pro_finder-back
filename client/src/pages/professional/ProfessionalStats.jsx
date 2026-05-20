@@ -44,8 +44,8 @@ const ProfessionalStats = () => {
   }));
 
   const kpis = [
-    { label: "Abonnés", value: stats?.totalFollowers || 0, icon: <Users size={22} />, color: "#3b82f6", bg: "#eff6ff", trend: "+12%" },
-    { label: "Publications", value: stats?.totalPosts || 0, icon: <FileText size={22} />, color: "#8b5cf6", bg: "#f5f3ff", trend: "+2" },
+    { label: "Abonnés", value: stats?.absoluteTotalFollowers || 0, icon: <Users size={22} />, color: "#3b82f6", bg: "#eff6ff", trend: "+12%" },
+    { label: "Publications", value: stats?.absoluteTotalPosts || 0, icon: <FileText size={22} />, color: "#8b5cf6", bg: "#f5f3ff", trend: "+2" },
     { label: "Note Moyenne", value: profile?.averageRating || "5.0", icon: <Star size={22} />, color: "#fbbf24", bg: "#fffbeb", trend: "0.0" },
     { label: "Engagement", value: (stats?.totalLikes || 0) + (stats?.totalComments || 0), icon: <TrendingUp size={22} />, color: "#10b981", bg: "#f0fdf4", trend: "+5%" },
   ];

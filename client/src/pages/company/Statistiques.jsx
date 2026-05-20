@@ -76,7 +76,7 @@ const Statistiques = () => {
   const kpis = [
     { 
       label: "Total Followers", 
-      value: stats?.totalFollowers || 0, 
+      value: stats?.absoluteTotalFollowers || 0, 
       icon: <Users size={24} />, 
       color: "#24416b", 
       bg: "#eff6ff",
@@ -84,7 +84,7 @@ const Statistiques = () => {
     },
     { 
       label: "Total Publications", 
-      value: stats?.totalPosts || 0, 
+      value: stats?.absoluteTotalPosts || 0, 
       icon: <Calendar size={24} />, 
       color: "#8b5cf6", 
       bg: "#f5f3ff",
@@ -100,7 +100,7 @@ const Statistiques = () => {
     },
     { 
       label: `Nouveaux (${isMonthly ? 'Mois' : 'Année'})`, 
-      value: `+${stats?.newFollowersThisMonth || 0}`, 
+      value: `+${stats?.totalFollowers || 0}`, 
       icon: <UserPlus size={24} />, 
       color: "#10b981", 
       bg: "#ecfdf5",

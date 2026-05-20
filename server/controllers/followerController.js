@@ -236,13 +236,29 @@ const getFollowersStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: { $size: { $ifNull: ["$comments", []] } } } } }
     ]))[0]?.total || 0;
 
+    // Totaux pour la période
     const totalFollowers = await Follow.countDocuments(matchStage);
-    const teamMembers = isProfessional ? 0 : await Follow.countDocuments({ ...matchStage, role_id: { $ne: null } });
     const totalPosts = await Post.countDocuments(postMatchStage);
+
+    // Totaux absolus (sans filtre de date)
+    const absoluteMatchStage = isProfessional 
+      ? { professional_id: companyId, is_blocked: { $ne: true } }
+      : { company_id: companyId, is_blocked: { $ne: true } };
+    
+    const absolutePostMatchStage = { 
+      author_id: companyId, 
+      authorType: isProfessional ? "Professional" : "Company", 
+      isDeleted: false 
+    };
+
+    const absoluteTotalFollowers = await Follow.countDocuments(absoluteMatchStage);
+    const absoluteTotalPosts = await Post.countDocuments(absolutePostMatchStage);
+    
+    const teamMembers = isProfessional ? 0 : await Follow.countDocuments({ ...matchStage, role_id: { $ne: null } });
     
     const firstDayOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const newFollowersThisMonth = await Follow.countDocuments({
-      ...matchStage,
+      ...absoluteMatchStage,
       createdAt: { $gte: firstDayOfThisMonth }
     });
 
@@ -251,13 +267,15 @@ const getFollowersStats = async (req, res) => {
       monthlyStats, 
       monthlyPostStats,
       monthlyEngagementStats,
-      totalFollowers, 
+      totalFollowers, // Pour la période (utilisé pour les graphiques et Nouveaux)
+      absoluteTotalFollowers, // Total réel
       teamMembers, 
-      totalPosts,
+      totalPosts, // Pour la période
+      absoluteTotalPosts, // Total réel des posts
       totalLikes,
       totalComments,
       newFollowersThisMonth,
-      retentionRate: totalFollowers > 0 ? ((teamMembers / totalFollowers) * 100).toFixed(1) : 0
+      retentionRate: absoluteTotalFollowers > 0 ? ((teamMembers / absoluteTotalFollowers) * 100).toFixed(1) : 0
     });
   } catch (err) {
     console.error(err);
